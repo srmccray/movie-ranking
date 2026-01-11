@@ -1,0 +1,19 @@
+# Core dependencies
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Database
+sqlalchemy[asyncio]>=2.0.0
+asyncpg
+alembic>=1.13.0
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.0.0
+
+# Validation
+pydantic[email]>=2.5.0
+pydantic-settings
+
+# Multipart form data
+python-multipart

@@ -1,0 +1,80 @@
+# =============================================================================
+# Movie Ranking API - Docker Compose Configuration
+# Development environment with FastAPI and PostgreSQL
+# =============================================================================
+#
+# Usage:
+#   Start:   docker compose up
+#   Stop:    docker compose down
+#   Rebuild: docker compose up --build
+#   Logs:    docker compose logs -f [service]
+#
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: movie-ranking-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-movie_ranking}
+    volumes:
+      # Named volume for data persistence across container restarts
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Expose to host for direct database access (optional, useful for debugging)
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      # Verify PostgreSQL is ready to accept connections
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-movie_ranking}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # FastAPI Application
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: movie-ranking-api
+    environment:
+      # Database connection - uses Docker internal networking
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-movie_ranking}
+      # Security settings from .env file
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      DEBUG: ${DEBUG:-false}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        # Wait for database to be healthy before starting the API
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    # Mount source code for development (enables hot reload)
+    volumes:
+      - ./app:/app/app:ro
+      - ./alembic:/app/alembic:ro
+
+# -----------------------------------------------------------------------------
+# Named Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    # Persist PostgreSQL data across container restarts
+    driver: local
