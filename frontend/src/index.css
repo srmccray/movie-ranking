@@ -1249,6 +1249,176 @@ select {
   margin: 0 0 var(--space-2) 0;
 }
 
+/* ============================================
+   Add Movie Card (Ghost/Template Card)
+   ============================================ */
+
+.add-movie-card {
+  /* Match movie card dimensions */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 180px;
+  padding: var(--space-6);
+
+  /* Glassmorphism base */
+  background: rgba(18, 18, 26, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  /* Dashed border with gradient effect */
+  border: 2px dashed var(--color-neutral-600);
+  border-radius: var(--radius-xl);
+
+  /* Interaction */
+  cursor: pointer;
+  transition:
+    border-color var(--transition-normal),
+    background-color var(--transition-normal),
+    box-shadow var(--transition-normal),
+    transform var(--transition-normal);
+
+  /* Positioning for pseudo-elements */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient glow background on hover */
+.add-movie-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(168, 85, 247, 0.08) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  pointer-events: none;
+}
+
+.add-movie-card:hover {
+  border-color: var(--color-primary-500);
+  border-style: solid;
+  background: rgba(24, 24, 36, 0.6);
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(168, 85, 247, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.add-movie-card:hover::before {
+  opacity: 1;
+}
+
+/* Focus state for accessibility */
+.add-movie-card:focus-visible {
+  outline: none;
+  border-color: var(--color-primary-500);
+  border-style: solid;
+  box-shadow:
+    0 0 0 3px var(--color-primary-100),
+    var(--shadow-glow-purple);
+}
+
+/* Active/pressed state */
+.add-movie-card:active {
+  transform: translateY(0);
+  background: rgba(30, 30, 42, 0.7);
+}
+
+/* Icon container */
+.add-movie-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.15) 0%,
+    rgba(59, 130, 246, 0.1) 100%
+  );
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  color: var(--color-primary-500);
+  transition:
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal),
+    background var(--transition-normal);
+}
+
+.add-movie-card:hover .add-movie-card-icon {
+  transform: scale(1.08);
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.25) 0%,
+    rgba(59, 130, 246, 0.15) 100%
+  );
+  box-shadow:
+    0 0 20px rgba(168, 85, 247, 0.3),
+    0 0 40px rgba(168, 85, 247, 0.1);
+}
+
+.add-movie-card-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2;
+  transition: transform var(--transition-fast);
+}
+
+.add-movie-card:hover .add-movie-card-icon svg {
+  transform: rotate(90deg);
+}
+
+/* Text label */
+.add-movie-card-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-neutral-400);
+  transition: color var(--transition-normal);
+}
+
+.add-movie-card:hover .add-movie-card-label {
+  color: var(--color-neutral-200);
+}
+
+/* Hint text */
+.add-movie-card-hint {
+  font-size: 0.8125rem;
+  color: var(--color-neutral-500);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity var(--transition-normal),
+    transform var(--transition-normal);
+}
+
+.add-movie-card:hover .add-movie-card-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animation for the card appearing */
+.rankings-list .add-movie-card {
+  animation: fadeSlideUp 0.5s ease-out backwards;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .movie-card {
@@ -1302,6 +1472,30 @@ select {
   .empty-state-title {
     font-size: 1.25rem;
   }
+
+  .add-movie-card {
+    min-height: 140px;
+    padding: var(--space-4);
+  }
+
+  .add-movie-card-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .add-movie-card-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .add-movie-card-label {
+    font-size: 0.875rem;
+  }
+
+  /* Hide hint on mobile - touch devices don't have hover */
+  .add-movie-card-hint {
+    display: none;
+  }
 }
 
 /* Reduced motion support */
@@ -1323,6 +1517,25 @@ select {
   }
 
   .empty-state-icon {
+    animation: none;
+  }
+
+  .add-movie-card,
+  .add-movie-card-icon,
+  .add-movie-card-icon svg,
+  .add-movie-card-hint {
+    transition: none;
+  }
+
+  .add-movie-card:hover .add-movie-card-icon svg {
+    transform: none;
+  }
+
+  .add-movie-card:hover .add-movie-card-icon {
+    transform: none;
+  }
+
+  .rankings-list .add-movie-card {
     animation: none;
   }
 }

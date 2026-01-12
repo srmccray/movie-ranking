@@ -6,5 +6,6 @@ export { Header } from './Header';
 export { MovieCard } from './MovieCard';
 export { EmptyState } from './EmptyState';
 export { AddMovieForm } from './AddMovieForm';
+export { AddMovieCard } from './AddMovieCard';
 export { MovieSearch } from './MovieSearch';
 export { ProtectedRoute } from './ProtectedRoute';

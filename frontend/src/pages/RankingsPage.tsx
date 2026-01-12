@@ -5,6 +5,7 @@ import { EmptyState } from '../components/EmptyState';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { AddMovieForm } from '../components/AddMovieForm';
+import { AddMovieCard } from '../components/AddMovieCard';
 import { useRankings } from '../hooks/useRankings';
 import type { MovieCreate } from '../types';
 
@@ -102,20 +103,6 @@ export function RankingsPage() {
                   </span>
                 )}
               </h1>
-              <Button onClick={handleOpenModal}>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                Add Movie
-              </Button>
             </div>
 
             {error && (
@@ -164,6 +151,7 @@ export function RankingsPage() {
             {showRankings && (
               <>
                 <div className="rankings-list">
+                  <AddMovieCard onClick={handleOpenModal} />
                   {rankings.map((ranking) => (
                     <MovieCard
                       key={ranking.id}
