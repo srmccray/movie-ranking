@@ -308,7 +308,7 @@ export const handlers = [
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         movie: movie
-          ? { id: movie.id, title: movie.title, year: movie.year }
+          ? { id: movie.id, title: movie.title, year: movie.year, poster_url: movie.poster_url || null }
           : null,
       };
     });
