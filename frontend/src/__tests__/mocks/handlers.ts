@@ -3,7 +3,7 @@
  *
  * These handlers simulate the backend API behavior for:
  * - Authentication (login, register)
- * - Movies (create)
+ * - Movies (create, search)
  * - Rankings (list, create)
  */
 
@@ -14,15 +14,43 @@ const MOCK_TOKEN = 'mock-jwt-token-for-testing';
 const MOCK_USER_EMAIL = 'test@example.com';
 const MOCK_USER_PASSWORD = 'password123';
 
+// Mock TMDB search results
+const MOCK_TMDB_RESULTS = [
+  {
+    id: 603,
+    title: 'The Matrix',
+    year: 1999,
+    poster_url: 'https://image.tmdb.org/t/p/w185/abc123.jpg',
+    overview: 'A computer hacker learns about the true nature of reality.',
+  },
+  {
+    id: 604,
+    title: 'The Matrix Reloaded',
+    year: 2003,
+    poster_url: 'https://image.tmdb.org/t/p/w185/def456.jpg',
+    overview: 'Neo continues his mission to save humanity.',
+  },
+  {
+    id: 605,
+    title: 'The Matrix Revolutions',
+    year: 2003,
+    poster_url: 'https://image.tmdb.org/t/p/w185/ghi789.jpg',
+    overview: 'The epic conclusion to the Matrix trilogy.',
+  },
+];
+
 // Store registered users for testing
 const registeredUsers = new Map<string, string>();
 registeredUsers.set(MOCK_USER_EMAIL, MOCK_USER_PASSWORD);
 
 // Store movies for testing
-const movies = new Map<string, { id: string; title: string; year: number | null }>();
+const movies = new Map<string, { id: string; title: string; year: number | null; tmdb_id?: number | null; poster_url?: string | null }>();
 
 // Store rankings for testing
 const rankings = new Map<string, { id: string; movie_id: string; rating: number }>();
+
+// Flag to simulate TMDB service errors
+let tmdbServiceError: 'rate_limit' | 'api_error' | 'unavailable' | null = null;
 
 export const handlers = [
   // POST /api/v1/auth/register
@@ -113,6 +141,69 @@ export const handlers = [
     });
   }),
 
+  // GET /api/v1/movies/search/
+  http.get('/api/v1/movies/search/', ({ request }) => {
+    const authHeader = request.headers.get('Authorization');
+
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { detail: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    // Check for simulated errors
+    if (tmdbServiceError === 'rate_limit') {
+      return HttpResponse.json(
+        { detail: 'TMDB rate limit exceeded. Please try again later.' },
+        { status: 503 }
+      );
+    }
+    if (tmdbServiceError === 'api_error') {
+      return HttpResponse.json(
+        { detail: 'Failed to search TMDB. Please try again.' },
+        { status: 500 }
+      );
+    }
+    if (tmdbServiceError === 'unavailable') {
+      return HttpResponse.json(
+        { detail: 'TMDB service unavailable. Please try again later.' },
+        { status: 500 }
+      );
+    }
+
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q');
+    const year = url.searchParams.get('year');
+
+    if (!query || query.trim() === '') {
+      return HttpResponse.json(
+        {
+          detail: [
+            {
+              loc: ['query', 'q'],
+              msg: 'Field required',
+              type: 'missing',
+            },
+          ],
+        },
+        { status: 422 }
+      );
+    }
+
+    // Filter results based on query and year
+    let results = MOCK_TMDB_RESULTS.filter((movie) =>
+      movie.title.toLowerCase().includes(query.toLowerCase())
+    );
+
+    if (year) {
+      const yearNum = parseInt(year);
+      results = results.filter((movie) => movie.year === yearNum);
+    }
+
+    return HttpResponse.json(results);
+  }),
+
   // POST /api/v1/movies/
   http.post('/api/v1/movies/', async ({ request }) => {
     const authHeader = request.headers.get('Authorization');
@@ -124,7 +215,12 @@ export const handlers = [
       );
     }
 
-    const body = (await request.json()) as { title?: string; year?: number };
+    const body = (await request.json()) as {
+      title?: string;
+      year?: number;
+      tmdb_id?: number;
+      poster_url?: string;
+    };
 
     if (!body.title) {
       return HttpResponse.json(
@@ -137,6 +233,8 @@ export const handlers = [
       id: `movie-${Date.now()}`,
       title: body.title,
       year: body.year || null,
+      tmdb_id: body.tmdb_id || null,
+      poster_url: body.poster_url || null,
       created_at: new Date().toISOString(),
     };
 
@@ -230,7 +328,13 @@ export function resetMockData() {
   registeredUsers.set(MOCK_USER_EMAIL, MOCK_USER_PASSWORD);
   movies.clear();
   rankings.clear();
+  tmdbServiceError = null;
+}
+
+// Helper to simulate TMDB service errors
+export function setTmdbServiceError(error: 'rate_limit' | 'api_error' | 'unavailable' | null) {
+  tmdbServiceError = error;
 }
 
 // Export mock constants for use in tests
-export { MOCK_TOKEN, MOCK_USER_EMAIL, MOCK_USER_PASSWORD };
+export { MOCK_TOKEN, MOCK_USER_EMAIL, MOCK_USER_PASSWORD, MOCK_TMDB_RESULTS };

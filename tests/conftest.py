@@ -12,6 +12,12 @@ from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID, uuid4
 
+# Set test environment variables BEFORE importing app modules
+# This ensures settings can be loaded during test discovery
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing")
+os.environ.setdefault("TMDB_API_KEY", "test-tmdb-api-key")
+
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient

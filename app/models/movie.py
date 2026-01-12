@@ -20,6 +20,8 @@ class Movie(Base):
         id: Unique identifier (UUID).
         title: Movie title.
         year: Release year (optional, must be between 1888 and 2031).
+        tmdb_id: The Movie Database (TMDB) ID (optional).
+        poster_url: URL to movie poster image (optional).
         created_at: Record creation timestamp.
         updated_at: Last update timestamp.
         rankings: Rankings for this movie (relationship).
@@ -37,6 +39,14 @@ class Movie(Base):
     )
     year: Mapped[int | None] = mapped_column(
         Integer,
+        nullable=True,
+    )
+    tmdb_id: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+    poster_url: Mapped[str | None] = mapped_column(
+        String(500),
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -62,6 +72,7 @@ class Movie(Base):
         ),
         Index("idx_movies_title", "title"),
         Index("idx_movies_year", "year"),
+        Index("idx_movies_tmdb_id", "tmdb_id"),
     )
 
     def __repr__(self) -> str:

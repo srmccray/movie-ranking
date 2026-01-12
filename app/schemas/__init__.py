@@ -1,6 +1,12 @@
 """Pydantic schemas for request/response validation."""
 
-from app.schemas.movie import MovieBrief, MovieCreate, MovieResponse
+from app.schemas.movie import (
+    MovieBrief,
+    MovieCreate,
+    MovieResponse,
+    TMDBSearchResponse,
+    TMDBSearchResult,
+)
 from app.schemas.ranking import (
     RankingCreate,
     RankingListResponse,
@@ -18,6 +24,8 @@ __all__ = [
     "RankingListResponse",
     "RankingResponse",
     "RankingWithMovie",
+    "TMDBSearchResponse",
+    "TMDBSearchResult",
     "Token",
     "UserCreate",
     "UserResponse",

@@ -117,6 +117,35 @@ async def test_create_with_custom_date(self, client, auth_headers, test_movie):
 - Form data: `application/x-www-form-urlencoded` (login)
 - Don't override Content-Type if already set
 
+## API Contract Verification
+
+**Critical:** Frontend and backend types must match exactly. Runtime errors occur when they don't.
+
+### Common Pitfall
+```typescript
+// Backend returns: { results: [...], query: "...", year: null }
+// WRONG - Frontend assumes raw array
+async searchMovies(): Promise<SearchResult[]> {
+  return this.request<SearchResult[]>('/search/');  // Runtime error!
+}
+
+// CORRECT - Frontend matches backend wrapper
+async searchMovies(): Promise<SearchResult[]> {
+  const response = await this.request<SearchResponse>('/search/');
+  return response.results;
+}
+```
+
+### Verification Checklist
+- [ ] Read backend schema (`app/schemas/*.py`) before implementing frontend types
+- [ ] Check `response_model=` in router to see exact response shape
+- [ ] Wrapper responses (`*ListResponse`, `*SearchResponse`) contain data in a field like `items` or `results`
+- [ ] Field names use `snake_case` (matching Python/JSON convention)
+
+**See also:**
+- `frontend/CLAUDE.md` → "API Contract Verification" section
+- `app/CLAUDE.md` → "Frontend API Contract Documentation" section
+
 ## Git Commit Messages
 
 - Do NOT include "Co-Authored-By: Claude" or any Claude attribution in commit messages

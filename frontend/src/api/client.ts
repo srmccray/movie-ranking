@@ -6,6 +6,7 @@ import type {
   MovieCreate,
   RankingCreate,
   ApiError,
+  TMDBSearchResult,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -84,6 +85,17 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  async searchMovies(query: string, year?: number): Promise<TMDBSearchResult[]> {
+    const params = new URLSearchParams({ q: query });
+    if (year !== undefined) {
+      params.append('year', year.toString());
+    }
+    const response = await this.request<{ results: TMDBSearchResult[]; query: string; year: number | null }>(
+      `/movies/search/?${params.toString()}`
+    );
+    return response.results;
   }
 
   // Ranking endpoints

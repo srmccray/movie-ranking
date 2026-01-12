@@ -310,6 +310,119 @@ __all__ = [
 
 ---
 
+## Frontend API Contract Documentation
+
+### The Problem
+
+Frontend developers may misinterpret response shapes when backend schemas are unclear or inconsistent. This leads to runtime errors when the frontend expects a different response structure than the backend provides.
+
+### Schema Documentation Requirements
+
+**All response schemas MUST include clear docstrings that explicitly state the response structure:**
+
+```python
+class TMDBSearchResponse(BaseModel):
+    """Schema for TMDB search response.
+
+    RESPONSE SHAPE: { results: [...], query: "...", year: ... }
+
+    This is a wrapper response - the actual search results are in the 'results' field,
+    not returned as a top-level array.
+
+    Attributes:
+        results: List of movies matching the search query.
+        query: The original search query (echoed back).
+        year: The year filter used (if any).
+    """
+
+    results: list[TMDBSearchResult] = Field(..., description="List of matching movies")
+    query: str = Field(..., description="The search query")
+    year: Optional[int] = Field(None, description="Year filter used")
+```
+
+### Wrapper vs Direct Response Patterns
+
+**Document which pattern each endpoint uses:**
+
+| Pattern | When to Use | Example |
+|---------|-------------|---------|
+| Direct response | Single item CRUD operations | `MovieResponse` for GET /movies/{id}/ |
+| List wrapper | Paginated collections | `RankingListResponse` for GET /rankings/ |
+| Search wrapper | Search results with metadata | `TMDBSearchResponse` with query echo |
+
+### Router Documentation
+
+**Always document the response shape in router docstrings:**
+
+```python
+@router.get(
+    "/search/",
+    response_model=TMDBSearchResponse,  # <-- Explicit response model
+    summary="Search movies on TMDB",
+)
+async def search_tmdb_movies(...) -> TMDBSearchResponse:
+    """Search for movies on TMDB.
+
+    Returns:
+        TMDBSearchResponse: Wrapper containing:
+            - results: List of TMDBSearchResult objects
+            - query: The search query (echoed)
+            - year: Year filter if provided
+
+        NOTE: Results are wrapped in a response object, not returned as a raw list.
+    """
+```
+
+### Checklist When Adding New Endpoints
+
+- [ ] Response schema has clear docstring explaining structure
+- [ ] Router uses `response_model=` parameter
+- [ ] Router docstring documents the response shape
+- [ ] Wrapper responses clearly indicate what field contains the data
+- [ ] Field names use snake_case (FastAPI/Pydantic convention)
+- [ ] Consider adding example response in docstring for complex shapes
+
+### Field Naming Convention
+
+**Always use snake_case for all schema fields.** Frontend will use these names directly:
+
+```python
+# CORRECT - snake_case matches JSON output
+class TMDBSearchResult(BaseModel):
+    tmdb_id: int
+    poster_url: Optional[str]
+
+# WRONG - camelCase causes frontend mismatch
+class TMDBSearchResult(BaseModel):
+    tmdbId: int  # Frontend would need { tmdb_id: ... } but gets { tmdbId: ... }
+    posterUrl: Optional[str]
+```
+
+### Testing Response Shapes
+
+**Integration tests should verify the exact response structure:**
+
+```python
+@pytest.mark.asyncio
+async def test_search_returns_wrapped_response(self, client, auth_headers):
+    """Verify search endpoint returns wrapper object, not raw array."""
+    response = await client.get(
+        "/api/v1/movies/search/",
+        params={"q": "test"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    # Verify wrapper structure
+    assert "results" in data, "Response must wrap results in 'results' field"
+    assert "query" in data, "Response must include echoed query"
+    assert isinstance(data["results"], list), "results must be a list"
+```
+
+---
+
 ## Adding a New Router
 
 ### Step 1: Create the Router File

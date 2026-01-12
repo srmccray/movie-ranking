@@ -9,6 +9,8 @@ export interface Movie {
   id: string;
   title: string;
   year: number | null;
+  tmdb_id?: number | null;
+  poster_url?: string | null;
   created_at: string;
 }
 
@@ -16,6 +18,16 @@ export interface MovieBrief {
   id: string;
   title: string;
   year: number | null;
+  tmdb_id?: number | null;
+  poster_url?: string | null;
+}
+
+export interface TMDBSearchResult {
+  id: number;
+  title: string;
+  year: number | null;
+  poster_url: string | null;
+  overview: string | null;
 }
 
 export interface Ranking {
@@ -53,6 +65,8 @@ export interface UserCreate {
 export interface MovieCreate {
   title: string;
   year?: number | null;
+  tmdb_id?: number | null;
+  poster_url?: string | null;
 }
 
 export interface RankingCreate {

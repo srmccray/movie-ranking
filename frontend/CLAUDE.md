@@ -570,6 +570,146 @@ if (response.status === 204) {
 }
 ```
 
+## API Contract Verification
+
+### The Problem
+
+Frontend-backend type mismatches cause runtime errors that are not caught during development or by TypeScript compilation. For example:
+- Backend returns `{ results: T[], query: string }`
+- Frontend expects `T[]` directly
+- TypeScript compiles successfully, but crashes at runtime
+
+### Before Implementing Any API Integration
+
+**Checklist:**
+
+- [ ] **Read the backend schema file** for the endpoint (`app/schemas/<entity>.py`)
+- [ ] **Read the backend router file** to see the `response_model=` declaration
+- [ ] **Verify the exact response shape** - is it a wrapper object or raw data?
+- [ ] **Check for nested types** - wrapper responses often contain `items`, `results`, `data`, etc.
+- [ ] **Add all required types to `types/index.ts`** including wrapper/response types
+- [ ] **Match field names exactly** - backend uses `snake_case`, frontend types must match
+
+### Response Shape Patterns
+
+The backend uses these common response patterns:
+
+| Pattern | Backend Schema | Frontend Type Needed |
+|---------|---------------|---------------------|
+| Single item | `EntityResponse` | `Entity` |
+| List with pagination | `EntityListResponse` | `{ items: Entity[], total, limit, offset }` |
+| Search results | `TMDBSearchResponse` | `{ results: TMDBSearchResult[], query, year }` |
+| Delete | `204 No Content` | `void` |
+
+### Type Mapping Process
+
+1. **Find the backend schema:**
+   ```bash
+   # Look in app/schemas/<entity>.py for response types
+   cat app/schemas/movie.py | grep -A 20 "class.*Response"
+   ```
+
+2. **Check the router's response_model:**
+   ```bash
+   # Look in app/routers/<entities>.py
+   grep "response_model=" app/routers/movies.py
+   ```
+
+3. **Create matching frontend type:**
+   ```typescript
+   // Backend: TMDBSearchResponse with results, query, year
+   // Frontend must match exactly:
+   export interface TMDBSearchResponse {
+     results: TMDBSearchResult[];
+     query: string;
+     year: number | null;
+   }
+   ```
+
+4. **Use the wrapper type in API client:**
+   ```typescript
+   // CORRECT - uses full response type, then extracts what's needed
+   async searchMovies(query: string, year?: number): Promise<TMDBSearchResult[]> {
+     const response = await this.request<TMDBSearchResponse>(`/movies/search/?...`);
+     return response.results;
+   }
+
+   // WRONG - assumes backend returns array directly
+   async searchMovies(query: string, year?: number): Promise<TMDBSearchResult[]> {
+     return this.request<TMDBSearchResult[]>(`/movies/search/?...`);
+   }
+   ```
+
+### Common Mistakes to Avoid
+
+1. **Assuming list endpoints return arrays directly**
+   ```typescript
+   // WRONG - most list endpoints return wrapper objects
+   async getItems(): Promise<Item[]> {
+     return this.request<Item[]>('/items/');
+   }
+
+   // CORRECT - list endpoints return paginated response
+   async getItems(): Promise<ItemListResponse> {
+     return this.request<ItemListResponse>('/items/');
+   }
+   ```
+
+2. **Not defining wrapper response types**
+   ```typescript
+   // WRONG - only has the item type
+   export interface TMDBSearchResult { ... }
+
+   // CORRECT - has both item AND response wrapper types
+   export interface TMDBSearchResult { ... }
+   export interface TMDBSearchResponse {
+     results: TMDBSearchResult[];
+     query: string;
+     year: number | null;
+   }
+   ```
+
+3. **Mismatched field names**
+   ```typescript
+   // Backend returns: { "tmdb_id": 12345 }
+
+   // WRONG
+   interface Movie { tmdbId: number; }
+
+   // CORRECT - match snake_case from backend
+   interface Movie { tmdb_id: number; }
+   ```
+
+### Testing API Integrations
+
+When adding MSW handlers, match the backend response shape exactly:
+
+```typescript
+// handlers.ts - must match backend TMDBSearchResponse schema
+http.get('/api/v1/movies/search/', () => {
+  return HttpResponse.json({
+    results: [{ tmdb_id: 1, title: 'Test', year: 2024, poster_url: null, overview: null }],
+    query: 'test',
+    year: null,
+  });
+});
+```
+
+### Verification Commands
+
+Before implementing, verify the contract:
+
+```bash
+# View backend response schema
+cat app/schemas/movie.py
+
+# View endpoint response_model
+grep -A 5 "def search" app/routers/movies.py
+
+# Test endpoint directly (requires auth token)
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/v1/movies/search/?q=test
+```
+
 ## Adding New Types
 
 ### Type Organization
