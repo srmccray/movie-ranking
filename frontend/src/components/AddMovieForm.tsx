@@ -28,6 +28,13 @@ export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
   const [year, setYear] = useState('');
   const [tmdbId, setTmdbId] = useState<number | null>(null);
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
+  // New metadata fields
+  const [genreIds, setGenreIds] = useState<number[] | null>(null);
+  const [voteAverage, setVoteAverage] = useState<number | null>(null);
+  const [voteCount, setVoteCount] = useState<number | null>(null);
+  const [releaseDate, setReleaseDate] = useState<string | null>(null);
+  const [originalLanguage, setOriginalLanguage] = useState<string | null>(null);
+  // Rating fields
   const [rating, setRating] = useState(0);
   const [ratedAt, setRatedAt] = useState(getTodayString());
   const [errors, setErrors] = useState<FormErrors>({});
@@ -72,6 +79,11 @@ export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
         year: year ? parseInt(year, 10) : null,
         tmdb_id: tmdbId,
         poster_url: posterUrl,
+        genre_ids: genreIds,
+        vote_average: voteAverage,
+        vote_count: voteCount,
+        release_date: releaseDate,
+        original_language: originalLanguage,
       };
 
       await onSubmit(movieData, rating, ratedAt);
@@ -85,8 +97,14 @@ export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
   const handleSearchSelect = useCallback((result: TMDBSearchResult) => {
     setTitle(result.title);
     setYear(result.year ? result.year.toString() : '');
-    setTmdbId(result.id);
+    setTmdbId(result.tmdb_id);
     setPosterUrl(result.poster_url);
+    // Set new metadata fields from search result
+    setGenreIds(result.genre_ids ?? null);
+    setVoteAverage(result.vote_average ?? null);
+    setVoteCount(result.vote_count ?? null);
+    setReleaseDate(result.release_date ?? null);
+    setOriginalLanguage(result.original_language ?? null);
     setMode('selected');
     setErrors({});
   }, []);
@@ -97,6 +115,11 @@ export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
     setYear('');
     setTmdbId(null);
     setPosterUrl(null);
+    setGenreIds(null);
+    setVoteAverage(null);
+    setVoteCount(null);
+    setReleaseDate(null);
+    setOriginalLanguage(null);
     setErrors({});
   }, []);
 
@@ -106,6 +129,11 @@ export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
     setYear('');
     setTmdbId(null);
     setPosterUrl(null);
+    setGenreIds(null);
+    setVoteAverage(null);
+    setVoteCount(null);
+    setReleaseDate(null);
+    setOriginalLanguage(null);
     setErrors({});
   }, []);
 
@@ -115,6 +143,11 @@ export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
     setYear('');
     setTmdbId(null);
     setPosterUrl(null);
+    setGenreIds(null);
+    setVoteAverage(null);
+    setVoteCount(null);
+    setReleaseDate(null);
+    setOriginalLanguage(null);
     setRating(0);
     setErrors({});
   }, []);

@@ -63,7 +63,7 @@ async def search_tmdb_movies(
         async with TMDBService() as service:
             results = await service.search_movies(query=q, year=year)
 
-        # Convert to response schema
+        # Convert to response schema with all metadata fields
         search_results = [
             TMDBSearchResult(
                 tmdb_id=result.tmdb_id,
@@ -71,6 +71,11 @@ async def search_tmdb_movies(
                 year=result.year,
                 poster_url=result.poster_url,
                 overview=result.overview,
+                genre_ids=result.genre_ids,
+                vote_average=result.vote_average,
+                vote_count=result.vote_count,
+                release_date=result.release_date,
+                original_language=result.original_language,
             )
             for result in results
         ]
@@ -122,12 +127,13 @@ async def create_movie(
     Requires authentication. Any authenticated user can add movies.
 
     Args:
-        movie_data: Movie data containing title, optional year, tmdb_id, and poster_url.
+        movie_data: Movie data containing title, year, tmdb_id, poster_url,
+            and additional metadata fields (genre_ids, vote_average, etc.).
         current_user: The authenticated user (from JWT token).
         db: Async database session.
 
     Returns:
-        The created movie with id, title, year, tmdb_id, poster_url, and created_at.
+        The created movie with all fields and timestamps.
 
     Raises:
         HTTPException: 401 Unauthorized if not authenticated.
@@ -137,6 +143,12 @@ async def create_movie(
         year=movie_data.year,
         tmdb_id=movie_data.tmdb_id,
         poster_url=movie_data.poster_url,
+        genre_ids=movie_data.genre_ids,
+        vote_average=movie_data.vote_average,
+        vote_count=movie_data.vote_count,
+        release_date=movie_data.release_date,
+        original_language=movie_data.original_language,
+        runtime=movie_data.runtime,
     )
 
     db.add(new_movie)

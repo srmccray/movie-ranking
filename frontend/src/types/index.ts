@@ -11,6 +11,12 @@ export interface Movie {
   year: number | null;
   tmdb_id?: number | null;
   poster_url?: string | null;
+  genre_ids?: number[] | null;
+  vote_average?: number | null;
+  vote_count?: number | null;
+  release_date?: string | null;
+  original_language?: string | null;
+  runtime?: number | null;
   created_at: string;
 }
 
@@ -23,11 +29,16 @@ export interface MovieBrief {
 }
 
 export interface TMDBSearchResult {
-  id: number;
+  tmdb_id: number;
   title: string;
   year: number | null;
   poster_url: string | null;
   overview: string | null;
+  genre_ids?: number[] | null;
+  vote_average?: number | null;
+  vote_count?: number | null;
+  release_date?: string | null;
+  original_language?: string | null;
 }
 
 export interface Ranking {
@@ -67,6 +78,12 @@ export interface MovieCreate {
   year?: number | null;
   tmdb_id?: number | null;
   poster_url?: string | null;
+  genre_ids?: number[] | null;
+  vote_average?: number | null;
+  vote_count?: number | null;
+  release_date?: string | null;
+  original_language?: string | null;
+  runtime?: number | null;
 }
 
 export interface RankingCreate {

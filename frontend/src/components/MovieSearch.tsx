@@ -168,7 +168,7 @@ export function MovieSearch({ onSelect }: MovieSearchProps) {
         >
           {results.map((result, index) => (
             <li
-              key={result.id}
+              key={result.tmdb_id}
               className={[
                 'movie-search-result',
                 highlightedIndex === index ? 'highlighted' : '',

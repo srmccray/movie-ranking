@@ -29,6 +29,11 @@ class TMDBMovieResult:
         poster_path: Relative path to poster image (optional).
         poster_url: Full URL to poster thumbnail (optional).
         overview: Movie synopsis/description (optional).
+        genre_ids: List of TMDB genre IDs (optional).
+        vote_average: TMDB user rating 0.0-10.0 (optional).
+        vote_count: Number of TMDB votes (optional).
+        release_date: Full release date string YYYY-MM-DD (optional).
+        original_language: ISO 639-1 language code (optional).
     """
 
     tmdb_id: int
@@ -37,6 +42,26 @@ class TMDBMovieResult:
     poster_path: str | None
     poster_url: str | None
     overview: str | None
+    genre_ids: list[int] | None = None
+    vote_average: float | None = None
+    vote_count: int | None = None
+    release_date: str | None = None
+    original_language: str | None = None
+
+
+@dataclass
+class TMDBMovieDetails:
+    """Movie details from TMDB details endpoint.
+
+    Contains fields not available in search results.
+
+    Attributes:
+        tmdb_id: The movie's ID in TMDB.
+        runtime: Movie length in minutes (optional).
+    """
+
+    tmdb_id: int
+    runtime: int | None
 
 
 class TMDBServiceError(Exception):
@@ -136,13 +161,24 @@ class TMDBService:
             Parsed TMDBMovieResult dataclass.
         """
         poster_path = movie.get("poster_path")
+        release_date = movie.get("release_date") or None
+        genre_ids = movie.get("genre_ids")
+        vote_average = movie.get("vote_average")
+        vote_count = movie.get("vote_count")
+        original_language = movie.get("original_language")
+
         return TMDBMovieResult(
             tmdb_id=movie["id"],
             title=movie["title"],
-            year=self._extract_year(movie.get("release_date")),
+            year=self._extract_year(release_date),
             poster_path=poster_path,
             poster_url=self._build_poster_url(poster_path),
             overview=movie.get("overview") or None,
+            genre_ids=genre_ids if genre_ids else None,
+            vote_average=vote_average if vote_average is not None else None,
+            vote_count=vote_count if vote_count is not None else None,
+            release_date=release_date,
+            original_language=original_language or None,
         )
 
     async def search_movies(
@@ -214,6 +250,72 @@ class TMDBService:
             logger.error(f"TMDB API request failed: {e}")
             raise TMDBServiceError(f"Failed to connect to TMDB: {e}")
 
+    async def get_movie_details(self, tmdb_id: int) -> TMDBMovieDetails:
+        """Get movie details from TMDB by ID.
+
+        This fetches additional data not available in search results,
+        specifically the runtime.
+
+        Args:
+            tmdb_id: TMDB movie ID.
+
+        Returns:
+            TMDBMovieDetails with runtime information.
+
+        Raises:
+            TMDBRateLimitError: If TMDB rate limit is exceeded.
+            TMDBAPIError: If TMDB returns an error response.
+            TMDBServiceError: For other service-related errors.
+        """
+        client = self._get_client()
+
+        params: dict[str, Any] = {
+            "api_key": self.api_key,
+            "language": "en-US",
+        }
+
+        try:
+            response = await client.get(
+                f"{self.base_url}/movie/{tmdb_id}",
+                params=params,
+            )
+
+            if response.status_code == 429:
+                retry_after = response.headers.get("Retry-After", "unknown")
+                logger.warning(f"TMDB rate limit exceeded. Retry after: {retry_after}")
+                raise TMDBRateLimitError(
+                    f"Rate limit exceeded. Retry after {retry_after} seconds."
+                )
+
+            if response.status_code == 401:
+                logger.error("TMDB API authentication failed - check API key")
+                raise TMDBAPIError("Invalid TMDB API key")
+
+            if response.status_code == 404:
+                logger.warning(f"Movie not found on TMDB: {tmdb_id}")
+                raise TMDBAPIError(f"Movie {tmdb_id} not found on TMDB")
+
+            if response.status_code != 200:
+                logger.error(
+                    f"TMDB API error: {response.status_code} - {response.text}"
+                )
+                raise TMDBAPIError(
+                    f"TMDB API returned status {response.status_code}"
+                )
+
+            data = response.json()
+            return TMDBMovieDetails(
+                tmdb_id=data["id"],
+                runtime=data.get("runtime"),
+            )
+
+        except httpx.TimeoutException:
+            logger.error("TMDB API request timed out")
+            raise TMDBServiceError("TMDB API request timed out")
+        except httpx.RequestError as e:
+            logger.error(f"TMDB API request failed: {e}")
+            raise TMDBServiceError(f"Failed to connect to TMDB: {e}")
+
 
 async def search_movies(
     query: str,
@@ -233,3 +335,19 @@ async def search_movies(
     """
     async with TMDBService() as service:
         return await service.search_movies(query, year)
+
+
+async def get_movie_details(tmdb_id: int) -> TMDBMovieDetails:
+    """Convenience function to get movie details without managing context.
+
+    This creates a new HTTP client for each call. For multiple calls,
+    prefer using TMDBService as a context manager.
+
+    Args:
+        tmdb_id: TMDB movie ID.
+
+    Returns:
+        TMDBMovieDetails with runtime information.
+    """
+    async with TMDBService() as service:
+        return await service.get_movie_details(tmdb_id)

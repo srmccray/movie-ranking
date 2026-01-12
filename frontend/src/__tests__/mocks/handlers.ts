@@ -17,25 +17,40 @@ const MOCK_USER_PASSWORD = 'password123';
 // Mock TMDB search results
 const MOCK_TMDB_RESULTS = [
   {
-    id: 603,
+    tmdb_id: 603,
     title: 'The Matrix',
     year: 1999,
     poster_url: 'https://image.tmdb.org/t/p/w185/abc123.jpg',
     overview: 'A computer hacker learns about the true nature of reality.',
+    genre_ids: [28, 878],
+    vote_average: 8.7,
+    vote_count: 24000,
+    release_date: '1999-03-30',
+    original_language: 'en',
   },
   {
-    id: 604,
+    tmdb_id: 604,
     title: 'The Matrix Reloaded',
     year: 2003,
     poster_url: 'https://image.tmdb.org/t/p/w185/def456.jpg',
     overview: 'Neo continues his mission to save humanity.',
+    genre_ids: [28, 878],
+    vote_average: 7.0,
+    vote_count: 12000,
+    release_date: '2003-05-15',
+    original_language: 'en',
   },
   {
-    id: 605,
+    tmdb_id: 605,
     title: 'The Matrix Revolutions',
     year: 2003,
     poster_url: 'https://image.tmdb.org/t/p/w185/ghi789.jpg',
     overview: 'The epic conclusion to the Matrix trilogy.',
+    genre_ids: [28, 878],
+    vote_average: 6.7,
+    vote_count: 10000,
+    release_date: '2003-11-05',
+    original_language: 'en',
   },
 ];
 
@@ -201,7 +216,12 @@ export const handlers = [
       results = results.filter((movie) => movie.year === yearNum);
     }
 
-    return HttpResponse.json(results);
+    // Return wrapped response to match backend schema
+    return HttpResponse.json({
+      results,
+      query,
+      year: year ? parseInt(year) : null,
+    });
   }),
 
   // POST /api/v1/movies/
