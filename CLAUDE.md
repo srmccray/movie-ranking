@@ -117,6 +117,12 @@ async def test_create_with_custom_date(self, client, auth_headers, test_movie):
 - Form data: `application/x-www-form-urlencoded` (login)
 - Don't override Content-Type if already set
 
+## Git Commit Messages
+
+- Do NOT include "Co-Authored-By: Claude" or any Claude attribution in commit messages
+- Keep commit messages concise and descriptive
+- Use present tense ("Add feature" not "Added feature")
+
 ## Before Implementing New Features
 
 ### Checklist
