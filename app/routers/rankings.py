@@ -1,5 +1,8 @@
 """Rankings router for creating and listing user movie rankings."""
 
+from datetime import datetime, timezone
+from uuid import UUID
+
 from fastapi import APIRouter, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
@@ -16,6 +19,16 @@ from app.schemas.ranking import (
 )
 
 router = APIRouter(tags=["rankings"])
+
+
+def to_naive_utc(dt: datetime | None) -> datetime | None:
+    """Convert a datetime to naive UTC datetime for database storage."""
+    if dt is None:
+        return None
+    # If timezone-aware, convert to UTC and remove tzinfo
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
 
 
 @router.post(
@@ -78,6 +91,9 @@ async def create_or_update_ranking(
     if existing_ranking is not None:
         # Update existing ranking
         existing_ranking.rating = ranking_data.rating
+        # Only update rated_at if explicitly provided
+        if ranking_data.rated_at is not None:
+            existing_ranking.rated_at = to_naive_utc(ranking_data.rated_at)
         await db.flush()
         await db.refresh(existing_ranking)
         response.status_code = status.HTTP_200_OK
@@ -88,6 +104,7 @@ async def create_or_update_ranking(
             user_id=current_user.id,
             movie_id=ranking_data.movie_id,
             rating=ranking_data.rating,
+            rated_at=to_naive_utc(ranking_data.rated_at) or datetime.utcnow(),
         )
         db.add(new_ranking)
         await db.flush()
@@ -113,7 +130,7 @@ async def list_rankings(
 ) -> RankingListResponse:
     """List all movies the authenticated user has ranked.
 
-    Returns paginated results ordered by updated_at descending (most recent first).
+    Returns paginated results ordered by rated_at descending (most recent first).
 
     Args:
         current_user: The authenticated user (from JWT token).
@@ -138,7 +155,7 @@ async def list_rankings(
         select(Ranking)
         .options(joinedload(Ranking.movie))
         .where(Ranking.user_id == current_user.id)
-        .order_by(Ranking.updated_at.desc())
+        .order_by(Ranking.rated_at.desc())
         .limit(limit)
         .offset(offset)
     )
@@ -153,3 +170,54 @@ async def list_rankings(
         limit=limit,
         offset=offset,
     )
+
+
+@router.delete(
+    "/{ranking_id}/",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a ranking",
+    responses={
+        204: {"description": "Ranking deleted successfully"},
+        401: {"description": "Not authenticated"},
+        403: {"description": "Not authorized to delete this ranking"},
+        404: {"description": "Ranking not found"},
+    },
+)
+async def delete_ranking(
+    ranking_id: UUID,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> None:
+    """Delete a ranking by ID.
+
+    Users can only delete their own rankings.
+
+    Args:
+        ranking_id: UUID of the ranking to delete.
+        current_user: The authenticated user (from JWT token).
+        db: Async database session.
+
+    Raises:
+        HTTPException: 401 if not authenticated.
+        HTTPException: 403 if ranking belongs to another user.
+        HTTPException: 404 if ranking not found.
+    """
+    # Find the ranking
+    result = await db.execute(select(Ranking).where(Ranking.id == ranking_id))
+    ranking = result.scalar_one_or_none()
+
+    if ranking is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ranking not found",
+        )
+
+    # Check ownership
+    if ranking.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this ranking",
+        )
+
+    await db.delete(ranking)
+    await db.flush()

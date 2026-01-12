@@ -27,6 +27,7 @@ class Ranking(Base):
         user_id: Foreign key to users table.
         movie_id: Foreign key to movies table.
         rating: User's rating (1-5).
+        rated_at: When the user rated the movie.
         created_at: Initial ranking timestamp.
         updated_at: Last rating update timestamp.
         user: Associated User (relationship).
@@ -58,6 +59,9 @@ class Ranking(Base):
         server_default=text("CURRENT_TIMESTAMP"),
         onupdate=datetime.utcnow,
     )
+    rated_at: Mapped[datetime] = mapped_column(
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
 
     # Relationships
     user: Mapped["User"] = relationship(
@@ -83,6 +87,11 @@ class Ranking(Base):
             "idx_rankings_user_updated",
             "user_id",
             desc("updated_at"),
+        ),
+        Index(
+            "idx_rankings_user_rated_at",
+            "user_id",
+            desc("rated_at"),
         ),
     )
 

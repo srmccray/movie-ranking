@@ -26,6 +26,11 @@
   --color-error: #ef4444;
   --color-error-bg: #fef2f2;
 
+  /* Danger (Red) */
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+
   /* Star Rating */
   --color-star-filled: #fbbf24;
   --color-star-empty: #d1d5db;
@@ -429,6 +434,92 @@ select {
 
 .movie-rating {
   flex-shrink: 0;
+}
+
+/* Movie Actions */
+.movie-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Icon Button */
+.btn-icon {
+  background: none;
+  border: none;
+  padding: var(--space-2);
+  cursor: pointer;
+  color: var(--color-neutral-400);
+  border-radius: var(--radius-md);
+  transition: color 150ms ease, background-color 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  color: var(--color-danger-500);
+  background-color: var(--color-danger-50);
+}
+
+.btn-icon:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* Delete Confirmation */
+.movie-card {
+  position: relative;
+}
+
+.delete-confirm {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.97);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.delete-confirm p {
+  font-size: 0.875rem;
+  color: var(--color-neutral-700);
+  font-weight: 500;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Danger Button */
+.btn-danger {
+  background-color: var(--color-danger-500);
+  color: white;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.btn-danger:hover {
+  background-color: var(--color-danger-600);
+}
+
+.btn-danger:focus-visible {
+  outline: 2px solid var(--color-danger-500);
+  outline-offset: 2px;
 }
 
 /* Star Rating */

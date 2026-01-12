@@ -15,10 +15,12 @@ class RankingCreate(BaseModel):
     Attributes:
         movie_id: UUID of the movie to rank.
         rating: Rating value (1-5).
+        rated_at: Optional date when the movie was rated (defaults to now).
     """
 
     movie_id: UUID
     rating: int = Field(..., ge=1, le=5)
+    rated_at: datetime | None = None
 
 
 class RankingResponse(BaseModel):
@@ -28,6 +30,7 @@ class RankingResponse(BaseModel):
         id: Unique ranking identifier.
         movie_id: UUID of the ranked movie.
         rating: Rating value (1-5).
+        rated_at: When the movie was rated.
         created_at: Initial ranking timestamp.
         updated_at: Last update timestamp.
     """
@@ -37,6 +40,7 @@ class RankingResponse(BaseModel):
     id: UUID
     movie_id: UUID
     rating: int
+    rated_at: datetime
     created_at: datetime
     updated_at: datetime
 
@@ -49,6 +53,7 @@ class RankingWithMovie(BaseModel):
     Attributes:
         id: Unique ranking identifier.
         rating: Rating value (1-5).
+        rated_at: When the movie was rated.
         created_at: Initial ranking timestamp.
         updated_at: Last update timestamp.
         movie: Embedded movie details.
@@ -58,6 +63,7 @@ class RankingWithMovie(BaseModel):
 
     id: UUID
     rating: int
+    rated_at: datetime
     created_at: datetime
     updated_at: datetime
     movie: MovieBrief

@@ -22,6 +22,7 @@ export interface Ranking {
   id: string;
   movie_id: string;
   rating: number;
+  rated_at: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,6 +30,7 @@ export interface Ranking {
 export interface RankingWithMovie {
   id: string;
   rating: number;
+  rated_at: string;
   created_at: string;
   updated_at: string;
   movie: MovieBrief;
@@ -56,6 +58,7 @@ export interface MovieCreate {
 export interface RankingCreate {
   movie_id: string;
   rating: number;
+  rated_at?: string;
 }
 
 // API Error Types

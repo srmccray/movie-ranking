@@ -10,8 +10,9 @@ interface UseRankingsReturn {
   hasMore: boolean;
   fetchRankings: (reset?: boolean) => Promise<void>;
   loadMore: () => Promise<void>;
-  addMovieAndRank: (movie: MovieCreate, rating: number) => Promise<void>;
+  addMovieAndRank: (movie: MovieCreate, rating: number, ratedAt?: string) => Promise<void>;
   updateRating: (movieId: string, rating: number) => Promise<void>;
+  deleteRanking: (rankingId: string) => Promise<void>;
 }
 
 const PAGE_SIZE = 20;
@@ -59,7 +60,7 @@ export function useRankings(): UseRankingsReturn {
   }, [fetchRankings, isLoading, hasMore]);
 
   const addMovieAndRank = useCallback(
-    async (movieData: MovieCreate, rating: number) => {
+    async (movieData: MovieCreate, rating: number, ratedAt?: string) => {
       setError(null);
 
       try {
@@ -70,6 +71,7 @@ export function useRankings(): UseRankingsReturn {
         const rankingData: RankingCreate = {
           movie_id: movie.id,
           rating,
+          rated_at: ratedAt ? new Date(ratedAt).toISOString() : undefined,
         };
         await apiClient.createOrUpdateRanking(rankingData);
 
@@ -114,6 +116,26 @@ export function useRankings(): UseRankingsReturn {
     []
   );
 
+  const deleteRanking = useCallback(
+    async (rankingId: string) => {
+      setError(null);
+
+      try {
+        await apiClient.deleteRanking(rankingId);
+
+        // Update local state - remove the deleted ranking
+        setRankings((prev) => prev.filter((r) => r.id !== rankingId));
+        setTotal((prev) => prev - 1);
+      } catch (err) {
+        if (err instanceof ApiClientError) {
+          throw err;
+        }
+        throw new Error('Failed to delete ranking');
+      }
+    },
+    []
+  );
+
   return {
     rankings,
     total,
@@ -124,5 +146,6 @@ export function useRankings(): UseRankingsReturn {
     loadMore,
     addMovieAndRank,
     updateRating,
+    deleteRanking,
   };
 }

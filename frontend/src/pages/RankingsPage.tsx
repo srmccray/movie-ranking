@@ -19,10 +19,12 @@ export function RankingsPage() {
     loadMore,
     addMovieAndRank,
     updateRating,
+    deleteRanking,
   } = useRankings();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Fetch rankings on mount
   useEffect(() => {
@@ -38,8 +40,8 @@ export function RankingsPage() {
   }, []);
 
   const handleAddMovie = useCallback(
-    async (movie: MovieCreate, rating: number) => {
-      await addMovieAndRank(movie, rating);
+    async (movie: MovieCreate, rating: number, ratedAt?: string) => {
+      await addMovieAndRank(movie, rating, ratedAt);
       setIsModalOpen(false);
     },
     [addMovieAndRank]
@@ -55,6 +57,18 @@ export function RankingsPage() {
       }
     },
     [updateRating]
+  );
+
+  const handleDelete = useCallback(
+    async (rankingId: string) => {
+      setDeleteError(null);
+      try {
+        await deleteRanking(rankingId);
+      } catch (err) {
+        setDeleteError(err instanceof Error ? err.message : 'Failed to delete ranking');
+      }
+    },
+    [deleteRanking]
   );
 
   const showEmptyState = !isLoading && rankings.length === 0 && !error;
@@ -111,6 +125,12 @@ export function RankingsPage() {
               </div>
             )}
 
+            {deleteError && (
+              <div className="alert alert-error" role="alert">
+                {deleteError}
+              </div>
+            )}
+
             {isLoading && rankings.length === 0 && (
               <div className="loading-container">
                 <div className="spinner" />
@@ -136,6 +156,7 @@ export function RankingsPage() {
                       key={ranking.id}
                       ranking={ranking}
                       onRatingChange={handleRatingChange}
+                      onDelete={handleDelete}
                     />
                   ))}
                 </div>

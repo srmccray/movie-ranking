@@ -48,6 +48,11 @@ class ApiClient {
       throw new ApiClientError(response.status, error);
     }
 
+    // Handle 204 No Content
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
     return response.json();
   }
 
@@ -93,6 +98,12 @@ class ApiClient {
     return this.request<RankingListResponse>(
       `/rankings/?limit=${limit}&offset=${offset}`
     );
+  }
+
+  async deleteRanking(rankingId: string): Promise<void> {
+    await this.request<void>(`/rankings/${rankingId}/`, {
+      method: 'DELETE',
+    });
   }
 }
 

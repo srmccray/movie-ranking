@@ -5,7 +5,7 @@ import { StarRating } from './StarRating';
 import type { MovieCreate } from '../types';
 
 interface AddMovieFormProps {
-  onSubmit: (movie: MovieCreate, rating: number) => Promise<void>;
+  onSubmit: (movie: MovieCreate, rating: number, ratedAt?: string) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -15,10 +15,15 @@ interface FormErrors {
   rating?: string;
 }
 
+function getTodayString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
 export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
   const [title, setTitle] = useState('');
   const [year, setYear] = useState('');
   const [rating, setRating] = useState(0);
+  const [ratedAt, setRatedAt] = useState(getTodayString());
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -61,7 +66,7 @@ export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
         year: year ? parseInt(year, 10) : null,
       };
 
-      await onSubmit(movieData, rating);
+      await onSubmit(movieData, rating, ratedAt);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to add movie');
     } finally {
@@ -97,6 +102,14 @@ export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
         placeholder="e.g., 2024"
         min={1888}
         max={2031}
+      />
+
+      <Input
+        label="Date Rated"
+        type="date"
+        value={ratedAt}
+        onChange={setRatedAt}
+        max={getTodayString()}
       />
 
       <div className="form-group">
