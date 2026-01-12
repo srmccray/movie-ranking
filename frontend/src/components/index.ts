@@ -1,0 +1,9 @@
+export { Button } from './Button';
+export { Input } from './Input';
+export { StarRating } from './StarRating';
+export { Modal } from './Modal';
+export { Header } from './Header';
+export { MovieCard } from './MovieCard';
+export { EmptyState } from './EmptyState';
+export { AddMovieForm } from './AddMovieForm';
+export { ProtectedRoute } from './ProtectedRoute';

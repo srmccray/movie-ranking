@@ -1,64 +1,94 @@
-# Movie Ranking API
+# Movie Ranking
 
-A FastAPI backend for a movie ranking website. Users can register, log in, add movies, and rank them on a 1-5 scale.
+A full-stack movie ranking application. Users can register, log in, add movies, and rank them on a 1-5 scale.
 
 ## Current State
 
-**MVP Complete** - All core features implemented and tested:
+**MVP Complete** - Full stack with React frontend and FastAPI backend:
 
 - User registration and login (JWT authentication)
 - Add movies (title + optional year)
 - Rank movies 1-5 (upsert behavior - re-ranking updates existing)
 - List your rankings with pagination
-- CORS configured for React frontend integration
+- Responsive React frontend
 
 ## Tech Stack
 
+### Backend
 - **Framework:** FastAPI
 - **Database:** PostgreSQL with async SQLAlchemy 2.0
-- **Migrations:** Alembic
 - **Authentication:** JWT (python-jose) + bcrypt password hashing
 - **Validation:** Pydantic v2
-- **Containerization:** Docker + Docker Compose
+
+### Frontend
+- **Framework:** React 18 with TypeScript
+- **Build Tool:** Vite
+- **Routing:** React Router
+- **Styling:** CSS with custom properties (design tokens)
+
+## Quick Start (Full Stack)
+
+### Prerequisites
+- Docker and Docker Compose
+- Node.js 18+ (for frontend development)
+
+### Start Everything
+
+```bash
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Start the backend (database + API)
+docker compose up -d
+
+# 3. Run database migrations
+docker compose exec api alembic upgrade head
+
+# 4. Start the frontend (in a separate terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:8000
+- **API Docs:** http://localhost:8000/docs
 
 ## Project Structure
 
 ```
 movie-ranking/
-├── app/
+├── frontend/                 # React frontend application
+│   ├── src/
+│   │   ├── api/             # API client
+│   │   ├── components/      # Reusable UI components
+│   │   ├── context/         # React context (auth)
+│   │   ├── hooks/           # Custom hooks
+│   │   ├── pages/           # Page components
+│   │   └── types/           # TypeScript types
+│   ├── package.json
+│   └── vite.config.ts
+├── app/                      # FastAPI backend
 │   ├── main.py              # FastAPI app entry point
 │   ├── config.py            # Settings from environment
 │   ├── database.py          # Async SQLAlchemy setup
-│   ├── dependencies.py      # Auth dependencies (get_current_user)
+│   ├── dependencies.py      # Auth dependencies
 │   ├── models/              # SQLAlchemy models
-│   │   ├── user.py
-│   │   ├── movie.py
-│   │   └── ranking.py
-│   ├── schemas/             # Pydantic request/response schemas
+│   ├── schemas/             # Pydantic schemas
 │   ├── routers/             # API route handlers
-│   │   ├── auth.py
-│   │   ├── movies.py
-│   │   └── rankings.py
-│   └── utils/
-│       └── security.py      # Password hashing, JWT utilities
+│   └── utils/               # Utilities (security)
 ├── alembic/                  # Database migrations
-├── docs/                     # Product and technical documentation
-├── Dockerfile                # Multi-stage build for the API
-├── docker-compose.yml        # Full stack orchestration
-├── .env.example              # Environment variable template
-├── pyproject.toml
+├── docs/                     # Documentation
+├── Dockerfile
+├── docker-compose.yml
 └── requirements.txt
 ```
 
-## Quick Start with Docker
+## Backend Development
 
-The fastest way to get the full stack running.
+### Docker Setup (Recommended)
 
-### Prerequisites
-
-- Docker and Docker Compose
-
-### Start the Application
+The fastest way to get the backend running.
 
 ```bash
 # Copy environment template
@@ -281,3 +311,6 @@ Detailed documentation is available in the `/docs` folder:
 - `features.md` - Product requirements and user stories
 - `architecture.md` - Technical architecture and design decisions
 - `api-spec.md` - Complete API specification with examples
+- `frontend-requirements.md` - Frontend product requirements
+- `design-system.md` - UI design system and component specs
+- `api-frontend-contracts.md` - API/frontend contract verification

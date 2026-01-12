@@ -1,0 +1,128 @@
+import { useState, useCallback } from 'react';
+import { apiClient, ApiClientError } from '../api/client';
+import type { RankingWithMovie, RankingCreate, MovieCreate, Movie } from '../types';
+
+interface UseRankingsReturn {
+  rankings: RankingWithMovie[];
+  total: number;
+  isLoading: boolean;
+  error: string | null;
+  hasMore: boolean;
+  fetchRankings: (reset?: boolean) => Promise<void>;
+  loadMore: () => Promise<void>;
+  addMovieAndRank: (movie: MovieCreate, rating: number) => Promise<void>;
+  updateRating: (movieId: string, rating: number) => Promise<void>;
+}
+
+const PAGE_SIZE = 20;
+
+export function useRankings(): UseRankingsReturn {
+  const [rankings, setRankings] = useState<RankingWithMovie[]>([]);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const hasMore = rankings.length < total;
+
+  const fetchRankings = useCallback(async (reset = false) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const newOffset = reset ? 0 : offset;
+      const response = await apiClient.getRankings(PAGE_SIZE, newOffset);
+
+      if (reset) {
+        setRankings(response.items);
+        setOffset(PAGE_SIZE);
+      } else {
+        setRankings((prev) => [...prev, ...response.items]);
+        setOffset((prev) => prev + PAGE_SIZE);
+      }
+      setTotal(response.total);
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setError(err.message);
+      } else {
+        setError('Failed to load rankings');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [offset]);
+
+  const loadMore = useCallback(async () => {
+    if (!isLoading && hasMore) {
+      await fetchRankings(false);
+    }
+  }, [fetchRankings, isLoading, hasMore]);
+
+  const addMovieAndRank = useCallback(
+    async (movieData: MovieCreate, rating: number) => {
+      setError(null);
+
+      try {
+        // First create the movie
+        const movie: Movie = await apiClient.createMovie(movieData);
+
+        // Then create the ranking
+        const rankingData: RankingCreate = {
+          movie_id: movie.id,
+          rating,
+        };
+        await apiClient.createOrUpdateRanking(rankingData);
+
+        // Refresh the rankings list
+        await fetchRankings(true);
+      } catch (err) {
+        if (err instanceof ApiClientError) {
+          throw err;
+        }
+        throw new Error('Failed to add movie');
+      }
+    },
+    [fetchRankings]
+  );
+
+  const updateRating = useCallback(
+    async (movieId: string, rating: number) => {
+      setError(null);
+
+      try {
+        const rankingData: RankingCreate = {
+          movie_id: movieId,
+          rating,
+        };
+        await apiClient.createOrUpdateRanking(rankingData);
+
+        // Update the local state
+        setRankings((prev) =>
+          prev.map((r) =>
+            r.movie.id === movieId
+              ? { ...r, rating, updated_at: new Date().toISOString() }
+              : r
+          )
+        );
+      } catch (err) {
+        if (err instanceof ApiClientError) {
+          throw err;
+        }
+        throw new Error('Failed to update rating');
+      }
+    },
+    []
+  );
+
+  return {
+    rankings,
+    total,
+    isLoading,
+    error,
+    hasMore,
+    fetchRankings,
+    loadMore,
+    addMovieAndRank,
+    updateRating,
+  };
+}
