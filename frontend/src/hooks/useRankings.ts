@@ -12,6 +12,7 @@ interface UseRankingsReturn {
   loadMore: () => Promise<void>;
   addMovieAndRank: (movie: MovieCreate, rating: number, ratedAt?: string) => Promise<void>;
   updateRating: (movieId: string, rating: number) => Promise<void>;
+  updateRatedAt: (rankingId: string, movieId: string, ratedAt: string) => Promise<void>;
   deleteRanking: (rankingId: string) => Promise<void>;
 }
 
@@ -116,6 +117,42 @@ export function useRankings(): UseRankingsReturn {
     []
   );
 
+  const updateRatedAt = useCallback(
+    async (rankingId: string, movieId: string, ratedAt: string) => {
+      setError(null);
+
+      try {
+        // Find the current ranking to get the current rating
+        const currentRanking = rankings.find((r) => r.id === rankingId);
+        if (!currentRanking) {
+          throw new Error('Ranking not found');
+        }
+
+        const rankingData: RankingCreate = {
+          movie_id: movieId,
+          rating: currentRanking.rating,
+          rated_at: ratedAt,
+        };
+        await apiClient.createOrUpdateRanking(rankingData);
+
+        // Update the local state
+        setRankings((prev) =>
+          prev.map((r) =>
+            r.id === rankingId
+              ? { ...r, rated_at: ratedAt, updated_at: new Date().toISOString() }
+              : r
+          )
+        );
+      } catch (err) {
+        if (err instanceof ApiClientError) {
+          throw err;
+        }
+        throw new Error('Failed to update rated date');
+      }
+    },
+    [rankings]
+  );
+
   const deleteRanking = useCallback(
     async (rankingId: string) => {
       setError(null);
@@ -146,6 +183,7 @@ export function useRankings(): UseRankingsReturn {
     loadMore,
     addMovieAndRank,
     updateRating,
+    updateRatedAt,
     deleteRanking,
   };
 }

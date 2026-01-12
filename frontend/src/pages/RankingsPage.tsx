@@ -19,6 +19,7 @@ export function RankingsPage() {
     loadMore,
     addMovieAndRank,
     updateRating,
+    updateRatedAt,
     deleteRanking,
   } = useRankings();
 
@@ -57,6 +58,18 @@ export function RankingsPage() {
       }
     },
     [updateRating]
+  );
+
+  const handleRatedAtChange = useCallback(
+    async (rankingId: string, movieId: string, ratedAt: string) => {
+      setUpdateError(null);
+      try {
+        await updateRatedAt(rankingId, movieId, ratedAt);
+      } catch (err) {
+        setUpdateError(err instanceof Error ? err.message : 'Failed to update date');
+      }
+    },
+    [updateRatedAt]
   );
 
   const handleDelete = useCallback(
@@ -156,6 +169,7 @@ export function RankingsPage() {
                       key={ranking.id}
                       ranking={ranking}
                       onRatingChange={handleRatingChange}
+                      onRatedAtChange={handleRatedAtChange}
                       onDelete={handleDelete}
                     />
                   ))}
