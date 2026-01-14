@@ -1,0 +1,152 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  NODE_VERSION: "20"
+  PYTHON_VERSION: "3.12"
+  AWS_REGION: "us-east-1"
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx aiosqlite
+
+      - name: Run tests
+        run: pytest tests/ -v
+        env:
+          DATABASE_URL: sqlite+aiosqlite:///:memory:
+          SECRET_KEY: test-secret-key-for-ci
+          TMDB_API_KEY: test-api-key
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:run
+
+  deploy:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Setup QEMU for ARM64 Docker builds
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      # Build and deploy frontend
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npx vite build
+
+      - name: Deploy frontend to S3
+        run: |
+          # Sync static assets with long cache (JS, CSS, images)
+          aws s3 sync ./frontend/dist s3://${{ secrets.S3_BUCKET_NAME }} \
+            --delete \
+            --cache-control "max-age=31536000,public" \
+            --exclude "*.html" \
+            --exclude "*.json"
+
+          # Sync HTML and JSON with shorter cache
+          aws s3 sync ./frontend/dist s3://${{ secrets.S3_BUCKET_NAME }} \
+            --cache-control "max-age=3600,public" \
+            --include "*.html" \
+            --include "*.json"
+
+      # Package and deploy Lambda using Docker for ARM64 compatibility
+      - name: Package Lambda function
+        run: |
+          # Create package directory
+          mkdir -p package
+
+          # Use Docker to build Lambda package with correct ARM64 binaries
+          docker run --rm \
+            --entrypoint "" \
+            -v "$(pwd)":/var/task \
+            -v "$(pwd)/package":/opt/package \
+            --platform linux/arm64 \
+            public.ecr.aws/lambda/python:3.12 \
+            bash -c "pip install -r /var/task/requirements.txt -t /opt/package --quiet && \
+                     cp -r /var/task/app /opt/package/ && \
+                     cp /var/task/lambda_handler.py /opt/package/"
+
+          # Create deployment package (keep dist-info for package metadata)
+          cd package && zip -r ../lambda.zip . -x "*.pyc" -x "*/__pycache__/*"
+
+      - name: Deploy Lambda function
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --zip-file fileb://lambda.zip \
+            --publish
+
+      # Invalidate CloudFront cache
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"

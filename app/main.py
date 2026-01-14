@@ -1,6 +1,7 @@
 """FastAPI application entry point for the Movie Ranking API."""
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -16,9 +17,13 @@ from app.routers import auth, movies, rankings
 logging.basicConfig(level=logging.INFO if not settings.DEBUG else logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# CORS origins configuration - can be overridden via environment variable
-# Default allows React development server
+# CORS origins configuration
+# Default allows React development server, production origin added via CORS_ORIGIN env var
 ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
+
+# Add production origin if CORS_ORIGIN environment variable is set
+if os.environ.get("CORS_ORIGIN"):
+    ALLOWED_ORIGINS.append(os.environ["CORS_ORIGIN"])
 
 
 @asynccontextmanager
