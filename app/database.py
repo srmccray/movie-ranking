@@ -11,17 +11,26 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import NullPool, StaticPool
 
 from app.config import settings
 
-# Detect if running in AWS Lambda environment
+# Detect runtime environment
 IS_LAMBDA = os.environ.get("AWS_LAMBDA_FUNCTION_NAME") is not None
+IS_SQLITE = settings.DATABASE_URL.startswith("sqlite")
 
 # Create async engine with environment-appropriate pooling
+# SQLite (testing): Use StaticPool for in-memory database
 # Lambda: Use NullPool (no connection pooling) since each invocation is isolated
-# Local/Docker: Use connection pooling for better performance
-if IS_LAMBDA:
+# Local/Docker PostgreSQL: Use connection pooling for better performance
+if IS_SQLITE:
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DEBUG,
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+    )
+elif IS_LAMBDA:
     engine = create_async_engine(
         settings.DATABASE_URL,
         echo=settings.DEBUG,
