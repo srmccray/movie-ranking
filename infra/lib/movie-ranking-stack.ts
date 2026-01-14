@@ -272,14 +272,18 @@ export class MovieRankingStack extends cdk.Stack {
     // ==========================================================================
     // GitHub Actions OIDC Provider and Deploy Role
     // Allows GitHub Actions to deploy without storing AWS credentials
-    // Uses existing OIDC provider (created by personal-website stack)
+    // Uses existing OIDC provider in the account
     // ==========================================================================
-    const githubOidcProviderArn = `arn:aws:iam::${this.account}:oidc-provider/token.actions.githubusercontent.com`;
+    const githubOidcProvider = iam.OpenIdConnectProvider.fromOpenIdConnectProviderArn(
+      this,
+      "GitHubOidcProvider",
+      `arn:aws:iam::${this.account}:oidc-provider/token.actions.githubusercontent.com`
+    );
 
     const deployRole = new iam.Role(this, "GitHubActionsDeployRole", {
       roleName: "movie-ranking-deploy",
       assumedBy: new iam.FederatedPrincipal(
-        githubOidcProviderArn,
+        githubOidcProvider.openIdConnectProviderArn,
         {
           StringEquals: {
             "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
