@@ -23,7 +23,11 @@ function toInputDateValue(isoString: string): string {
 }
 
 function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function MovieCard({ ranking, onRatingChange, onRatedAtChange, onDelete }: MovieCardProps) {
@@ -59,7 +63,8 @@ export function MovieCard({ ranking, onRatingChange, onRatedAtChange, onDelete }
 
     setIsSavingDate(true);
     try {
-      const isoDate = new Date(editedDate).toISOString();
+      // Append T00:00:00Z to interpret the date as midnight UTC, not local time
+      const isoDate = new Date(editedDate + 'T00:00:00Z').toISOString();
       await onRatedAtChange(ranking.id, movie.id, isoDate);
       setIsEditingDate(false);
       editButtonRef.current?.focus();

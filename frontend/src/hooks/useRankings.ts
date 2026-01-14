@@ -72,7 +72,8 @@ export function useRankings(): UseRankingsReturn {
         const rankingData: RankingCreate = {
           movie_id: movie.id,
           rating,
-          rated_at: ratedAt ? new Date(ratedAt).toISOString() : undefined,
+          // Append T00:00:00Z to interpret the date as midnight UTC, not local time
+          rated_at: ratedAt ? new Date(ratedAt + 'T00:00:00Z').toISOString() : undefined,
         };
         await apiClient.createOrUpdateRanking(rankingData);
 
