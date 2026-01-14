@@ -102,6 +102,14 @@ Provide actionable, specific feedback. Distinguish between blocking issues and s
 - Proactively surface risks and concerns
 - Give credit to the specialized agents for their contributions
 
+## Planning Documents
+
+When creating implementation plans for this project:
+- Store plans in `.claude/plans/` within the project directory
+- Use descriptive filenames following the pattern: `NN-feature-description.md`
+- Reference existing plans in `.claude/plans/` for context on prior decisions
+- Update CLAUDE.md's "Planning Documents" section when adding new plans
+
 ## Quality Assurance
 
 Before finalizing any recommendation or coordination:

@@ -141,6 +141,14 @@ Option A: [Description]
 - Ask clarifying questions when requirements are ambiguous
 - Always tie recommendations back to user value and business outcomes
 
+## Planning Documents
+
+When creating implementation plans or PRDs for this project:
+- Store plans in `.claude/plans/` within the project directory
+- Use descriptive filenames following the pattern: `NN-feature-description.md`
+- Reference existing plans in `.claude/plans/` for context on prior decisions
+- Update CLAUDE.md's "Planning Documents" section when adding new plans
+
 ## Quality Checks
 
 Before finalizing any output, verify:

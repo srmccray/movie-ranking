@@ -146,6 +146,18 @@ async searchMovies(): Promise<SearchResult[]> {
 - `frontend/CLAUDE.md` → "API Contract Verification" section
 - `app/CLAUDE.md` → "Frontend API Contract Documentation" section
 
+## Planning Documents
+
+All implementation plans are stored in `.claude/plans/` with descriptive names:
+- `01-initial-app-implementation.md` - Original app architecture
+- `02-api-implementation.md` - FastAPI backend implementation
+- `03-rating-date-and-delete-features.md` - Rating date and delete features
+- `04-movie-search-feature.md` - TMDB movie search integration
+- `05-frontend-development.md` - React frontend development
+- `06-fix-date-timezone-bug.md` - Date timezone bug fix
+
+When creating new plans, use descriptive names following the pattern: `NN-feature-description.md`
+
 ## Git Commit Messages
 
 - Do NOT include "Co-Authored-By: Claude" or any Claude attribution in commit messages
