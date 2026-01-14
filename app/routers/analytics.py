@@ -158,15 +158,16 @@ async def get_genres(
     )
     rankings = result.scalars().unique().all()
 
-    # Aggregate by genre
+    # Aggregate by primary genre (first genre in list, most relevant per TMDB)
     genre_counts: dict[int, int] = defaultdict(int)
     genre_ratings: dict[int, list[int]] = defaultdict(list)
 
     for ranking in rankings:
         if ranking.movie and ranking.movie.genre_ids:
-            for genre_id in ranking.movie.genre_ids:
-                genre_counts[genre_id] += 1
-                genre_ratings[genre_id].append(ranking.rating)
+            # Use only the first/primary genre
+            genre_id = ranking.movie.genre_ids[0]
+            genre_counts[genre_id] += 1
+            genre_ratings[genre_id].append(ranking.rating)
 
     # Build genre stats
     genres: list[GenreStats] = []
