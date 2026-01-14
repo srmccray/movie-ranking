@@ -36,9 +36,9 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v
         env:
-          DATABASE_URL: sqlite+aiosqlite:///:memory:
-          SECRET_KEY: test-secret-key-for-ci
-          TMDB_API_KEY: test-api-key
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          SECRET_KEY: "test-secret-key-for-ci"
+          TMDB_API_KEY: "test-api-key"
 
   test-frontend:
     runs-on: ubuntu-latest
