@@ -7,7 +7,18 @@ import { Modal } from '../components/Modal';
 import { AddMovieForm } from '../components/AddMovieForm';
 import { AddMovieCard } from '../components/AddMovieCard';
 import { useRankings } from '../hooks/useRankings';
-import type { MovieCreate } from '../types';
+import type { MovieCreate, SortOption } from '../types';
+
+const SORT_OPTIONS: SortOption[] = [
+  { label: 'Date (Newest)', field: 'rated_at', order: 'desc' },
+  { label: 'Date (Oldest)', field: 'rated_at', order: 'asc' },
+  { label: 'Rating (High to Low)', field: 'rating', order: 'desc' },
+  { label: 'Rating (Low to High)', field: 'rating', order: 'asc' },
+  { label: 'Title (A-Z)', field: 'title', order: 'asc' },
+  { label: 'Title (Z-A)', field: 'title', order: 'desc' },
+  { label: 'Year (Newest)', field: 'year', order: 'desc' },
+  { label: 'Year (Oldest)', field: 'year', order: 'asc' },
+];
 
 export function RankingsPage() {
   const {
@@ -16,8 +27,11 @@ export function RankingsPage() {
     isLoading,
     error,
     hasMore,
+    sortBy,
+    sortOrder,
     fetchRankings,
     loadMore,
+    setSort,
     addMovieAndRank,
     updateRating,
     updateRatedAt,
@@ -28,10 +42,25 @@ export function RankingsPage() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // Fetch rankings on mount
+  // Fetch rankings on mount and when sort changes
   useEffect(() => {
     fetchRankings(true);
-  }, []);
+  }, [sortBy, sortOrder]);
+
+  const handleSortChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const selectedOption = SORT_OPTIONS[parseInt(e.target.value, 10)];
+      if (selectedOption) {
+        setSort(selectedOption.field, selectedOption.order);
+      }
+    },
+    [setSort]
+  );
+
+  // Get current sort option index
+  const currentSortIndex = SORT_OPTIONS.findIndex(
+    (opt) => opt.field === sortBy && opt.order === sortOrder
+  );
 
   const handleOpenModal = useCallback(() => {
     setIsModalOpen(true);
@@ -88,6 +117,23 @@ export function RankingsPage() {
   const showEmptyState = !isLoading && rankings.length === 0 && !error;
   const showRankings = rankings.length > 0;
 
+  // Track if user has scrolled down enough to show back-to-top button
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show button after scrolling 400px
+      setShowBackToTop(window.scrollY > 400);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   return (
     <>
       <Header />
@@ -103,6 +149,25 @@ export function RankingsPage() {
                   </span>
                 )}
               </h1>
+              {rankings.length > 0 && (
+                <div className="sort-control">
+                  <label htmlFor="sort-select" className="sort-label">
+                    Sort by
+                  </label>
+                  <select
+                    id="sort-select"
+                    className="sort-select"
+                    value={currentSortIndex >= 0 ? currentSortIndex : 0}
+                    onChange={handleSortChange}
+                  >
+                    {SORT_OPTIONS.map((option, index) => (
+                      <option key={`${option.field}-${option.order}`} value={index}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             {error && (
@@ -163,22 +228,44 @@ export function RankingsPage() {
                   ))}
                 </div>
 
-                {hasMore && (
-                  <div className="load-more">
-                    <Button
-                      variant="secondary"
-                      onClick={loadMore}
-                      loading={isLoading}
-                    >
-                      Load More
-                    </Button>
-                  </div>
-                )}
+                <div className="load-more">
+                  {hasMore ? (
+                    <>
+                      <p className="load-more-progress">
+                        Showing {rankings.length} of {total} movies
+                      </p>
+                      <Button
+                        variant="secondary"
+                        onClick={loadMore}
+                        loading={isLoading}
+                      >
+                        Load More
+                      </Button>
+                    </>
+                  ) : total > 0 && (
+                    <p className="load-more-progress">
+                      Showing all {total} movies
+                    </p>
+                  )}
+                </div>
               </>
             )}
           </div>
         </div>
       </main>
+
+      {showBackToTop && (
+        <button
+          className="back-to-top"
+          onClick={scrollToTop}
+          aria-label="Back to top"
+          title="Back to top"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 15l-6-6-6 6" />
+          </svg>
+        </button>
+      )}
 
       <Modal
         isOpen={isModalOpen}

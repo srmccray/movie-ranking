@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { apiClient, ApiClientError } from '../api/client';
-import type { RankingWithMovie, RankingCreate, MovieCreate, Movie } from '../types';
+import type { RankingWithMovie, RankingCreate, MovieCreate, Movie, SortField, SortOrder } from '../types';
 
 interface UseRankingsReturn {
   rankings: RankingWithMovie[];
@@ -8,15 +8,18 @@ interface UseRankingsReturn {
   isLoading: boolean;
   error: string | null;
   hasMore: boolean;
+  sortBy: SortField;
+  sortOrder: SortOrder;
   fetchRankings: (reset?: boolean) => Promise<void>;
   loadMore: () => Promise<void>;
+  setSort: (field: SortField, order: SortOrder) => void;
   addMovieAndRank: (movie: MovieCreate, rating: number, ratedAt?: string) => Promise<void>;
   updateRating: (movieId: string, rating: number) => Promise<void>;
   updateRatedAt: (rankingId: string, movieId: string, ratedAt: string) => Promise<void>;
   deleteRanking: (rankingId: string) => Promise<void>;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export function useRankings(): UseRankingsReturn {
   const [rankings, setRankings] = useState<RankingWithMovie[]>([]);
@@ -24,6 +27,12 @@ export function useRankings(): UseRankingsReturn {
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortField>('rated_at');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
+  // Use ref to track current sort values for fetchRankings
+  const sortRef = useRef({ sortBy, sortOrder });
+  sortRef.current = { sortBy, sortOrder };
 
   const hasMore = rankings.length < total;
 
@@ -33,7 +42,8 @@ export function useRankings(): UseRankingsReturn {
 
     try {
       const newOffset = reset ? 0 : offset;
-      const response = await apiClient.getRankings(PAGE_SIZE, newOffset);
+      const { sortBy: currentSortBy, sortOrder: currentSortOrder } = sortRef.current;
+      const response = await apiClient.getRankings(PAGE_SIZE, newOffset, currentSortBy, currentSortOrder);
 
       if (reset) {
         setRankings(response.items);
@@ -53,6 +63,11 @@ export function useRankings(): UseRankingsReturn {
       setIsLoading(false);
     }
   }, [offset]);
+
+  const setSort = useCallback((field: SortField, order: SortOrder) => {
+    setSortBy(field);
+    setSortOrder(order);
+  }, []);
 
   const loadMore = useCallback(async () => {
     if (!isLoading && hasMore) {
@@ -180,8 +195,11 @@ export function useRankings(): UseRankingsReturn {
     isLoading,
     error,
     hasMore,
+    sortBy,
+    sortOrder,
     fetchRankings,
     loadMore,
+    setSort,
     addMovieAndRank,
     updateRating,
     updateRatedAt,

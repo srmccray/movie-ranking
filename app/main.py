@@ -11,7 +11,7 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.database import engine
-from app.routers import auth, movies, rankings
+from app.routers import analytics, auth, movies, rankings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO if not settings.DEBUG else logging.DEBUG)
@@ -87,6 +87,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/v1/auth")
 app.include_router(movies.router, prefix="/api/v1/movies")
 app.include_router(rankings.router, prefix="/api/v1/rankings")
+app.include_router(analytics.router, prefix="/api/v1/analytics")
 
 
 @app.get(

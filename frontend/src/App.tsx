@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { RankingsPage } from './pages/RankingsPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<RankingsPage />} />
             <Route path="/rankings" element={<Navigate to="/" replace />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
           </Route>
 
           {/* Catch all - redirect to home */}

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './Button';
 
@@ -8,9 +8,30 @@ export function Header() {
   return (
     <header className="header">
       <div className="header-content">
-        <Link to="/" className="header-logo">
-          Movie Ranking
-        </Link>
+        <div className="header-left">
+          <span className="header-logo">Movie Ranking</span>
+          {isAuthenticated && (
+            <nav className="header-nav">
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `header-nav-link ${isActive ? 'header-nav-link-active' : ''}`
+                }
+              >
+                Rankings
+              </NavLink>
+              <NavLink
+                to="/analytics"
+                className={({ isActive }) =>
+                  `header-nav-link ${isActive ? 'header-nav-link-active' : ''}`
+                }
+              >
+                Analytics
+              </NavLink>
+            </nav>
+          )}
+        </div>
         {isAuthenticated && (
           <Button variant="ghost" size="sm" onClick={logout}>
             Logout

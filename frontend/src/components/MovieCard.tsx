@@ -2,6 +2,29 @@ import { useState, useRef, useEffect } from 'react';
 import { StarRating } from './StarRating';
 import type { RankingWithMovie } from '../types';
 
+// TMDB genre ID to name mapping
+const GENRE_MAP: Record<number, string> = {
+  28: 'Action',
+  12: 'Adventure',
+  16: 'Animation',
+  35: 'Comedy',
+  80: 'Crime',
+  99: 'Documentary',
+  18: 'Drama',
+  10751: 'Family',
+  14: 'Fantasy',
+  36: 'History',
+  27: 'Horror',
+  10402: 'Music',
+  9648: 'Mystery',
+  10749: 'Romance',
+  878: 'Sci-Fi',
+  10770: 'TV Movie',
+  53: 'Thriller',
+  10752: 'War',
+  37: 'Western',
+};
+
 interface MovieCardProps {
   ranking: RankingWithMovie;
   onRatingChange?: (movieId: string, rating: number) => void;
@@ -28,6 +51,14 @@ function getTodayString(): string {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function getGenreNames(genreIds: number[] | null | undefined): string[] {
+  if (!genreIds || genreIds.length === 0) return [];
+  return genreIds
+    .slice(0, 2) // Show max 2 genres to keep card compact
+    .map((id) => GENRE_MAP[id])
+    .filter((name): name is string => name !== undefined);
 }
 
 export function MovieCard({ ranking, onRatingChange, onRatedAtChange, onDelete }: MovieCardProps) {
@@ -128,6 +159,9 @@ export function MovieCard({ ranking, onRatingChange, onRatedAtChange, onDelete }
       <div className="movie-info">
         <h3 className="movie-title">{movie.title}</h3>
         {movie.year && <p className="movie-year">{movie.year}</p>}
+        {movie.genre_ids && movie.genre_ids.length > 0 && (
+          <p className="movie-genres">{getGenreNames(movie.genre_ids).join(' / ')}</p>
+        )}
 
         {isEditingDate && onRatedAtChange ? (
           <div className={`movie-date-editor ${isSavingDate ? 'saving' : ''}`}>

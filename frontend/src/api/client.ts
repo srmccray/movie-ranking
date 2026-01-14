@@ -7,6 +7,10 @@ import type {
   RankingCreate,
   ApiError,
   TMDBSearchResult,
+  SortField,
+  SortOrder,
+  ActivityResponse,
+  GenreResponse,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -106,16 +110,34 @@ class ApiClient {
     });
   }
 
-  async getRankings(limit = 20, offset = 0): Promise<RankingListResponse> {
-    return this.request<RankingListResponse>(
-      `/rankings/?limit=${limit}&offset=${offset}`
-    );
+  async getRankings(
+    limit = 20,
+    offset = 0,
+    sortBy: SortField = 'rated_at',
+    sortOrder: SortOrder = 'desc'
+  ): Promise<RankingListResponse> {
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString(),
+      sort_by: sortBy,
+      sort_order: sortOrder,
+    });
+    return this.request<RankingListResponse>(`/rankings/?${params.toString()}`);
   }
 
   async deleteRanking(rankingId: string): Promise<void> {
     await this.request<void>(`/rankings/${rankingId}/`, {
       method: 'DELETE',
     });
+  }
+
+  // Analytics endpoints
+  async getActivity(): Promise<ActivityResponse> {
+    return this.request<ActivityResponse>('/analytics/activity/');
+  }
+
+  async getGenres(): Promise<GenreResponse> {
+    return this.request<GenreResponse>('/analytics/genres/');
   }
 }
 

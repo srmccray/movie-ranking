@@ -91,6 +91,7 @@ class MovieBrief(BaseModel):
         title: Movie title.
         year: Release year (optional).
         poster_url: URL to movie poster image (optional).
+        genre_ids: List of TMDB genre IDs (optional).
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -99,6 +100,7 @@ class MovieBrief(BaseModel):
     title: str
     year: Optional[int]
     poster_url: Optional[str]
+    genre_ids: Optional[list[int]]
 
 
 class TMDBSearchResult(BaseModel):

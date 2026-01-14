@@ -26,6 +26,7 @@ export interface MovieBrief {
   year: number | null;
   tmdb_id?: number | null;
   poster_url?: string | null;
+  genre_ids?: number[] | null;
 }
 
 export interface TMDBSearchResult {
@@ -64,6 +65,40 @@ export interface RankingListResponse {
   total: number;
   limit: number;
   offset: number;
+}
+
+// Sort types
+export type SortField = 'rated_at' | 'rating' | 'title' | 'year';
+export type SortOrder = 'asc' | 'desc';
+
+export interface SortOption {
+  label: string;
+  field: SortField;
+  order: SortOrder;
+}
+
+// Analytics types
+export interface ActivityDay {
+  date: string;
+  count: number;
+}
+
+export interface ActivityResponse {
+  activity: ActivityDay[];
+  start_date: string;
+  end_date: string;
+}
+
+export interface GenreStats {
+  genre_id: number;
+  genre_name: string;
+  count: number;
+  average_rating: number;
+}
+
+export interface GenreResponse {
+  genres: GenreStats[];
+  total_movies: number;
 }
 
 // Request Types

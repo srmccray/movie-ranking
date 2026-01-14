@@ -1,6 +1,8 @@
 """Rankings router for creating and listing user movie rankings."""
 
 from datetime import datetime, timezone
+from enum import Enum
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
@@ -127,16 +129,26 @@ async def list_rankings(
     db: DbSession,
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    sort_by: Literal["rated_at", "rating", "title", "year"] = Query(
+        default="rated_at",
+        description="Field to sort by",
+    ),
+    sort_order: Literal["asc", "desc"] = Query(
+        default="desc",
+        description="Sort order (asc or desc)",
+    ),
 ) -> RankingListResponse:
     """List all movies the authenticated user has ranked.
 
-    Returns paginated results ordered by rated_at descending (most recent first).
+    Returns paginated results with configurable sorting.
 
     Args:
         current_user: The authenticated user (from JWT token).
         db: Async database session.
         limit: Number of results to return (1-100, default 20).
         offset: Number of results to skip (default 0).
+        sort_by: Field to sort by (rated_at, rating, title, year).
+        sort_order: Sort order (asc or desc).
 
     Returns:
         Paginated list of rankings with embedded movie details.
@@ -150,15 +162,33 @@ async def list_rankings(
     )
     total = count_result.scalar_one()
 
-    # Get paginated rankings with movie details
-    rankings_result = await db.execute(
+    # Build query with sorting
+    query = (
         select(Ranking)
         .options(joinedload(Ranking.movie))
         .where(Ranking.user_id == current_user.id)
-        .order_by(Ranking.rated_at.desc())
-        .limit(limit)
-        .offset(offset)
     )
+
+    # Determine sort column
+    if sort_by == "rated_at":
+        sort_column = Ranking.rated_at
+    elif sort_by == "rating":
+        sort_column = Ranking.rating
+    elif sort_by == "title":
+        sort_column = Movie.title
+    elif sort_by == "year":
+        sort_column = Movie.year
+    else:
+        sort_column = Ranking.rated_at
+
+    # Apply sort order
+    if sort_order == "asc":
+        query = query.order_by(sort_column.asc())
+    else:
+        query = query.order_by(sort_column.desc())
+
+    # Execute with pagination
+    rankings_result = await db.execute(query.limit(limit).offset(offset))
     rankings = rankings_result.scalars().unique().all()
 
     # Convert to response schema
