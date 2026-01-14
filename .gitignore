@@ -173,3 +173,4 @@ temp/
 # Cache
 .cache/
 *.cache
+frontend/tsconfig.tsbuildinfo
