@@ -99,7 +99,9 @@ describe('RegisterPage', () => {
         expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
       });
 
-      await user.type(screen.getByLabelText(/^email$/i), 'notanemail');
+      // Use an email that passes HTML5 validation (has @) but fails our stricter
+      // regex validation (requires user@domain.tld format)
+      await user.type(screen.getByLabelText(/^email$/i), 'test@localhost');
       await user.type(screen.getByLabelText(/^password$/i), 'password123');
       await user.type(screen.getByLabelText(/confirm password/i), 'password123');
       await user.click(screen.getByRole('button', { name: /create account/i }));

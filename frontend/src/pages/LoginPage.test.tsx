@@ -98,15 +98,11 @@ describe('LoginPage', () => {
         expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
       });
 
-      // Type an email that passes HTML5 validation but fails our regex
-      // (emails without TLD like "test@localhost" might work for HTML5 but fail our validation)
-      // Actually, jsdom doesn't enforce HTML5 email validation, so we need to test
-      // using a value that our JavaScript validation catches
-
-      // First, clear any existing value and type our test value
+      // Use an email that passes HTML5 validation (has @) but fails our stricter
+      // regex validation (requires user@domain.tld format)
       const emailInput = screen.getByLabelText(/email/i);
       await user.clear(emailInput);
-      await user.type(emailInput, 'notanemail');
+      await user.type(emailInput, 'test@localhost');
       await user.type(screen.getByLabelText(/password/i), 'password123');
 
       // Submit the form
@@ -115,7 +111,7 @@ describe('LoginPage', () => {
       // Our validation should run and show the error
       await waitFor(() => {
         expect(screen.getByText(/please enter a valid email/i)).toBeInTheDocument();
-      }, { timeout: 3000 });
+      });
     });
 
     it('should show error when password is empty', async () => {
