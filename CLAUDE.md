@@ -148,7 +148,9 @@ async searchMovies(): Promise<SearchResult[]> {
 
 ## Planning Documents
 
-All implementation plans are stored in `.claude/plans/` with descriptive names:
+All implementation plans are stored in `.claude/plans/`:
+
+### Legacy Plans (single files)
 - `01-initial-app-implementation.md` - Original app architecture
 - `02-api-implementation.md` - FastAPI backend implementation
 - `03-rating-date-and-delete-features.md` - Rating date and delete features
@@ -156,7 +158,25 @@ All implementation plans are stored in `.claude/plans/` with descriptive names:
 - `05-frontend-development.md` - React frontend development
 - `06-fix-date-timezone-bug.md` - Date timezone bug fix
 
-When creating new plans, use descriptive names following the pattern: `NN-feature-description.md`
+### New Feature Plans (directory structure)
+New features use a directory structure with the product-manager creating the feature plan and the tech-lead breaking it into tasks:
+
+```
+.claude/plans/NN-feature-name/
+├── README.md           # Feature plan (created by product-manager)
+├── TASKS.md            # Task execution plan (created by tech-lead)
+├── 01-task-name.md     # Individual task with agent assignment
+├── 02-task-name.md
+└── ...
+```
+
+**Active Feature Plans:**
+- `07-analytics-enhancements/` - 2x2 dashboard with stats card and rating distribution chart
+
+### Workflow
+1. **product-manager** creates `README.md` with feature definition, user stories, and requirements
+2. **tech-lead** reviews the plan and creates task files with agent assignments
+3. Tasks are executed by assigned agents in the defined sequence
 
 ## Git Commit Messages
 

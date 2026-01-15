@@ -91,7 +91,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     """Create an async HTTP client for testing API endpoints."""
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    from app.routers import auth, movies, rankings
+    from app.routers import analytics, auth, movies, rankings
 
     # Patch UUID columns for SQLite compatibility
     patch_uuid_columns()
@@ -153,6 +153,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     test_app.include_router(auth.router, prefix="/api/v1/auth")
     test_app.include_router(movies.router, prefix="/api/v1/movies")
     test_app.include_router(rankings.router, prefix="/api/v1/rankings")
+    test_app.include_router(analytics.router, prefix="/api/v1/analytics")
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         async with session_maker() as session:

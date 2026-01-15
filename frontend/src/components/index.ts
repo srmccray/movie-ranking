@@ -9,3 +9,5 @@ export { AddMovieForm } from './AddMovieForm';
 export { AddMovieCard } from './AddMovieCard';
 export { MovieSearch } from './MovieSearch';
 export { ProtectedRoute } from './ProtectedRoute';
+export { StatsCard } from './StatsCard';
+export { RatingDistributionChart } from './RatingDistributionChart';

@@ -101,6 +101,25 @@ export interface GenreResponse {
   total_movies: number;
 }
 
+export interface StatsResponse {
+  total_movies: number;
+  total_watch_time_minutes: number;
+  average_rating: number;
+  current_streak: number;
+  longest_streak: number;
+  top_genre: string | null;
+}
+
+export interface RatingCount {
+  rating: number;
+  count: number;
+}
+
+export interface RatingDistributionResponse {
+  distribution: RatingCount[];
+  total: number;
+}
+
 // Request Types
 
 export interface UserCreate {

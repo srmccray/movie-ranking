@@ -11,6 +11,8 @@ import type {
   SortOrder,
   ActivityResponse,
   GenreResponse,
+  StatsResponse,
+  RatingDistributionResponse,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -138,6 +140,14 @@ class ApiClient {
 
   async getGenres(): Promise<GenreResponse> {
     return this.request<GenreResponse>('/analytics/genres/');
+  }
+
+  async getStats(): Promise<StatsResponse> {
+    return this.request<StatsResponse>('/analytics/stats/');
+  }
+
+  async getRatingDistribution(): Promise<RatingDistributionResponse> {
+    return this.request<RatingDistributionResponse>('/analytics/rating-distribution/');
   }
 }
 
