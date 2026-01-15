@@ -11,3 +11,4 @@ export { MovieSearch } from './MovieSearch';
 export { ProtectedRoute } from './ProtectedRoute';
 export { StatsCard } from './StatsCard';
 export { RatingDistributionChart } from './RatingDistributionChart';
+export { GoogleSignInButton } from './GoogleSignInButton';

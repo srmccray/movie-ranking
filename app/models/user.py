@@ -19,7 +19,9 @@ class User(Base):
     Attributes:
         id: Unique identifier (UUID).
         email: User's email address (unique).
-        hashed_password: bcrypt-hashed password.
+        hashed_password: bcrypt-hashed password (nullable for OAuth users).
+        google_id: Google OAuth user ID (unique, nullable).
+        auth_provider: Authentication provider ("local", "google", or "linked").
         created_at: Account creation timestamp.
         updated_at: Last update timestamp.
         rankings: User's movie rankings (relationship).
@@ -37,9 +39,21 @@ class User(Base):
         nullable=False,
         index=True,
     )
-    hashed_password: Mapped[str] = mapped_column(
+    hashed_password: Mapped[str | None] = mapped_column(
         String(255),
+        nullable=True,
+    )
+    google_id: Mapped[str | None] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
+    auth_provider: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
+        default="local",
+        server_default=text("'local'"),
     )
     created_at: Mapped[datetime] = mapped_column(
         server_default=text("CURRENT_TIMESTAMP"),
@@ -59,6 +73,7 @@ class User(Base):
 
     __table_args__ = (
         Index("idx_users_email", "email"),
+        Index("idx_users_google_id", "google_id"),
     )
 
     def __repr__(self) -> str:

@@ -172,6 +172,8 @@ New features use a directory structure with the product-manager creating the fea
 
 **Active Feature Plans:**
 - `07-analytics-enhancements/` - 2x2 dashboard with stats card and rating distribution chart
+- `08-google-oauth/` - Google OAuth login integration
+- `09-google-account-linking/` - Link existing accounts to Google OAuth
 
 ### Workflow
 1. **product-manager** creates `README.md` with feature definition, user stories, and requirements

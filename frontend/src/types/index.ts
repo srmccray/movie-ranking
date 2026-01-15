@@ -5,6 +5,32 @@ export interface Token {
   token_type: string;
 }
 
+// Google OAuth Types
+export interface GoogleAuthUrlResponse {
+  authorization_url: string;
+}
+
+export interface GoogleCallbackError {
+  error: string;
+  error_description?: string;
+}
+
+export interface AccountLinkingResponse {
+  requires_linking: boolean;
+  email: string;
+  message: string;
+}
+
+// User Profile Types
+export interface UserProfileResponse {
+  id: string;
+  email: string;
+  auth_provider: 'local' | 'google' | 'linked';
+  has_google_linked: boolean;
+  has_password: boolean;
+  created_at: string;
+}
+
 export interface Movie {
   id: string;
   title: string;
@@ -170,4 +196,5 @@ export interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  loginWithToken: (token: string) => void;
 }

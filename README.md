@@ -168,12 +168,36 @@ Configure via `.env` file or environment variables:
 | ALGORITHM | No | HS256 | JWT algorithm |
 | ACCESS_TOKEN_EXPIRE_MINUTES | No | 1440 | Token lifetime (24 hours) |
 | DEBUG | No | false | Debug mode |
+| GOOGLE_CLIENT_ID | No | - | Google OAuth client ID (for "Sign in with Google") |
+| GOOGLE_CLIENT_SECRET | No | - | Google OAuth client secret |
+| GOOGLE_REDIRECT_URI | No | http://localhost:8000/api/v1/auth/google/callback/ | OAuth callback URL |
 
 Example `.env`:
 ```
 SECRET_KEY=your-256-bit-secret-key-here
 POSTGRES_PASSWORD=mysecurepassword
 ```
+
+### Google OAuth Setup (Optional)
+
+To enable "Sign in with Google", you need to create OAuth credentials in the Google Cloud Console:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to **APIs & Services > Credentials**
+4. Click **Create Credentials > OAuth client ID**
+5. Select **Web application** as the application type
+6. Add authorized redirect URIs:
+   - Development: `http://localhost:8000/api/v1/auth/google/callback/`
+   - Production: `https://yourdomain.com/api/v1/auth/google/callback/`
+7. Copy the Client ID and Client Secret to your `.env` file
+
+```env
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+```
+
+For detailed setup instructions, see [Google OAuth Setup Guide](.claude/plans/08-google-oauth/SETUP.md).
 
 ## Local Development (without Docker)
 
@@ -230,6 +254,8 @@ Once running, interactive docs are available at:
 | GET | `/health` | No | Health check |
 | POST | `/api/v1/auth/register` | No | Create account |
 | POST | `/api/v1/auth/login` | No | Login (returns JWT) |
+| GET | `/api/v1/auth/google/login/` | No | Get Google OAuth URL |
+| GET | `/api/v1/auth/google/callback/` | No | Handle Google OAuth callback |
 | POST | `/api/v1/movies/` | Yes | Add a movie |
 | POST | `/api/v1/rankings/` | Yes | Create/update ranking |
 | GET | `/api/v1/rankings/` | Yes | List your rankings |

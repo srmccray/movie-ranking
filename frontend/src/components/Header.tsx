@@ -29,6 +29,14 @@ export function Header() {
               >
                 Analytics
               </NavLink>
+              <NavLink
+                to="/settings"
+                className={({ isActive }) =>
+                  `header-nav-link ${isActive ? 'header-nav-link-active' : ''}`
+                }
+              >
+                Settings
+              </NavLink>
             </nav>
           )}
         </div>

@@ -18,6 +18,11 @@ os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing")
 os.environ.setdefault("TMDB_API_KEY", "test-tmdb-api-key")
 
+# Google OAuth settings for testing
+os.environ.setdefault("GOOGLE_CLIENT_ID", "test-client-id.apps.googleusercontent.com")
+os.environ.setdefault("GOOGLE_CLIENT_SECRET", "test-client-secret")
+os.environ.setdefault("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/v1/auth/google/callback/")
+
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -74,10 +79,11 @@ def patch_uuid_columns():
     from app.models.user import User
     from app.models.movie import Movie
     from app.models.ranking import Ranking
+    from app.models.oauth_state import OAuthState
 
     # Override the column type for id columns to use String in SQLite
     # This is done at the metadata level
-    for model in [User, Movie, Ranking]:
+    for model in [User, Movie, Ranking, OAuthState]:
         if hasattr(model, "__table__"):
             for column in model.__table__.columns:
                 if column.name == "id":
@@ -91,7 +97,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     """Create an async HTTP client for testing API endpoints."""
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    from app.routers import analytics, auth, movies, rankings
+    from app.routers import analytics, auth, google_auth, movies, rankings
 
     # Patch UUID columns for SQLite compatibility
     patch_uuid_columns()
@@ -122,9 +128,10 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         from app.models.user import User
         from app.models.movie import Movie
         from app.models.ranking import Ranking
+        from app.models.oauth_state import OAuthState
 
         for obj in session.new:
-            if isinstance(obj, (User, Movie, Ranking)):
+            if isinstance(obj, (User, Movie, Ranking, OAuthState)):
                 if obj.id is None:
                     obj.id = uuid4()
 
@@ -151,6 +158,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         allow_headers=["*"],
     )
     test_app.include_router(auth.router, prefix="/api/v1/auth")
+    test_app.include_router(google_auth.router, prefix="/api/v1/auth")
     test_app.include_router(movies.router, prefix="/api/v1/movies")
     test_app.include_router(rankings.router, prefix="/api/v1/rankings")
     test_app.include_router(analytics.router, prefix="/api/v1/analytics")

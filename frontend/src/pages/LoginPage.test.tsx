@@ -8,15 +8,24 @@
  * - Error messages are displayed for invalid credentials
  * - Redirect to original destination after login
  * - Already authenticated users are redirected
+ * - Google Sign-In button is present
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { LoginPage } from './LoginPage';
 import { resetMockData, MOCK_USER_EMAIL, MOCK_USER_PASSWORD } from '../__tests__/mocks/handlers';
+
+// Helper to find the email/password form's submit button (not the Google button)
+function getEmailSubmitButton() {
+  // The email form submit button is inside the form element
+  const form = document.querySelector('form');
+  if (!form) throw new Error('Form not found');
+  return within(form).getByRole('button', { name: /sign in/i });
+}
 
 // Helper to render LoginPage with router and auth context
 function renderLoginPage(initialEntries = ['/login']) {
@@ -49,7 +58,7 @@ describe('LoginPage', () => {
 
       expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+      expect(getEmailSubmitButton()).toBeInTheDocument();
     });
 
     it('should render link to register page', async () => {
@@ -71,6 +80,14 @@ describe('LoginPage', () => {
 
       expect(screen.getByLabelText(/password/i)).toHaveAttribute('type', 'password');
     });
+
+    it('should render Google Sign-In button', async () => {
+      renderLoginPage();
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /sign in with google/i })).toBeInTheDocument();
+      });
+    });
   });
 
   describe('form validation', () => {
@@ -79,11 +96,11 @@ describe('LoginPage', () => {
       renderLoginPage();
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+        expect(getEmailSubmitButton()).toBeInTheDocument();
       });
 
       // Submit without entering anything
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(getEmailSubmitButton());
 
       await waitFor(() => {
         expect(screen.getByText(/email is required/i)).toBeInTheDocument();
@@ -106,7 +123,7 @@ describe('LoginPage', () => {
       await user.type(screen.getByLabelText(/password/i), 'password123');
 
       // Submit the form
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(getEmailSubmitButton());
 
       // Our validation should run and show the error
       await waitFor(() => {
@@ -123,7 +140,7 @@ describe('LoginPage', () => {
       });
 
       await user.type(screen.getByLabelText(/email/i), 'test@example.com');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(getEmailSubmitButton());
 
       await waitFor(() => {
         expect(screen.getByText(/password is required/i)).toBeInTheDocument();
@@ -142,7 +159,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByLabelText(/email/i), MOCK_USER_EMAIL);
       await user.type(screen.getByLabelText(/password/i), MOCK_USER_PASSWORD);
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(getEmailSubmitButton());
 
       await waitFor(() => {
         expect(screen.getByText('Home Page')).toBeInTheDocument();
@@ -171,7 +188,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByLabelText(/email/i), MOCK_USER_EMAIL);
       await user.type(screen.getByLabelText(/password/i), MOCK_USER_PASSWORD);
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(getEmailSubmitButton());
 
       await waitFor(() => {
         expect(screen.getByText('Rankings Page')).toBeInTheDocument();
@@ -190,7 +207,7 @@ describe('LoginPage', () => {
       await user.type(screen.getByLabelText(/password/i), MOCK_USER_PASSWORD);
 
       // Click and immediately check for loading state
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
+      const submitButton = getEmailSubmitButton();
       await user.click(submitButton);
 
       // Button should be disabled during submission
@@ -209,7 +226,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByLabelText(/email/i), MOCK_USER_EMAIL);
       await user.type(screen.getByLabelText(/password/i), 'wrongpassword');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(getEmailSubmitButton());
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -226,7 +243,7 @@ describe('LoginPage', () => {
 
       await user.type(screen.getByLabelText(/email/i), 'nonexistent@example.com');
       await user.type(screen.getByLabelText(/password/i), 'password123');
-      await user.click(screen.getByRole('button', { name: /sign in/i }));
+      await user.click(getEmailSubmitButton());
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();

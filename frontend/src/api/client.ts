@@ -13,6 +13,8 @@ import type {
   GenreResponse,
   StatsResponse,
   RatingDistributionResponse,
+  GoogleAuthUrlResponse,
+  UserProfileResponse,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -83,6 +85,26 @@ class ApiClient {
       },
       body: formData.toString(),
     });
+  }
+
+  // Google OAuth endpoints
+  async getGoogleAuthUrl(): Promise<GoogleAuthUrlResponse> {
+    // Pass the frontend callback URL so backend redirects there with the token
+    const redirectUri = `${window.location.origin}/auth/google/callback`;
+    const params = new URLSearchParams({ redirect_uri: redirectUri });
+    return this.request<GoogleAuthUrlResponse>(`/auth/google/login/?${params.toString()}`);
+  }
+
+  async getGoogleLinkUrl(): Promise<GoogleAuthUrlResponse> {
+    // Pass the frontend settings page URL so backend redirects there after linking
+    const redirectUri = `${window.location.origin}/settings`;
+    const params = new URLSearchParams({ redirect_uri: redirectUri });
+    return this.request<GoogleAuthUrlResponse>(`/auth/google/link/?${params.toString()}`);
+  }
+
+  // User profile endpoints
+  async getCurrentUser(): Promise<UserProfileResponse> {
+    return this.request<UserProfileResponse>('/auth/me/');
   }
 
   // Movie endpoints

@@ -69,6 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     apiClient.setToken(null);
   }, []);
 
+  const loginWithToken = useCallback(
+    (accessToken: string) => {
+      saveToken(accessToken);
+    },
+    [saveToken]
+  );
+
   const value: AuthContextType = {
     token,
     isAuthenticated: !!token,
@@ -76,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
+    loginWithToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

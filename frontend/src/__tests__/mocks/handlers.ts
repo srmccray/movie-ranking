@@ -58,6 +58,20 @@ const MOCK_TMDB_RESULTS = [
 const registeredUsers = new Map<string, string>();
 registeredUsers.set(MOCK_USER_EMAIL, MOCK_USER_PASSWORD);
 
+// Mock Google OAuth state
+const MOCK_GOOGLE_STATE = 'mock-google-oauth-state-123';
+const MOCK_GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=test&redirect_uri=http://localhost:8000/api/v1/auth/google/callback/&response_type=code&scope=openid%20email%20profile&state=${MOCK_GOOGLE_STATE}`;
+
+// Store valid states for testing
+const validOAuthStates = new Set<string>();
+validOAuthStates.add(MOCK_GOOGLE_STATE);
+
+// Store link states (for account linking flow)
+const validLinkStates = new Set<string>();
+
+// Track if user has Google linked
+let userHasGoogleLinked = false;
+
 // Store movies for testing
 const movies = new Map<string, { id: string; title: string; year: number | null; tmdb_id?: number | null; poster_url?: string | null }>();
 
@@ -406,6 +420,107 @@ export const handlers = [
       total,
     });
   }),
+
+  // GET /api/v1/auth/google/login/
+  http.get('/api/v1/auth/google/login/', () => {
+    // Generate a new state and store it
+    const newState = `state-${Date.now()}`;
+    validOAuthStates.add(newState);
+
+    return HttpResponse.json({
+      authorization_url: `https://accounts.google.com/o/oauth2/v2/auth?client_id=test&redirect_uri=http://localhost:8000/api/v1/auth/google/callback/&response_type=code&scope=openid%20email%20profile&state=${newState}`,
+    });
+  }),
+
+  // GET /api/v1/auth/google/callback/
+  http.get('/api/v1/auth/google/callback/', ({ request }) => {
+    const url = new URL(request.url);
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
+    const error = url.searchParams.get('error');
+
+    // Handle user cancellation
+    if (error) {
+      return HttpResponse.json(
+        { detail: 'Authentication cancelled' },
+        { status: 400 }
+      );
+    }
+
+    // Check for missing parameters
+    if (!code || !state) {
+      return HttpResponse.json(
+        { detail: 'Missing required parameters' },
+        { status: 400 }
+      );
+    }
+
+    // Validate state (CSRF protection)
+    if (!validOAuthStates.has(state)) {
+      return HttpResponse.json(
+        { detail: 'Invalid or expired authentication state' },
+        { status: 400 }
+      );
+    }
+
+    // Remove used state
+    validOAuthStates.delete(state);
+
+    // Return mock token
+    return HttpResponse.json({
+      access_token: MOCK_TOKEN,
+      token_type: 'bearer',
+    });
+  }),
+
+  // GET /api/v1/auth/me/
+  http.get('/api/v1/auth/me/', ({ request }) => {
+    const authHeader = request.headers.get('Authorization');
+
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { detail: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json({
+      id: 'user-123',
+      email: MOCK_USER_EMAIL,
+      auth_provider: userHasGoogleLinked ? 'linked' : 'local',
+      has_google_linked: userHasGoogleLinked,
+      has_password: true,
+      created_at: '2024-01-01T00:00:00Z',
+    });
+  }),
+
+  // GET /api/v1/auth/google/link/
+  http.get('/api/v1/auth/google/link/', ({ request }) => {
+    const authHeader = request.headers.get('Authorization');
+
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { detail: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    // Check if already linked
+    if (userHasGoogleLinked) {
+      return HttpResponse.json(
+        { detail: 'Google account already linked' },
+        { status: 409 }
+      );
+    }
+
+    // Generate a link state
+    const linkState = `link-state-${Date.now()}`;
+    validLinkStates.add(linkState);
+
+    return HttpResponse.json({
+      authorization_url: `https://accounts.google.com/o/oauth2/v2/auth?client_id=test&redirect_uri=http://localhost:3000/settings&response_type=code&scope=openid%20email%20profile&state=${linkState}`,
+    });
+  }),
 ];
 
 // Helper to reset mock data between tests
@@ -415,6 +530,10 @@ export function resetMockData() {
   movies.clear();
   rankings.clear();
   tmdbServiceError = null;
+  validOAuthStates.clear();
+  validOAuthStates.add(MOCK_GOOGLE_STATE);
+  validLinkStates.clear();
+  userHasGoogleLinked = false;
 }
 
 // Helper to simulate TMDB service errors
@@ -422,5 +541,15 @@ export function setTmdbServiceError(error: 'rate_limit' | 'api_error' | 'unavail
   tmdbServiceError = error;
 }
 
+// Helper to add a valid OAuth state for testing
+export function addValidOAuthState(state: string) {
+  validOAuthStates.add(state);
+}
+
+// Helper to set Google linked status for testing
+export function setUserGoogleLinked(linked: boolean) {
+  userHasGoogleLinked = linked;
+}
+
 // Export mock constants for use in tests
-export { MOCK_TOKEN, MOCK_USER_EMAIL, MOCK_USER_PASSWORD, MOCK_TMDB_RESULTS };
+export { MOCK_TOKEN, MOCK_USER_EMAIL, MOCK_USER_PASSWORD, MOCK_TMDB_RESULTS, MOCK_GOOGLE_STATE, MOCK_GOOGLE_AUTH_URL };

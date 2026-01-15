@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Input } from '../components/Input';
-import { Button } from '../components/Button';
-import { ApiClientError } from '../api/client';
+import { Input, Button, GoogleSignInButton } from '../components';
+import { apiClient, ApiClientError } from '../api/client';
 
 interface LocationState {
   from?: { pathname: string };
@@ -19,6 +18,7 @@ export function LoginPage() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -68,6 +68,25 @@ export function LoginPage() {
     }
   };
 
+  const handleGoogleSignIn = useCallback(async () => {
+    setSubmitError(null);
+    setIsGoogleLoading(true);
+
+    try {
+      const response = await apiClient.getGoogleAuthUrl();
+      // Redirect to Google OAuth
+      window.location.href = response.authorization_url;
+    } catch (err) {
+      setIsGoogleLoading(false);
+      if (err instanceof ApiClientError) {
+        setSubmitError(err.message);
+      } else {
+        setSubmitError('Failed to initiate Google sign-in. Please try again.');
+      }
+    }
+    // Note: isGoogleLoading stays true as we're redirecting away
+  }, []);
+
   return (
     <div className="auth-layout">
       <div className="auth-card">
@@ -79,6 +98,15 @@ export function LoginPage() {
           </div>
         )}
 
+        <GoogleSignInButton
+          variant="signin"
+          onClick={handleGoogleSignIn}
+          loading={isGoogleLoading}
+          disabled={isSubmitting}
+        />
+
+        <div className="auth-divider">or</div>
+
         <form onSubmit={handleSubmit}>
           <Input
             label="Email"
@@ -88,7 +116,6 @@ export function LoginPage() {
             error={errors.email}
             placeholder="you@example.com"
             autoComplete="email"
-            autoFocus
           />
 
           <Input
@@ -106,6 +133,7 @@ export function LoginPage() {
             variant="primary"
             fullWidth
             loading={isSubmitting}
+            disabled={isGoogleLoading}
           >
             Sign In
           </Button>

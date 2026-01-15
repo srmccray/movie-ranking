@@ -1,15 +1,16 @@
 """Authentication router for user registration and login."""
 
-from fastapi import APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
-from typing import Annotated
-from fastapi import Depends
 
 from app.database import DbSession
+from app.dependencies import CurrentUser
 from app.models.user import User
 from app.schemas.token import Token
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserProfileResponse
 from app.utils.security import create_access_token, get_password_hash, verify_password
 
 router = APIRouter(tags=["auth"])
@@ -98,7 +99,12 @@ async def login(
     user = result.scalar_one_or_none()
 
     # Verify user exists and password matches
-    if user is None or not verify_password(form_data.password, user.hashed_password):
+    # Note: Users without a password (Google-only) cannot use password login
+    if (
+        user is None
+        or user.hashed_password is None
+        or not verify_password(form_data.password, user.hashed_password)
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -109,3 +115,36 @@ async def login(
     access_token = create_access_token(data={"sub": str(user.id)})
 
     return Token(access_token=access_token)
+
+
+@router.get(
+    "/me/",
+    response_model=UserProfileResponse,
+    summary="Get current user profile",
+    responses={
+        200: {"description": "User profile retrieved successfully"},
+        401: {"description": "Not authenticated"},
+    },
+)
+async def get_current_user_profile(
+    current_user: CurrentUser,
+) -> UserProfileResponse:
+    """Get the authenticated user's profile information.
+
+    Returns:
+        UserProfileResponse: User profile including authentication provider info.
+            - id: User's unique identifier
+            - email: User's email address
+            - auth_provider: 'local', 'google', or 'linked'
+            - has_google_linked: True if Google account is linked
+            - has_password: True if user can use email/password login
+            - created_at: Account creation timestamp
+    """
+    return UserProfileResponse(
+        id=current_user.id,
+        email=current_user.email,
+        auth_provider=current_user.auth_provider,
+        has_google_linked=current_user.google_id is not None,
+        has_password=current_user.hashed_password is not None,
+        created_at=current_user.created_at,
+    )
