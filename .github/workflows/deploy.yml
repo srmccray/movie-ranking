@@ -145,6 +145,37 @@ jobs:
             --zip-file fileb://lambda.zip \
             --publish
 
+      - name: Wait for Lambda update to complete
+        run: |
+          aws lambda wait function-updated \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }}
+
+      - name: Update Lambda environment variables
+        run: |
+          # Get current environment variables
+          CURRENT_ENV=$(aws lambda get-function-configuration \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --query 'Environment.Variables' \
+            --output json)
+
+          # Merge with new secrets (jq merges objects, new values override existing)
+          UPDATED_ENV=$(echo "$CURRENT_ENV" | jq \
+            --arg google_client_id "${{ secrets.GOOGLE_CLIENT_ID }}" \
+            --arg google_client_secret "${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            --arg secret_key "${{ secrets.SECRET_KEY }}" \
+            --arg google_redirect_uri "https://movies.stephenmccray.com/api/v1/auth/google/callback/" \
+            '. + {
+              "GOOGLE_CLIENT_ID": $google_client_id,
+              "GOOGLE_CLIENT_SECRET": $google_client_secret,
+              "SECRET_KEY": $secret_key,
+              "GOOGLE_REDIRECT_URI": $google_redirect_uri
+            }')
+
+          # Update Lambda configuration
+          aws lambda update-function-configuration \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --environment "Variables=$UPDATED_ENV"
+
       # Invalidate CloudFront cache
       - name: Invalidate CloudFront cache
         run: |
