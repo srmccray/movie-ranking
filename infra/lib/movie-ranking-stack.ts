@@ -329,6 +329,7 @@ export class MovieRankingStack extends cdk.Stack {
         actions: [
           "lambda:UpdateFunctionCode",
           "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
           "lambda:UpdateFunctionConfiguration",
         ],
         resources: [this.lambdaFunction.functionArn],
