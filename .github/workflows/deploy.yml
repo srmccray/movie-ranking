@@ -171,10 +171,13 @@ jobs:
               "GOOGLE_REDIRECT_URI": $google_redirect_uri
             }')
 
+          # Build the full environment JSON structure
+          ENV_JSON=$(echo "$UPDATED_ENV" | jq '{Variables: .}')
+
           # Update Lambda configuration
           aws lambda update-function-configuration \
             --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --environment "Variables=$UPDATED_ENV"
+            --environment "$ENV_JSON"
 
       # Invalidate CloudFront cache
       - name: Invalidate CloudFront cache
