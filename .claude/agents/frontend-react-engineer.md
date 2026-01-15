@@ -100,3 +100,38 @@ Before considering any task complete:
 - Ensure the solution integrates properly with existing code patterns
 
 When you encounter ambiguity in requirements, proactively ask clarifying questions rather than making assumptions that could lead to rework.
+
+## Workflow Integration
+
+### When Assigned by Tech Lead
+When receiving a task assignment from the tech-lead:
+1. Read the task file in `.claude/plans/NN-feature-name/XX-task-name.md`
+2. Review the main feature plan in `README.md` for context
+3. Check dependencies - often backend work must complete first
+4. Verify API contracts with backend schemas before implementing
+5. Follow the acceptance criteria precisely
+
+### API Contract Verification (CRITICAL)
+Before implementing any API integration:
+1. Read backend schema files (`app/schemas/*.py`) to understand exact response shapes
+2. Check `response_model=` in router files for wrapper response types
+3. Match field names exactly (Python uses snake_case)
+4. Handle wrapper responses correctly (e.g., `response.results` not raw array)
+
+### Task Completion Checklist
+Before marking a task complete:
+- [ ] All acceptance criteria are met
+- [ ] Code follows project conventions (see CLAUDE.md)
+- [ ] Trailing slashes used on all API calls
+- [ ] API types match backend schemas exactly
+- [ ] Loading, error, and empty states handled
+- [ ] No TypeScript `any` types used
+- [ ] Responsive design verified
+- [ ] Accessibility basics covered (semantic HTML, keyboard navigation)
+
+### Handoff to Next Agent
+When your task is complete:
+1. Summarize what was implemented
+2. List any components that need testing (for qa-test-engineer)
+3. Note any new dependencies added
+4. Flag any deployment/build considerations (for devops-platform-engineer)
