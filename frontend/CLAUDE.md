@@ -1,6 +1,8 @@
 # Frontend Development Guide
 
-This document provides comprehensive guidance for developing features in the Movie Ranking frontend application.
+This document provides React/TypeScript development guidance for the Movie Ranking frontend application.
+
+> **Important:** Before reading this guide, review the [root CLAUDE.md](../CLAUDE.md) for project-wide conventions including trailing slashes, datetime handling, HTTP status codes, and API contract verification. This guide focuses on frontend-specific patterns and implementation details.
 
 ## Project Overview
 
@@ -492,7 +494,7 @@ import type {
 class ApiClient {
   // ... existing methods
 
-  // New Item endpoints - NOTE TRAILING SLASHES!
+  // New Item endpoints - NOTE: All URLs must have trailing slashes (see root CLAUDE.md)
   async getNewItems(limit = 20, offset = 0): Promise<NewItemListResponse> {
     return this.request<NewItemListResponse>(
       `/new-items/?limit=${limit}&offset=${offset}`
@@ -519,21 +521,6 @@ class ApiClient {
     });
   }
 }
-```
-
-### CRITICAL: Trailing Slashes
-
-**All API endpoints MUST include trailing slashes.** FastAPI will 307 redirect without them, causing CORS and authentication issues.
-
-```tsx
-// CORRECT
-await this.request<Item>('/items/');
-await this.request<Item>(`/items/${id}/`);
-await this.request<ItemList>(`/items/?limit=${limit}`);
-
-// WRONG - will cause 404 or redirect errors
-await this.request<Item>('/items');
-await this.request<Item>(`/items/${id}`);
 ```
 
 ### Content-Type Rules
@@ -570,149 +557,7 @@ if (response.status === 204) {
 }
 ```
 
-## API Contract Verification
-
-### The Problem
-
-Frontend-backend type mismatches cause runtime errors that are not caught during development or by TypeScript compilation. For example:
-- Backend returns `{ results: T[], query: string }`
-- Frontend expects `T[]` directly
-- TypeScript compiles successfully, but crashes at runtime
-
-### Before Implementing Any API Integration
-
-**Checklist:**
-
-- [ ] **Read the backend schema file** for the endpoint (`app/schemas/<entity>.py`)
-- [ ] **Read the backend router file** to see the `response_model=` declaration
-- [ ] **Verify the exact response shape** - is it a wrapper object or raw data?
-- [ ] **Check for nested types** - wrapper responses often contain `items`, `results`, `data`, etc.
-- [ ] **Add all required types to `types/index.ts`** including wrapper/response types
-- [ ] **Match field names exactly** - backend uses `snake_case`, frontend types must match
-
-### Response Shape Patterns
-
-The backend uses these common response patterns:
-
-| Pattern | Backend Schema | Frontend Type Needed |
-|---------|---------------|---------------------|
-| Single item | `EntityResponse` | `Entity` |
-| List with pagination | `EntityListResponse` | `{ items: Entity[], total, limit, offset }` |
-| Search results | `TMDBSearchResponse` | `{ results: TMDBSearchResult[], query, year }` |
-| Delete | `204 No Content` | `void` |
-
-### Type Mapping Process
-
-1. **Find the backend schema:**
-   ```bash
-   # Look in app/schemas/<entity>.py for response types
-   cat app/schemas/movie.py | grep -A 20 "class.*Response"
-   ```
-
-2. **Check the router's response_model:**
-   ```bash
-   # Look in app/routers/<entities>.py
-   grep "response_model=" app/routers/movies.py
-   ```
-
-3. **Create matching frontend type:**
-   ```typescript
-   // Backend: TMDBSearchResponse with results, query, year
-   // Frontend must match exactly:
-   export interface TMDBSearchResponse {
-     results: TMDBSearchResult[];
-     query: string;
-     year: number | null;
-   }
-   ```
-
-4. **Use the wrapper type in API client:**
-   ```typescript
-   // CORRECT - uses full response type, then extracts what's needed
-   async searchMovies(query: string, year?: number): Promise<TMDBSearchResult[]> {
-     const response = await this.request<TMDBSearchResponse>(`/movies/search/?...`);
-     return response.results;
-   }
-
-   // WRONG - assumes backend returns array directly
-   async searchMovies(query: string, year?: number): Promise<TMDBSearchResult[]> {
-     return this.request<TMDBSearchResult[]>(`/movies/search/?...`);
-   }
-   ```
-
-### Common Mistakes to Avoid
-
-1. **Assuming list endpoints return arrays directly**
-   ```typescript
-   // WRONG - most list endpoints return wrapper objects
-   async getItems(): Promise<Item[]> {
-     return this.request<Item[]>('/items/');
-   }
-
-   // CORRECT - list endpoints return paginated response
-   async getItems(): Promise<ItemListResponse> {
-     return this.request<ItemListResponse>('/items/');
-   }
-   ```
-
-2. **Not defining wrapper response types**
-   ```typescript
-   // WRONG - only has the item type
-   export interface TMDBSearchResult { ... }
-
-   // CORRECT - has both item AND response wrapper types
-   export interface TMDBSearchResult { ... }
-   export interface TMDBSearchResponse {
-     results: TMDBSearchResult[];
-     query: string;
-     year: number | null;
-   }
-   ```
-
-3. **Mismatched field names**
-   ```typescript
-   // Backend returns: { "tmdb_id": 12345 }
-
-   // WRONG
-   interface Movie { tmdbId: number; }
-
-   // CORRECT - match snake_case from backend
-   interface Movie { tmdb_id: number; }
-   ```
-
-### Testing API Integrations
-
-When adding MSW handlers, match the backend response shape exactly:
-
-```typescript
-// handlers.ts - must match backend TMDBSearchResponse schema
-http.get('/api/v1/movies/search/', () => {
-  return HttpResponse.json({
-    results: [{ tmdb_id: 1, title: 'Test', year: 2024, poster_url: null, overview: null }],
-    query: 'test',
-    year: null,
-  });
-});
-```
-
-### Verification Commands
-
-Before implementing, verify the contract:
-
-```bash
-# View backend response schema
-cat app/schemas/movie.py
-
-# View endpoint response_model
-grep -A 5 "def search" app/routers/movies.py
-
-# Test endpoint directly (requires auth token)
-curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/v1/movies/search/?q=test
-```
-
-## Adding New Types
-
-### Type Organization
+## Type Organization
 
 Types are organized in `/frontend/src/types/index.ts`:
 
@@ -775,6 +620,94 @@ export interface SomeContextType {
 2. **Optional/Nullable**: Use `field?: type | null` pattern
 3. **IDs**: Always `string` (UUIDs from backend)
 4. **Response vs Request**: Separate types for API responses and requests
+5. **Field names**: Use `snake_case` to match backend JSON (see root CLAUDE.md)
+
+## API Contract Verification (Frontend-Specific)
+
+> **Note:** See the [root CLAUDE.md](../CLAUDE.md) for the complete API contract verification checklist. This section covers frontend-specific patterns.
+
+### Type Mapping Process
+
+1. **Find the backend schema:**
+   ```bash
+   # Look in app/schemas/<entity>.py for response types
+   cat app/schemas/movie.py | grep -A 20 "class.*Response"
+   ```
+
+2. **Check the router's response_model:**
+   ```bash
+   # Look in app/routers/<entities>.py
+   grep "response_model=" app/routers/movies.py
+   ```
+
+3. **Create matching frontend type:**
+   ```typescript
+   // Backend: TMDBSearchResponse with results, query, year
+   // Frontend must match exactly:
+   export interface TMDBSearchResponse {
+     results: TMDBSearchResult[];
+     query: string;
+     year: number | null;
+   }
+   ```
+
+4. **Use the wrapper type in API client:**
+   ```typescript
+   // CORRECT - uses full response type, then extracts what's needed
+   async searchMovies(query: string, year?: number): Promise<TMDBSearchResult[]> {
+     const response = await this.request<TMDBSearchResponse>(`/movies/search/?...`);
+     return response.results;
+   }
+
+   // WRONG - assumes backend returns array directly
+   async searchMovies(query: string, year?: number): Promise<TMDBSearchResult[]> {
+     return this.request<TMDBSearchResult[]>(`/movies/search/?...`);
+   }
+   ```
+
+### Common Frontend Mistakes
+
+1. **Assuming list endpoints return arrays directly**
+   ```typescript
+   // WRONG - most list endpoints return wrapper objects
+   async getItems(): Promise<Item[]> {
+     return this.request<Item[]>('/items/');
+   }
+
+   // CORRECT - list endpoints return paginated response
+   async getItems(): Promise<ItemListResponse> {
+     return this.request<ItemListResponse>('/items/');
+   }
+   ```
+
+2. **Not defining wrapper response types**
+   ```typescript
+   // WRONG - only has the item type
+   export interface TMDBSearchResult { ... }
+
+   // CORRECT - has both item AND response wrapper types
+   export interface TMDBSearchResult { ... }
+   export interface TMDBSearchResponse {
+     results: TMDBSearchResult[];
+     query: string;
+     year: number | null;
+   }
+   ```
+
+### Testing API Integrations
+
+When adding MSW handlers, match the backend response shape exactly:
+
+```typescript
+// handlers.ts - must match backend TMDBSearchResponse schema
+http.get('/api/v1/movies/search/', () => {
+  return HttpResponse.json({
+    results: [{ tmdb_id: 1, title: 'Test', year: 2024, poster_url: null, overview: null }],
+    query: 'test',
+    year: null,
+  });
+});
+```
 
 ## Styling Conventions
 
@@ -1142,22 +1075,9 @@ describe('Button', () => {
 
 ## Common Gotchas
 
-### 1. Trailing Slashes on API Calls
+> **Note:** For trailing slashes, datetime handling, and HTTP status codes, see the [root CLAUDE.md](../CLAUDE.md). This section covers frontend-specific gotchas.
 
-**CRITICAL**: All API endpoints require trailing slashes.
-
-```tsx
-// CORRECT
-'/api/v1/rankings/'
-'/api/v1/rankings/?limit=20'
-`/api/v1/rankings/${id}/`
-
-// WRONG - causes 404 or redirect errors
-'/api/v1/rankings'
-`/api/v1/rankings/${id}`
-```
-
-### 2. Date Handling
+### 1. Date Handling
 
 Send dates as ISO 8601 UTC strings:
 
@@ -1170,7 +1090,7 @@ const localDate = '2024-01-15';  // from <input type="date">
 const isoDate = new Date(localDate).toISOString();
 ```
 
-### 3. Login Content-Type
+### 2. Login Content-Type
 
 Login uses `application/x-www-form-urlencoded`, not JSON:
 
@@ -1190,7 +1110,7 @@ async login(email: string, password: string): Promise<Token> {
 }
 ```
 
-### 4. Component Imports
+### 3. Component Imports
 
 Always import from barrel file when available:
 
@@ -1203,7 +1123,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 ```
 
-### 5. Form Event Handling
+### 4. Form Event Handling
 
 Always prevent default and handle async properly:
 
@@ -1223,7 +1143,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 };
 ```
 
-### 6. useCallback Dependencies
+### 5. useCallback Dependencies
 
 Include all used functions in dependency arrays:
 
@@ -1239,7 +1159,7 @@ const handleAction = useCallback(async () => {
 }, []);  // fetchData is missing
 ```
 
-### 7. Modal Focus Management
+### 6. Modal Focus Management
 
 The Modal component handles focus automatically. Just pass `isOpen` and `onClose`:
 
@@ -1253,7 +1173,7 @@ The Modal component handles focus automatically. Just pass `isOpen` and `onClose
 </Modal>
 ```
 
-### 8. Protected Routes
+### 7. Protected Routes
 
 Wrap protected routes with `<ProtectedRoute />` element wrapper:
 
@@ -1268,9 +1188,11 @@ Wrap protected routes with `<ProtectedRoute />` element wrapper:
 
 ### Checklist
 
-- [ ] Review 2-3 similar existing implementations
+- [ ] Review [root CLAUDE.md](../CLAUDE.md) for project-wide conventions
+- [ ] Review 2-3 similar existing implementations in this codebase
 - [ ] Identify required types and add to `types/index.ts`
-- [ ] Plan API endpoints with trailing slashes
+- [ ] Verify backend schema matches frontend types (API contract)
+- [ ] Plan API endpoints (all URLs must have trailing slashes)
 - [ ] Create custom hook if data fetching is involved
 - [ ] Design component with proper accessibility attributes
 - [ ] Add styles using CSS custom properties

@@ -1,60 +1,51 @@
-# Movie Ranking Project Conventions
+# Movie Ranking Project
 
-This document captures project conventions to ensure consistency across the codebase.
+This document defines project-wide conventions that apply across the entire codebase. For domain-specific guidance, see the detailed guides in each directory.
 
-## API Conventions
+## Detailed Guides
 
-### Trailing Slashes
-**All API endpoints use trailing slashes.** This is critical for FastAPI's redirect behavior.
+| Guide | Purpose |
+|-------|---------|
+| [`frontend/CLAUDE.md`](frontend/CLAUDE.md) | React/TypeScript development, components, hooks, styling |
+| [`app/CLAUDE.md`](app/CLAUDE.md) | FastAPI backend, models, schemas, routers, migrations |
+| [`infra/CLAUDE.md`](infra/CLAUDE.md) | AWS CDK infrastructure, CloudFront, Lambda, deployment |
+
+## Critical Conventions
+
+### Trailing Slashes (MUST FOLLOW)
+
+**All API endpoints use trailing slashes.** This is critical for FastAPI's redirect behavior and CORS compatibility.
 
 ```python
-# Correct
+# Backend - Correct
 @router.post("/")
-@router.get("/")
 @router.delete("/{ranking_id}/")
 
-# Wrong - will cause 404 errors
+# Backend - Wrong (causes 404/redirect errors)
 @router.delete("/{ranking_id}")
 ```
 
-Frontend API calls must also include trailing slashes:
 ```typescript
-// Correct
+// Frontend - Correct
 await fetch(`/api/v1/rankings/${id}/`, { method: 'DELETE' });
 
-// Wrong
+// Frontend - Wrong
 await fetch(`/api/v1/rankings/${id}`, { method: 'DELETE' });
 ```
 
-### HTTP Status Codes
-- `200` - Successful update
-- `201` - Successful creation
-- `204` - Successful deletion (no content)
-- `401` - Not authenticated
-- `403` - Not authorized (e.g., accessing another user's resource)
-- `404` - Resource not found
-- `422` - Validation error
+### DateTime Handling
 
-## DateTime Handling
+**Strategy: Naive UTC.** The database uses `TIMESTAMP WITHOUT TIME ZONE`. All datetimes are stored as naive UTC.
 
-### Strategy: Naive UTC
-The database uses `TIMESTAMP WITHOUT TIME ZONE` columns. All datetimes are stored as **naive UTC**.
-
-### Client Input
-Frontend sends ISO 8601 with timezone:
-```typescript
-// Frontend sends
-new Date().toISOString()  // "2025-12-25T10:00:00.000Z"
-```
-
-### Backend Conversion
-Always convert timezone-aware datetimes to naive UTC before storage:
+| Layer | Format |
+|-------|--------|
+| Frontend sends | ISO 8601 with timezone: `new Date().toISOString()` |
+| Backend converts | Naive UTC before storage |
+| Database stores | `TIMESTAMP WITHOUT TIME ZONE` |
 
 ```python
-from datetime import datetime, timezone
-
+# Backend conversion (app/routers/*.py)
 def to_naive_utc(dt: datetime | None) -> datetime | None:
-    """Convert a datetime to naive UTC datetime for database storage."""
     if dt is None:
         return None
     if dt.tzinfo is not None:
@@ -62,68 +53,27 @@ def to_naive_utc(dt: datetime | None) -> datetime | None:
     return dt
 ```
 
-### Usage
-```python
-# In router/service code
-rating.rated_at = to_naive_utc(request.rated_at) or datetime.utcnow()
-```
+### HTTP Status Codes
 
-## Database Conventions
-
-### Column Types
-- UUIDs: `UUID` with `server_default=text("gen_random_uuid()")`
-- Timestamps: `DateTime(timezone=True)` in migrations, stored as naive UTC
-- Strings: Use appropriate `String(length)` - see existing models for patterns
-
-### Migrations
-- Number migrations sequentially: `001_`, `002_`, etc.
-- Backfill data when adding non-nullable columns
-- Add indexes for frequently queried columns
-
-## Testing Requirements
-
-### API Tests Must:
-1. Use trailing slashes in all URLs
-2. Send timezone-aware dates (ISO 8601 with 'Z' suffix)
-3. Test full data path: input → storage → retrieval
-4. Include edge cases: nulls, boundaries, timezone variations
-
-### Example Test Pattern
-```python
-@pytest.mark.asyncio
-async def test_create_with_custom_date(self, client, auth_headers, test_movie):
-    custom_date = "2025-12-25T10:00:00Z"  # Timezone-aware
-    response = await client.post(
-        "/api/v1/rankings/",  # Trailing slash
-        json={
-            "movie_id": test_movie["movie_id"],
-            "rating": 4,
-            "rated_at": custom_date,
-        },
-        headers=auth_headers,
-    )
-    assert response.status_code == 201
-```
-
-## Frontend Conventions
-
-### API Client
-- Always use trailing slashes on API calls
-- Handle 204 No Content responses
-- Send dates as ISO 8601 UTC: `new Date().toISOString()`
-
-### Content-Type Headers
-- JSON requests: `application/json` (default)
-- Form data: `application/x-www-form-urlencoded` (login)
-- Don't override Content-Type if already set
+| Code | Usage |
+|------|-------|
+| `200` | Successful update/read |
+| `201` | Successful creation |
+| `204` | Successful deletion (no content) |
+| `401` | Not authenticated |
+| `403` | Not authorized (wrong user) |
+| `404` | Resource not found |
+| `422` | Validation error |
 
 ## API Contract Verification
 
 **Critical:** Frontend and backend types must match exactly. Runtime errors occur when they don't.
 
 ### Common Pitfall
+
 ```typescript
 // Backend returns: { results: [...], query: "...", year: null }
+
 // WRONG - Frontend assumes raw array
 async searchMovies(): Promise<SearchResult[]> {
   return this.request<SearchResult[]>('/search/');  // Runtime error!
@@ -137,50 +87,65 @@ async searchMovies(): Promise<SearchResult[]> {
 ```
 
 ### Verification Checklist
+
 - [ ] Read backend schema (`app/schemas/*.py`) before implementing frontend types
 - [ ] Check `response_model=` in router to see exact response shape
 - [ ] Wrapper responses (`*ListResponse`, `*SearchResponse`) contain data in a field like `items` or `results`
 - [ ] Field names use `snake_case` (matching Python/JSON convention)
 
-**See also:**
-- `frontend/CLAUDE.md` → "API Contract Verification" section
-- `app/CLAUDE.md` → "Frontend API Contract Documentation" section
+For detailed patterns, see:
+- `frontend/CLAUDE.md` - "API Contract Verification" section
+- `app/CLAUDE.md` - "Frontend API Contract Documentation" section
 
-## Planning Documents
+## Documentation Structure
 
-All implementation plans are stored in `.claude/plans/`:
-
-### Legacy Plans (single files)
-- `01-initial-app-implementation.md` - Original app architecture
-- `02-api-implementation.md` - FastAPI backend implementation
-- `03-rating-date-and-delete-features.md` - Rating date and delete features
-- `04-movie-search-feature.md` - TMDB movie search integration
-- `05-frontend-development.md` - React frontend development
-- `06-fix-date-timezone-bug.md` - Date timezone bug fix
-
-### New Feature Plans (directory structure)
-New features use a directory structure with the product-manager creating the feature plan and the tech-lead breaking it into tasks:
+All project documentation is stored in `.claude_docs/`:
 
 ```
-.claude/plans/NN-feature-name/
-├── README.md           # Feature plan (created by product-manager)
-├── TASKS.md            # Task execution plan (created by tech-lead)
-├── 01-task-name.md     # Individual task with agent assignment
-├── 02-task-name.md
-└── ...
+.claude_docs/
+├── features/                    # Feature Requirements Documents (FRDs)
+│   └── {feature-slug}/
+│       ├── sketch.md            # SMALL tier (quick sketch)
+│       ├── frd.md               # MEDIUM/LARGE tier (full FRD)
+│       └── refinement.md        # Refinement notes
+├── tasks/                       # Task breakdowns for features
+│   └── {feature-slug}/
+│       ├── _index.md            # Master task list with dependencies
+│       └── task-{n}-{name}.md   # Individual tasks
+├── decisions/                   # Architecture Decision Records
+│   └── ADR-{n}-{slug}.md
+└── archive/                     # Completed/legacy documentation
+    ├── plans/                   # Old .claude/plans/ content
+    └── docs/                    # Old docs/ content
 ```
 
-**Active Feature Plans:**
-- `07-analytics-enhancements/` - 2x2 dashboard with stats card and rating distribution chart
-- `08-google-oauth/` - Google OAuth login integration
-- `09-google-account-linking/` - Link existing accounts to Google OAuth
+## Agent Workflow
 
-### Workflow
-1. **product-manager** creates `README.md` with feature definition, user stories, and requirements
-2. **tech-lead** reviews the plan and creates task files with agent assignments
-3. Tasks are executed by assigned agents in the defined sequence
+Specialized agents handle different aspects of development. See `.claude/agents/` for agent definitions.
 
-## Git Commit Messages
+### Feature Development Tiers
+
+| Tier | Process |
+|------|---------|
+| TRIVIAL | Direct implementation |
+| SMALL | Quick Sketch -> Implementation |
+| MEDIUM | FRD -> Light Refinement -> Implementation |
+| LARGE | FRD -> Thorough Refinement -> Task Breakdown -> Implementation |
+
+### Key Agents
+
+| Agent | Purpose |
+|-------|---------|
+| `request-triage` | Categorizes requests and determines workflow |
+| `frd-creator` | Creates Feature Requirements Documents |
+| `frd-refiner` | Refines FRDs against codebase patterns |
+| `frd-task-breakdown` | Breaks features into implementable tasks |
+| `backend-implementation` | Implements backend features |
+| `frontend-implementation` | Implements frontend features |
+| `test-coverage` | Adds/improves test coverage |
+| `documentation-writer` | Creates/updates documentation |
+
+## Git Conventions
 
 - Do NOT include "Co-Authored-By: Claude" or any Claude attribution in commit messages
 - Keep commit messages concise and descriptive
@@ -189,9 +154,10 @@ New features use a directory structure with the product-manager creating the fea
 ## Before Implementing New Features
 
 ### Checklist
+
 - [ ] Examine 3+ similar implementations in the codebase
-- [ ] Review models, schemas, routers, and migrations for related features
-- [ ] Document conventions found (URL patterns, datetime handling, etc.)
+- [ ] Review the relevant detailed guide (`frontend/CLAUDE.md` or `app/CLAUDE.md`)
 - [ ] Verify trailing slash convention matches existing endpoints
 - [ ] Match datetime handling patterns (naive UTC conversion)
+- [ ] Plan API contracts before implementing (check both frontend types and backend schemas)
 - [ ] Write integration tests with realistic frontend requests

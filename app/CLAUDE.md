@@ -1,6 +1,8 @@
 # Backend Development Guide
 
-This document provides comprehensive guidance for adding new features to the Movie Ranking API backend. Follow these patterns to ensure consistency with existing code.
+This document provides FastAPI/Python development guidance for the Movie Ranking API backend.
+
+> **Important:** Before reading this guide, review the [root CLAUDE.md](../CLAUDE.md) for project-wide conventions including trailing slashes, datetime handling, HTTP status codes, and API contract verification. This guide focuses on backend-specific patterns and implementation details.
 
 ## Project Structure
 
@@ -312,9 +314,7 @@ __all__ = [
 
 ## Frontend API Contract Documentation
 
-### The Problem
-
-Frontend developers may misinterpret response shapes when backend schemas are unclear or inconsistent. This leads to runtime errors when the frontend expects a different response structure than the backend provides.
+> **Note:** See the [root CLAUDE.md](../CLAUDE.md) for the complete API contract verification requirements. This section covers backend-specific documentation patterns.
 
 ### Schema Documentation Requirements
 
@@ -372,15 +372,6 @@ async def search_tmdb_movies(...) -> TMDBSearchResponse:
         NOTE: Results are wrapped in a response object, not returned as a raw list.
     """
 ```
-
-### Checklist When Adding New Endpoints
-
-- [ ] Response schema has clear docstring explaining structure
-- [ ] Router uses `response_model=` parameter
-- [ ] Router docstring documents the response shape
-- [ ] Wrapper responses clearly indicate what field contains the data
-- [ ] Field names use snake_case (FastAPI/Pydantic convention)
-- [ ] Consider adding example response in docstring for complex shapes
 
 ### Field Naming Convention
 
@@ -453,7 +444,10 @@ router = APIRouter(tags=["entities"])
 
 
 def to_naive_utc(dt: datetime | None) -> datetime | None:
-    """Convert a datetime to naive UTC datetime for database storage."""
+    """Convert a datetime to naive UTC datetime for database storage.
+
+    See root CLAUDE.md for datetime handling strategy.
+    """
     if dt is None:
         return None
     if dt.tzinfo is not None:
@@ -462,7 +456,7 @@ def to_naive_utc(dt: datetime | None) -> datetime | None:
 
 
 @router.post(
-    "/",
+    "/",  # NOTE: Trailing slash required (see root CLAUDE.md)
     response_model=EntityResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new entity",
@@ -504,7 +498,7 @@ async def create_entity(
 
 
 @router.get(
-    "/",
+    "/",  # NOTE: Trailing slash required
     response_model=EntityListResponse,
     summary="List user's entities",
     responses={
@@ -554,7 +548,7 @@ async def list_entities(
 
 
 @router.get(
-    "/{entity_id}/",
+    "/{entity_id}/",  # NOTE: Trailing slash required
     response_model=EntityResponse,
     summary="Get entity by ID",
     responses={
@@ -601,7 +595,7 @@ async def get_entity(
 
 
 @router.put(
-    "/{entity_id}/",
+    "/{entity_id}/",  # NOTE: Trailing slash required
     response_model=EntityResponse,
     summary="Update an entity",
     responses={
@@ -656,7 +650,7 @@ async def update_entity(
 
 
 @router.delete(
-    "/{entity_id}/",
+    "/{entity_id}/",  # NOTE: Trailing slash required
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete an entity",
     responses={
@@ -713,15 +707,15 @@ app.include_router(entities.router, prefix="/api/v1/entities")
 
 | Convention | Pattern |
 |------------|---------|
-| **CRITICAL: Trailing slashes** | All endpoints MUST end with `/` (e.g., `"/"``, `"/{id}/"`) |
 | Tags | Use `tags=["entities"]` matching resource name |
-| Status codes | 200=update, 201=create, 204=delete, 401=unauth, 403=forbidden, 404=not found |
 | Response model | Always specify `response_model=` |
 | Responses dict | Document all possible response codes |
 | Dependencies | Use `CurrentUser` for auth, `DbSession` for database |
 | Query params | Use `Query(default=X, ge=Y, le=Z)` for pagination |
 | Path params | Use `{id}/` pattern with trailing slash |
 | Authorization | Always check `entity.user_id != current_user.id` for ownership |
+
+> **Important:** All endpoint paths MUST end with `/`. See the [root CLAUDE.md](../CLAUDE.md) for details on the trailing slash convention.
 
 ---
 
@@ -853,6 +847,8 @@ These tests verify the entities functionality including:
 - Updating entities
 - Deleting entities (with trailing slash)
 - Authorization checks
+
+NOTE: All URLs must include trailing slashes. See root CLAUDE.md.
 """
 
 import pytest
@@ -868,7 +864,7 @@ class TestCreateEntity:
     ):
         """Test successful entity creation."""
         response = await client.post(
-            "/api/v1/entities/",  # TRAILING SLASH IS CRITICAL
+            "/api/v1/entities/",  # Trailing slash required
             json={
                 "name": "Test Entity",
                 "value": 50,
@@ -975,7 +971,7 @@ class TestDeleteEntity:
         )
         entity_id = create_response.json()["id"]
 
-        # Delete with trailing slash (CRITICAL)
+        # Delete with trailing slash (required)
         delete_response = await client.delete(
             f"/api/v1/entities/{entity_id}/",
             headers=auth_headers,
@@ -1081,7 +1077,6 @@ class TestFullEntityFlow:
 
 | Convention | Details |
 |------------|---------|
-| **CRITICAL: Trailing slashes** | All URLs MUST include trailing slashes |
 | Class organization | Group by endpoint: `TestCreate*`, `TestList*`, `TestDelete*`, `TestFull*Flow` |
 | Fixtures | Use `client`, `auth_headers`, `test_user`, `test_movie` from conftest.py |
 | Assertions | Check status code first, then response body |
@@ -1089,6 +1084,8 @@ class TestFullEntityFlow:
 | Validation tests | Test 422 for invalid input |
 | Flow tests | Test complete user journeys |
 | Login tests | Use `data={}` (form), NOT `json={}` for /login |
+
+> **Important:** All test URLs must include trailing slashes. See the [root CLAUDE.md](../CLAUDE.md) for details.
 
 ### Running Tests
 
@@ -1157,6 +1154,8 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 ## Common Patterns and Utilities
 
 ### DateTime Handling (Naive UTC)
+
+> **Note:** See the [root CLAUDE.md](../CLAUDE.md) for the datetime handling strategy. This section covers the backend implementation.
 
 The database stores naive UTC datetimes. Always convert timezone-aware input:
 
@@ -1265,23 +1264,9 @@ from app.utils.security import (
 
 ## Important Gotchas
 
-### 1. Trailing Slashes Are Mandatory
+> **Note:** For trailing slashes, datetime handling, and HTTP status codes, see the [root CLAUDE.md](../CLAUDE.md). This section covers backend-specific gotchas.
 
-All endpoint paths MUST end with `/`. Without trailing slashes, FastAPI returns 307 redirects which can cause issues.
-
-```python
-# CORRECT
-@router.get("/")
-@router.get("/{id}/")
-@router.delete("/{id}/")
-
-# WRONG - will cause 404 or redirect issues
-@router.get("")
-@router.get("/{id}")
-@router.delete("/{id}")
-```
-
-### 2. Login Uses Form Data, Not JSON
+### 1. Login Uses Form Data, Not JSON
 
 The `/login` endpoint uses `OAuth2PasswordRequestForm` which requires `application/x-www-form-urlencoded`:
 
@@ -1294,7 +1279,7 @@ response = await client.post(
 )
 ```
 
-### 3. Always Check Ownership
+### 2. Always Check Ownership
 
 For user-specific resources, always verify ownership before allowing operations:
 
@@ -1303,7 +1288,7 @@ if entity.user_id != current_user.id:
     raise HTTPException(status_code=403, detail="Not authorized")
 ```
 
-### 4. Use flush() and refresh() for Created/Updated Records
+### 3. Use flush() and refresh() for Created/Updated Records
 
 To get database-generated values (id, timestamps):
 
@@ -1314,18 +1299,7 @@ await db.refresh(new_entity)  # Load generated values into object
 return new_entity
 ```
 
-### 5. Response Status Codes Matter
-
-- `201` for successful creation
-- `200` for successful update/read
-- `204` for successful deletion (no content returned)
-
-```python
-@router.post("/", status_code=status.HTTP_201_CREATED)
-@router.delete("/{id}/", status_code=status.HTTP_204_NO_CONTENT)
-```
-
-### 6. Unique Results with joinedload
+### 4. Unique Results with joinedload
 
 When using `joinedload` with collections, call `.unique()`:
 
@@ -1338,11 +1312,11 @@ result = await db.execute(
 entities = result.scalars().unique().all()  # .unique() is important
 ```
 
-### 7. SQLite Test Compatibility
+### 5. SQLite Test Compatibility
 
 Tests use SQLite which doesn't support PostgreSQL's `gen_random_uuid()`. The conftest.py handles this with custom UUID generation, but be aware if adding new UUID columns.
 
-### 8. Import Models Before Migrations
+### 6. Import Models Before Migrations
 
 The alembic `env.py` imports models to ensure metadata is registered:
 
@@ -1358,6 +1332,7 @@ Always ensure new models are exported from `app/models/__init__.py`.
 
 When adding a new feature:
 
+- [ ] Review [root CLAUDE.md](../CLAUDE.md) for project-wide conventions
 - [ ] Create model in `app/models/<entity>.py`
 - [ ] Export model from `app/models/__init__.py`
 - [ ] Add relationships to related models (e.g., User)
@@ -1371,4 +1346,5 @@ When adding a new feature:
 - [ ] All protected endpoints use `CurrentUser` dependency
 - [ ] All database operations use `DbSession` dependency
 - [ ] Authorization checks for user-owned resources
+- [ ] Schema docstrings document response shapes for frontend
 - [ ] Tests cover create, read, update, delete, auth, and validation
