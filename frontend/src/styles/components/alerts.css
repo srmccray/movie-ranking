@@ -4,7 +4,7 @@
   border-radius: var(--radius-lg);
   font-size: 0.875rem;
   margin-bottom: var(--space-4);
-  animation: alertSlideIn var(--transition-normal) ease-out;
+  animation: alertSlideIn var(--transition-normal);
 }
 
 .alert-error {

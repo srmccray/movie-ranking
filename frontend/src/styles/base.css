@@ -97,7 +97,7 @@ select {
   border: 2px solid transparent;
   border-top-color: currentColor;
   border-radius: 50%;
-  animation: spinnerFadeIn var(--transition-normal) ease-out,
+  animation: spinnerFadeIn var(--transition-normal),
              spin 600ms linear infinite;
 }
 
@@ -106,7 +106,7 @@ select {
   align-items: center;
   justify-content: center;
   padding: var(--space-8);
-  animation: fadeIn var(--transition-normal) ease-out;
+  animation: fadeIn var(--transition-normal);
 }
 
 .loading-container .spinner {

@@ -13,11 +13,11 @@
 
 /* Utility classes for animations */
 .animate-success-pulse {
-  animation: successPulse var(--transition-slow) ease-out;
+  animation: successPulse var(--transition-slow);
 }
 
 .animate-subtle-pulse {
-  animation: subtlePulse var(--transition-slow) ease-in-out;
+  animation: subtlePulse var(--transition-slow);
 }
 
 /* ==================== Animations ==================== */
