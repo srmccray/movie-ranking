@@ -74,6 +74,22 @@ select {
   letter-spacing: -0.02em;
 }
 
+/* Loading Spinner Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinnerFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Loading Spinner */
 .spinner {
   width: 20px;

@@ -26,9 +26,14 @@ const API_BASE = '/api/v1';
 
 class ApiClient {
   private token: string | null = null;
+  private onUnauthorized: (() => void) | null = null;
 
   setToken(token: string | null) {
     this.token = token;
+  }
+
+  setOnUnauthorized(callback: (() => void) | null) {
+    this.onUnauthorized = callback;
   }
 
   private async request<T>(
@@ -58,6 +63,11 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      // Handle 401 Unauthorized - trigger logout callback
+      if (response.status === 401 && this.onUnauthorized) {
+        this.onUnauthorized();
+      }
+
       const error: ApiError = await response.json();
       throw new ApiClientError(response.status, error);
     }
@@ -209,6 +219,11 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      // Handle 401 Unauthorized - trigger logout callback
+      if (response.status === 401 && this.onUnauthorized) {
+        this.onUnauthorized();
+      }
+
       const error: ApiError = await response.json();
       throw new ApiClientError(response.status, error);
     }

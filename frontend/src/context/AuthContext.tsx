@@ -69,6 +69,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     apiClient.setToken(null);
   }, []);
 
+  // Register logout as the unauthorized callback so API 401s trigger logout
+  useEffect(() => {
+    apiClient.setOnUnauthorized(logout);
+
+    // Cleanup on unmount (though AuthProvider rarely unmounts)
+    return () => {
+      apiClient.setOnUnauthorized(null);
+    };
+  }, [logout]);
+
   const loginWithToken = useCallback(
     (accessToken: string) => {
       saveToken(accessToken);

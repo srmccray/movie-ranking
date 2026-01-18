@@ -42,11 +42,7 @@
   }
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* Note: @keyframes spin is defined in base.css with the spinner */
 
 @keyframes float {
   0%, 100% {
@@ -151,15 +147,7 @@
   }
 }
 
-/* Loading spinner fade-in for smoother appearance */
-@keyframes spinnerFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+/* Note: @keyframes spinnerFadeIn is defined in base.css with the spinner */
 
 /* ==================== Reduced Motion Support ==================== */
 /* Following WCAG 2.3.3 guidelines: reduce motion but don't remove essential
