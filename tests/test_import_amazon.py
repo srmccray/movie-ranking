@@ -39,14 +39,29 @@ def create_mock_tmdb_result(
     year: int | None = None,
     poster_url: str | None = None,
     overview: str | None = None,
+    genre_ids: list[int] | None = None,
+    vote_average: float | None = None,
+    vote_count: int | None = None,
+    release_date: str | None = None,
+    original_language: str | None = None,
 ):
-    """Create a mock TMDB search result."""
+    """Create a mock TMDB search result.
+
+    All attributes must be explicitly set to avoid MagicMock returning
+    nested MagicMock objects for unset attributes, which would cause
+    Pydantic validation errors when creating TMDBMatchResult schemas.
+    """
     mock = MagicMock()
     mock.tmdb_id = tmdb_id
     mock.title = title
     mock.year = year
     mock.poster_url = poster_url
     mock.overview = overview
+    mock.genre_ids = genre_ids
+    mock.vote_average = vote_average
+    mock.vote_count = vote_count
+    mock.release_date = release_date
+    mock.original_language = original_language
     return mock
 
 
