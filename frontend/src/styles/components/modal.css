@@ -1,0 +1,79 @@
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 200;
+  animation: fadeIn 150ms ease;
+}
+
+.modal {
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl), var(--shadow-glow-purple);
+  animation: scaleIn 150ms ease;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-neutral-50);
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-neutral-400);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.modal-close:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-neutral-200);
+}
+
+.modal-body {
+  padding: var(--space-6);
+}
+
+/* Clear All Rankings Modal */
+.clear-all-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.clear-all-modal-message {
+  color: var(--color-neutral-200);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.clear-all-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}

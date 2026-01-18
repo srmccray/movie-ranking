@@ -1,0 +1,47 @@
+/* Star Rating */
+.star-rating {
+  display: flex;
+  gap: 4px;
+}
+
+.star-rating.sm .star {
+  width: 18px;
+  height: 18px;
+}
+
+.star-rating.md .star {
+  width: 28px;
+  height: 28px;
+}
+
+.star-rating.lg .star {
+  width: 36px;
+  height: 36px;
+}
+
+.star {
+  cursor: pointer;
+  transition: transform var(--transition-fast), filter var(--transition-fast);
+}
+
+.star:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 2px 8px rgba(251, 191, 36, 0.5));
+}
+
+.star.readonly {
+  cursor: default;
+}
+
+.star.readonly:hover {
+  transform: none;
+  filter: none;
+}
+
+.star-filled {
+  color: var(--color-star-filled);
+}
+
+.star-empty {
+  color: var(--color-star-empty);
+}

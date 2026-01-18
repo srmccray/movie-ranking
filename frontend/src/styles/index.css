@@ -1,0 +1,33 @@
+/**
+ * Movie Ranking - Main Stylesheet
+ *
+ * This file imports all modular CSS files in the correct order.
+ * Design tokens (variables) must be loaded first, followed by base styles,
+ * then components, pages, and finally utilities/animations.
+ */
+
+/* Design Tokens - Must be loaded first */
+@import './variables.css';
+
+/* Base Styles - Reset, typography, global elements */
+@import './base.css';
+
+/* Components */
+@import './components/buttons.css';
+@import './components/forms.css';
+@import './components/cards.css';
+@import './components/header.css';
+@import './components/modal.css';
+@import './components/movie-card.css';
+@import './components/star-rating.css';
+@import './components/alerts.css';
+
+/* Pages */
+@import './pages/auth.css';
+@import './pages/rankings.css';
+@import './pages/analytics.css';
+@import './pages/settings.css';
+@import './pages/import.css';
+
+/* Utilities and Animations - Should be last for proper cascade */
+@import './utilities.css';

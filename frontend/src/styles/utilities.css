@@ -1,0 +1,221 @@
+/* Utility Classes */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Utility classes for animations */
+.animate-success-pulse {
+  animation: successPulse var(--transition-slow) ease-out;
+}
+
+.animate-subtle-pulse {
+  animation: subtlePulse var(--transition-slow) ease-in-out;
+}
+
+/* ==================== Animations ==================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes alertSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.95);
+  }
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scaleY(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Success pulse animation for action confirmations */
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+/* Subtle scale pulse for inline success indicators */
+@keyframes subtlePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+/* Loading spinner fade-in for smoother appearance */
+@keyframes spinnerFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ==================== Reduced Motion Support ==================== */
+/* Following WCAG 2.3.3 guidelines: reduce motion but don't remove essential
+ * animations like spinners that indicate system status.
+ * See: https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html
+ */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable decorative transitions globally */
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Disable decorative entrance/exit animations */
+  .alert,
+  .movie-search-results,
+  .loading-container,
+  .rankings-list .movie-card,
+  .rankings-list .add-movie-card,
+  .animate-success-pulse,
+  .animate-subtle-pulse {
+    animation: none !important;
+  }
+
+  /* Spinner keeps its rotation (essential for indicating loading state)
+   * but removes the fade-in entrance animation */
+  .spinner {
+    animation: spin 600ms linear infinite !important;
+  }
+
+  /* Disable transform-based hover effects */
+  .movie-card:hover {
+    transform: none;
+  }
+
+  .movie-card:hover .movie-poster {
+    transform: none;
+  }
+
+  .empty-state-icon {
+    animation: none;
+  }
+
+  .add-movie-card,
+  .add-movie-card-icon,
+  .add-movie-card-icon svg,
+  .add-movie-card-hint {
+    transition: none;
+  }
+
+  .add-movie-card:hover .add-movie-card-icon svg {
+    transform: none;
+  }
+
+  .add-movie-card:hover .add-movie-card-icon {
+    transform: none;
+  }
+}

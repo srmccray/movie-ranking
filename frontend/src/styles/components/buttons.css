@@ -1,0 +1,223 @@
+/* Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+  text-decoration: none;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: 0.875rem;
+}
+
+.btn-md {
+  height: 40px;
+  padding: 0 var(--space-4);
+  font-size: 0.875rem;
+}
+
+.btn-lg {
+  height: 48px;
+  padding: 0 var(--space-6);
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: var(--shadow-glow-purple);
+  border: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c084fc 0%, #60a5fa 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-glow-purple);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 1px solid var(--color-border-hover);
+  color: var(--color-neutral-100);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-primary-500);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-neutral-300);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-neutral-100);
+}
+
+.btn-full {
+  width: 100%;
+}
+
+/* Danger Button */
+.btn-danger {
+  background-color: var(--color-danger-500);
+  color: white;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.btn-danger:hover {
+  background-color: var(--color-danger-600);
+}
+
+.btn-danger:focus-visible {
+  outline: 2px solid var(--color-danger-500);
+  outline-offset: 2px;
+}
+
+/* Icon Button */
+.btn-icon {
+  background: none;
+  border: none;
+  padding: var(--space-2);
+  cursor: pointer;
+  color: var(--color-neutral-500);
+  border-radius: var(--radius-md);
+  transition: color 150ms ease, background-color 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  color: var(--color-neutral-300);
+  background-color: var(--color-bg-tertiary);
+}
+
+.btn-icon:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* Menu Toggle Button */
+.btn-menu-toggle {
+  color: var(--color-neutral-400);
+}
+
+.btn-menu-toggle:hover {
+  color: var(--color-neutral-200);
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Small Icon Buttons (for inline actions) */
+.btn-icon-sm {
+  background: none;
+  border: none;
+  width: 24px;
+  height: 24px;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-400);
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.btn-icon-sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-icon-sm:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.btn-icon-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon-save:hover:not(:disabled) {
+  color: var(--color-success);
+  background-color: var(--color-success-bg, rgba(34, 197, 94, 0.1));
+}
+
+.btn-icon-cancel:hover:not(:disabled) {
+  color: var(--color-neutral-600);
+  background-color: var(--color-neutral-100);
+}
+
+/* Google Sign-In Button */
+.btn-google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 44px;
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-neutral-800);
+  background-color: #ffffff;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-google:hover:not(:disabled) {
+  background-color: #f8f8f8;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-google:focus-visible {
+  outline: 2px solid var(--color-secondary-500);
+  outline-offset: 2px;
+}
+
+.btn-google:active:not(:disabled) {
+  background-color: #eeeeee;
+}
+
+.btn-google:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.google-logo {
+  flex-shrink: 0;
+}
