@@ -3,7 +3,7 @@
  */
 
 import { setupServer } from 'msw/node';
-import { handlers } from './handlers';
+import { handlers, importHandlers } from './handlers';
 
-// Create the MSW server with the handlers
-export const server = setupServer(...handlers);
+// Create the MSW server with all handlers (main + import)
+export const server = setupServer(...handlers, ...importHandlers);

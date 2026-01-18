@@ -2440,6 +2440,10 @@ select {
   overflow: hidden;
 }
 
+.settings-card-danger {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
 .settings-row {
   display: flex;
   align-items: center;
@@ -2536,4 +2540,643 @@ select {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* ==================== Import Wizard ==================== */
+
+/* Make import wizard modal larger */
+.import-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Override modal width for import wizard */
+.modal:has(.import-wizard) {
+  max-width: 600px;
+}
+
+/* File Upload Step */
+.import-file-upload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.import-file-upload-description {
+  color: var(--color-neutral-300);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.import-csv-example {
+  margin-top: var(--space-3);
+  border: 1px solid var(--color-neutral-700);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.import-csv-example-toggle {
+  display: block;
+  padding: var(--space-3);
+  background-color: var(--color-neutral-800);
+  color: var(--color-neutral-300);
+  cursor: pointer;
+  font-size: 0.875rem;
+  user-select: none;
+}
+
+.import-csv-example-toggle:hover {
+  background-color: var(--color-neutral-700);
+}
+
+.import-csv-example[open] .import-csv-example-toggle {
+  border-bottom: 1px solid var(--color-neutral-700);
+}
+
+.import-csv-example-content {
+  padding: var(--space-3);
+  background-color: var(--color-neutral-900);
+}
+
+.import-csv-example-note {
+  color: var(--color-neutral-400);
+  font-size: 0.8125rem;
+  margin: 0 0 var(--space-2) 0;
+  line-height: 1.5;
+}
+
+.import-csv-example-note:last-child {
+  margin: var(--space-2) 0 0 0;
+}
+
+.import-csv-example-note strong {
+  color: var(--color-neutral-200);
+}
+
+.import-csv-example-code {
+  background-color: var(--color-neutral-800);
+  border: 1px solid var(--color-neutral-700);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  color: var(--color-neutral-200);
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.import-file-upload-dropzone {
+  border: 2px dashed var(--color-neutral-600);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--transition-normal), background-color var(--transition-normal);
+}
+
+.import-file-upload-dropzone:hover {
+  border-color: var(--color-primary-500);
+  background-color: var(--color-primary-50);
+}
+
+.import-file-upload-dropzone:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.import-file-input {
+  display: none;
+}
+
+.import-file-selected {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.import-file-name {
+  font-weight: 600;
+  color: var(--color-neutral-50);
+}
+
+.import-file-size {
+  font-size: 0.875rem;
+  color: var(--color-neutral-400);
+}
+
+.import-file-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-neutral-300);
+}
+
+.import-file-upload-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--color-neutral-400);
+  margin-bottom: var(--space-2);
+}
+
+.import-file-hint {
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+}
+
+.import-file-upload-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Review Step */
+.import-review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.import-review-empty {
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--color-neutral-300);
+}
+
+.import-review-empty p {
+  margin-bottom: var(--space-4);
+}
+
+.import-review-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.import-review-progress-bar {
+  flex: 1;
+  height: 8px;
+  background-color: var(--color-neutral-700);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.import-review-progress-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  transition: width 0.3s ease;
+}
+
+.import-review-progress-text {
+  font-size: 0.875rem;
+  color: var(--color-neutral-400);
+  white-space: nowrap;
+}
+
+.import-review-card {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.import-review-poster {
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.import-review-poster-image {
+  width: 100%;
+  border-radius: var(--radius-md);
+}
+
+.import-review-poster-placeholder {
+  width: 100%;
+  aspect-ratio: 2/3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  color: var(--color-neutral-500);
+  font-size: 0.875rem;
+}
+
+.import-review-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.import-review-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-neutral-50);
+  margin: 0;
+}
+
+.import-review-year {
+  font-size: 0.875rem;
+  color: var(--color-neutral-400);
+}
+
+.import-review-overview {
+  font-size: 0.875rem;
+  color: var(--color-neutral-400);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.import-review-confidence {
+  margin-top: var(--space-2);
+}
+
+.import-review-confidence-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.confidence-high {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.confidence-medium {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.confidence-low {
+  background-color: var(--color-error-bg);
+  color: var(--color-error);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.import-review-watch-date {
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+}
+
+.import-review-unmatched {
+  text-align: center;
+  padding: var(--space-6);
+  width: 100%;
+}
+
+.import-review-unmatched-title {
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+  margin-bottom: var(--space-2);
+}
+
+.import-review-unmatched-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-neutral-50);
+  margin-bottom: var(--space-4);
+}
+
+.import-review-unmatched-hint {
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+  margin: 0;
+}
+
+.import-review-rating {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.import-review-rating-label {
+  font-weight: 500;
+  color: var(--color-neutral-200);
+}
+
+.import-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* Complete Step */
+.import-complete {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.import-complete-summary {
+  text-align: center;
+}
+
+.import-complete-heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-neutral-50);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.import-complete-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-8);
+}
+
+.import-complete-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.import-complete-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary-500);
+}
+
+.import-complete-stat-label {
+  font-size: 0.875rem;
+  color: var(--color-neutral-400);
+}
+
+.import-complete-unmatched {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.import-complete-unmatched-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-neutral-100);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.import-complete-unmatched-hint {
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.import-complete-unmatched-list {
+  list-style: disc;
+  padding-left: var(--space-4);
+  color: var(--color-neutral-300);
+  margin: 0;
+}
+
+.import-complete-unmatched-list li {
+  margin-bottom: var(--space-1);
+}
+
+.import-complete-unmatched-more {
+  font-style: italic;
+  color: var(--color-neutral-500);
+}
+
+.import-complete-actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* Import Search (Manual Movie Search) */
+.import-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.import-search-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.import-search-label {
+  font-size: 0.875rem;
+  color: var(--color-neutral-400);
+}
+
+.import-search-label strong {
+  color: var(--color-neutral-100);
+}
+
+.import-search-input-wrapper {
+  position: relative;
+}
+
+.import-search-input {
+  padding-right: var(--space-10);
+}
+
+.import-search-spinner {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-neutral-400);
+}
+
+.import-search-spinner .spinner {
+  width: 16px;
+  height: 16px;
+}
+
+.import-search-error {
+  font-size: 0.875rem;
+  color: var(--color-error);
+  padding: var(--space-2) 0;
+}
+
+.import-search-no-results {
+  font-size: 0.875rem;
+  color: var(--color-neutral-400);
+  text-align: center;
+  padding: var(--space-4);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.import-search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg-secondary);
+  box-shadow: var(--shadow-lg);
+}
+
+.import-search-result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.import-search-result:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.import-search-result:hover,
+.import-search-result.highlighted {
+  background: var(--gradient-card-hover);
+}
+
+.import-search-result.highlighted {
+  outline: none;
+}
+
+.import-search-result-poster {
+  flex-shrink: 0;
+  width: 40px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background-color: var(--color-bg-tertiary);
+}
+
+.import-search-poster-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.import-search-poster-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-500);
+}
+
+.import-search-poster-placeholder svg {
+  width: 20px;
+  height: 20px;
+}
+
+.import-search-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.import-search-result-title {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-neutral-50);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-search-result-year {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-neutral-400);
+  margin-top: 2px;
+}
+
+/* Search link button in confidence badge area */
+.import-review-search-link {
+  display: inline;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: var(--space-2);
+  font-size: 0.75rem;
+  color: var(--color-primary-500);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.import-review-search-link:hover:not(:disabled) {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+.import-review-search-link:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.import-review-search-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Import Wizard Responsive */
+@media (max-width: 640px) {
+  .import-review-card {
+    flex-direction: column;
+  }
+
+  .import-review-poster {
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+
+  .import-complete-stats {
+    gap: var(--space-4);
+  }
+
+  .import-complete-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .import-search-header {
+    flex-wrap: wrap;
+  }
+
+  .import-review-search-link {
+    display: block;
+    margin-left: 0;
+    margin-top: var(--space-1);
+  }
+}
+
+/* Clear All Rankings Modal */
+.clear-all-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.clear-all-modal-message {
+  color: var(--color-neutral-200);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.clear-all-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
 }

@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import contains_eager, joinedload
 
 from app.database import DbSession
 from app.dependencies import CurrentUser
@@ -162,24 +162,26 @@ async def list_rankings(
     )
     total = count_result.scalar_one()
 
-    # Build query with sorting
-    query = (
-        select(Ranking)
-        .options(joinedload(Ranking.movie))
-        .where(Ranking.user_id == current_user.id)
-    )
+    # Determine sort column and whether we need explicit join
+    sort_by_movie = sort_by in ("title", "year")
 
-    # Determine sort column
-    if sort_by == "rated_at":
-        sort_column = Ranking.rated_at
-    elif sort_by == "rating":
-        sort_column = Ranking.rating
-    elif sort_by == "title":
-        sort_column = Movie.title
-    elif sort_by == "year":
-        sort_column = Movie.year
+    if sort_by_movie:
+        # Use explicit join for sorting by movie fields
+        query = (
+            select(Ranking)
+            .join(Ranking.movie)
+            .options(contains_eager(Ranking.movie))
+            .where(Ranking.user_id == current_user.id)
+        )
+        sort_column = Movie.title if sort_by == "title" else Movie.year
     else:
-        sort_column = Ranking.rated_at
+        # Use joinedload for ranking fields
+        query = (
+            select(Ranking)
+            .options(joinedload(Ranking.movie))
+            .where(Ranking.user_id == current_user.id)
+        )
+        sort_column = Ranking.rating if sort_by == "rating" else Ranking.rated_at
 
     # Apply sort order
     if sort_order == "asc":
@@ -200,6 +202,43 @@ async def list_rankings(
         limit=limit,
         offset=offset,
     )
+
+
+@router.delete(
+    "/all/",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete all rankings",
+    responses={
+        204: {"description": "All rankings deleted successfully"},
+        401: {"description": "Not authenticated"},
+    },
+)
+async def delete_all_rankings(
+    current_user: CurrentUser,
+    db: DbSession,
+) -> None:
+    """Delete all rankings for the current user.
+
+    This is a destructive operation that removes all of the user's
+    movie rankings. Use with caution.
+
+    Args:
+        current_user: The authenticated user (from JWT token).
+        db: Async database session.
+
+    Raises:
+        HTTPException: 401 if not authenticated.
+    """
+    # Delete all rankings for the current user
+    result = await db.execute(
+        select(Ranking).where(Ranking.user_id == current_user.id)
+    )
+    rankings = result.scalars().all()
+
+    for ranking in rankings:
+        await db.delete(ranking)
+
+    await db.flush()
 
 
 @router.delete(

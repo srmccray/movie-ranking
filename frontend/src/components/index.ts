@@ -12,3 +12,7 @@ export { ProtectedRoute } from './ProtectedRoute';
 export { StatsCard } from './StatsCard';
 export { RatingDistributionChart } from './RatingDistributionChart';
 export { GoogleSignInButton } from './GoogleSignInButton';
+export { ImportWizard } from './ImportWizard';
+export { ImportFileUpload } from './ImportFileUpload';
+export { ImportReview } from './ImportReview';
+export { ImportComplete } from './ImportComplete';

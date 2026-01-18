@@ -198,3 +198,106 @@ export interface AuthContextType extends AuthState {
   logout: () => void;
   loginWithToken: (token: string) => void;
 }
+
+// ============================================
+// Amazon Prime Import Types
+// ============================================
+
+/**
+ * A movie parsed from the Amazon Prime CSV file.
+ */
+export interface ParsedMovieItem {
+  title: string;
+  watch_date: string | null;  // ISO 8601 or null
+  prime_image_url: string | null;
+}
+
+/**
+ * TMDB search result for import matching.
+ */
+export interface TMDBMatchResult {
+  tmdb_id: number;
+  title: string;
+  year: number | null;
+  poster_url: string | null;
+  overview: string | null;
+  genre_ids?: number[] | null;
+  vote_average?: number | null;
+  vote_count?: number | null;
+  release_date?: string | null;
+  original_language?: string | null;
+}
+
+/**
+ * A parsed movie with TMDB match results.
+ */
+export interface MatchedMovieItem {
+  parsed: ParsedMovieItem;
+  tmdb_match: TMDBMatchResult | null;
+  confidence: number;  // 0.0 - 1.0
+  alternatives: TMDBMatchResult[];
+  status: 'pending' | 'added' | 'skipped';
+}
+
+/**
+ * Response after uploading Amazon Prime CSV file.
+ * POST /api/v1/import/amazon-prime/upload/
+ */
+export interface ImportSessionResponse {
+  session_id: string;
+  total_entries: number;
+  movies_found: number;
+  tv_shows_filtered: number;
+  already_ranked: number;
+  ready_for_review: number;
+  movies: MatchedMovieItem[];
+}
+
+/**
+ * Current import session state.
+ * GET /api/v1/import/amazon-prime/session/{session_id}/
+ */
+export interface ImportSessionDetailResponse {
+  session_id: string;
+  current_index: number;
+  total_movies: number;
+  added_count: number;
+  skipped_count: number;
+  remaining_count: number;
+  movies: MatchedMovieItem[];
+}
+
+/**
+ * Request to add a movie from import session.
+ * POST /api/v1/import/amazon-prime/session/{session_id}/movie/{index}/add/
+ */
+export interface ImportMovieAddRequest {
+  rating: number;  // 1-5
+  rated_at?: string | null;  // ISO 8601, optional
+}
+
+/**
+ * Request to update a movie's TMDB match in an import session.
+ * PATCH /api/v1/import/amazon-prime/session/{session_id}/movie/{index}/match/
+ */
+export interface ImportMovieMatchRequest {
+  tmdb_id: number;
+  title: string;
+  year?: number | null;
+  poster_url?: string | null;
+  overview?: string | null;
+  genre_ids?: number[] | null;
+  vote_average?: number | null;
+  vote_count?: number | null;
+  release_date?: string | null;
+  original_language?: string | null;
+}
+
+/**
+ * Summary after completing import (computed from session state).
+ */
+export interface ImportCompletionSummary {
+  movies_added: number;
+  movies_skipped: number;
+  unmatched_titles: string[];
+}

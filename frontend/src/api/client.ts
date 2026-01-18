@@ -15,6 +15,11 @@ import type {
   RatingDistributionResponse,
   GoogleAuthUrlResponse,
   UserProfileResponse,
+  ImportSessionResponse,
+  ImportSessionDetailResponse,
+  ImportMovieAddRequest,
+  ImportMovieMatchRequest,
+  MatchedMovieItem,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -155,6 +160,12 @@ class ApiClient {
     });
   }
 
+  async clearAllRankings(): Promise<void> {
+    await this.request<void>('/rankings/all/', {
+      method: 'DELETE',
+    });
+  }
+
   // Analytics endpoints
   async getActivity(): Promise<ActivityResponse> {
     return this.request<ActivityResponse>('/analytics/activity/');
@@ -170,6 +181,122 @@ class ApiClient {
 
   async getRatingDistribution(): Promise<RatingDistributionResponse> {
     return this.request<RatingDistributionResponse>('/analytics/rating-distribution/');
+  }
+
+  // ============================================
+  // Amazon Prime Import Methods
+  // ============================================
+
+  /**
+   * Upload an Amazon Prime CSV file to start an import session.
+   * @param file - The CSV file to upload
+   * @returns Import session with matched movies
+   */
+  async uploadAmazonPrimeCSV(file: File): Promise<ImportSessionResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: HeadersInit = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    // Note: Don't set Content-Type for FormData - browser sets it with boundary
+
+    const response = await fetch(`${API_BASE}/import/amazon-prime/upload/`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error: ApiError = await response.json();
+      throw new ApiClientError(response.status, error);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get the current state of an import session.
+   * @param sessionId - The session ID from upload response
+   * @returns Current session state with progress
+   */
+  async getImportSession(sessionId: string): Promise<ImportSessionDetailResponse> {
+    return this.request<ImportSessionDetailResponse>(
+      `/import/amazon-prime/session/${sessionId}/`
+    );
+  }
+
+  /**
+   * Add a movie from the import session to user's rankings.
+   * @param sessionId - The session ID
+   * @param movieIndex - Index of the movie in the session
+   * @param rating - Rating to assign (1-5)
+   * @param ratedAt - Optional rated_at timestamp (ISO 8601)
+   * @returns The created ranking
+   */
+  async addImportMovie(
+    sessionId: string,
+    movieIndex: number,
+    rating: number,
+    ratedAt?: string
+  ): Promise<Ranking> {
+    const body: ImportMovieAddRequest = { rating };
+    if (ratedAt) {
+      body.rated_at = ratedAt;
+    }
+
+    return this.request<Ranking>(
+      `/import/amazon-prime/session/${sessionId}/movie/${movieIndex}/add/`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }
+    );
+  }
+
+  /**
+   * Skip a movie in the import session.
+   * @param sessionId - The session ID
+   * @param movieIndex - Index of the movie to skip
+   */
+  async skipImportMovie(sessionId: string, movieIndex: number): Promise<void> {
+    await this.request<void>(
+      `/import/amazon-prime/session/${sessionId}/movie/${movieIndex}/skip/`,
+      { method: 'POST' }
+    );
+  }
+
+  /**
+   * Cancel and delete an import session.
+   * @param sessionId - The session ID to cancel
+   */
+  async cancelImportSession(sessionId: string): Promise<void> {
+    await this.request<void>(
+      `/import/amazon-prime/session/${sessionId}/`,
+      { method: 'DELETE' }
+    );
+  }
+
+  /**
+   * Update the TMDB match for a movie in the import session.
+   * @param sessionId - The session ID
+   * @param movieIndex - Index of the movie in the session
+   * @param match - The new TMDB match data
+   * @returns The updated MatchedMovieItem
+   */
+  async updateImportMovieMatch(
+    sessionId: string,
+    movieIndex: number,
+    match: ImportMovieMatchRequest
+  ): Promise<MatchedMovieItem> {
+    return this.request<MatchedMovieItem>(
+      `/import/amazon-prime/session/${sessionId}/movie/${movieIndex}/match/`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(match),
+      }
+    );
   }
 }
 

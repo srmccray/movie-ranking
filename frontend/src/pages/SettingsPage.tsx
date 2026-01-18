@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Header, Button } from '../components';
+import { Header, Button, ImportWizard, Modal } from '../components';
 import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { apiClient, ApiClientError } from '../api/client';
 import type { UserProfileResponse } from '../types';
 
 type LinkingStatus = 'idle' | 'loading' | 'success' | 'error';
+type ClearStatus = 'idle' | 'confirming' | 'clearing' | 'success' | 'error';
 
 interface LinkingError {
   code: string;
@@ -37,6 +38,13 @@ export function SettingsPage() {
 
   const [linkingStatus, setLinkingStatus] = useState<LinkingStatus>('idle');
   const [linkingError, setLinkingError] = useState<LinkingError | null>(null);
+
+  // Import wizard state
+  const [showImportWizard, setShowImportWizard] = useState(false);
+
+  // Clear all rankings state
+  const [clearStatus, setClearStatus] = useState<ClearStatus>('idle');
+  const [clearError, setClearError] = useState<string | null>(null);
 
   // Fetch user profile on mount
   const fetchProfile = useCallback(async () => {
@@ -121,6 +129,42 @@ export function SettingsPage() {
   const dismissError = useCallback(() => {
     setLinkingStatus('idle');
     setLinkingError(null);
+  }, []);
+
+  const handleImportComplete = useCallback(() => {
+    // Optionally refresh data or show success message
+    // For now, just close the wizard
+  }, []);
+
+  const handleClearAllClick = useCallback(() => {
+    setClearStatus('confirming');
+    setClearError(null);
+  }, []);
+
+  const handleClearAllCancel = useCallback(() => {
+    setClearStatus('idle');
+    setClearError(null);
+  }, []);
+
+  const handleClearAllConfirm = useCallback(async () => {
+    setClearStatus('clearing');
+    setClearError(null);
+
+    try {
+      await apiClient.clearAllRankings();
+      setClearStatus('success');
+    } catch (err) {
+      setClearStatus('error');
+      if (err instanceof ApiClientError) {
+        setClearError(err.message);
+      } else {
+        setClearError('Failed to clear rankings. Please try again.');
+      }
+    }
+  }, []);
+
+  const handleClearSuccessDismiss = useCallback(() => {
+    setClearStatus('idle');
   }, []);
 
   return (
@@ -262,11 +306,120 @@ export function SettingsPage() {
                     </div>
                   </div>
                 </section>
+
+                {/* Import Watch History Section */}
+                <section className="settings-section">
+                  <h2 className="settings-section-title">Import Watch History</h2>
+                  <div className="settings-card">
+                    <div className="settings-row settings-row-action">
+                      <div className="settings-row-info">
+                        <div className="settings-label">Amazon Prime Video</div>
+                        <div className="settings-description">
+                          Import your watch history from Amazon Prime Video using a CSV export.
+                        </div>
+                      </div>
+                      <div className="settings-row-action-button">
+                        <Button onClick={() => setShowImportWizard(true)}>
+                          Import
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Data Management Section */}
+                <section className="settings-section">
+                  <h2 className="settings-section-title">Data Management</h2>
+                  <div className="settings-card settings-card-danger">
+                    {clearStatus === 'success' && (
+                      <div className="alert alert-success" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
+                        <span>All rankings have been cleared.</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearSuccessDismiss}
+                          style={{ marginLeft: 'var(--space-2)' }}
+                        >
+                          Dismiss
+                        </Button>
+                      </div>
+                    )}
+                    {clearStatus === 'error' && clearError && (
+                      <div className="alert alert-error" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
+                        <span>{clearError}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearAllCancel}
+                          style={{ marginLeft: 'var(--space-2)' }}
+                        >
+                          Dismiss
+                        </Button>
+                      </div>
+                    )}
+                    <div className="settings-row settings-row-action">
+                      <div className="settings-row-info">
+                        <div className="settings-label">Clear All Rankings</div>
+                        <div className="settings-description">
+                          Permanently delete all your movie rankings. This action cannot be undone.
+                        </div>
+                      </div>
+                      <div className="settings-row-action-button">
+                        <Button
+                          variant="danger"
+                          onClick={handleClearAllClick}
+                          disabled={clearStatus === 'clearing'}
+                        >
+                          Clear All
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
               </div>
             )}
           </div>
         </div>
       </main>
+
+      {/* Import Wizard Modal */}
+      {showImportWizard && (
+        <ImportWizard
+          onClose={() => setShowImportWizard(false)}
+          onComplete={handleImportComplete}
+        />
+      )}
+
+      {/* Clear All Confirmation Modal */}
+      <Modal
+        isOpen={clearStatus === 'confirming' || clearStatus === 'clearing'}
+        onClose={handleClearAllCancel}
+        title="Clear All Rankings"
+      >
+        <div className="clear-all-modal">
+          <p className="clear-all-modal-message">
+            Are you sure you want to delete all your movie rankings? This action
+            cannot be undone.
+          </p>
+          <div className="clear-all-modal-actions">
+            <Button
+              variant="secondary"
+              onClick={handleClearAllCancel}
+              disabled={clearStatus === 'clearing'}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleClearAllConfirm}
+              loading={clearStatus === 'clearing'}
+              disabled={clearStatus === 'clearing'}
+            >
+              {clearStatus === 'clearing' ? 'Clearing...' : 'Clear All Rankings'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

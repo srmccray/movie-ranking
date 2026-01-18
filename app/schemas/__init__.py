@@ -1,5 +1,15 @@
 """Pydantic schemas for request/response validation."""
 
+from app.schemas.import_amazon import (
+    ImportCompletionResponse,
+    ImportMovieAddRequest,
+    ImportMovieMatchRequest,
+    ImportSessionDetailResponse,
+    ImportSessionResponse,
+    MatchedMovieItem,
+    ParsedMovieItem,
+    TMDBMatchResult,
+)
 from app.schemas.movie import (
     GenreResponse,
     MovieBrief,
@@ -28,13 +38,21 @@ __all__ = [
     "GenreResponse",
     "GoogleAuthUrlResponse",
     "GoogleCallbackError",
+    "ImportCompletionResponse",
+    "ImportMovieAddRequest",
+    "ImportMovieMatchRequest",
+    "ImportSessionDetailResponse",
+    "ImportSessionResponse",
+    "MatchedMovieItem",
     "MovieBrief",
     "MovieCreate",
     "MovieResponse",
+    "ParsedMovieItem",
     "RankingCreate",
     "RankingListResponse",
     "RankingResponse",
     "RankingWithMovie",
+    "TMDBMatchResult",
     "TMDBMovieDetails",
     "TMDBSearchResponse",
     "TMDBSearchResult",
