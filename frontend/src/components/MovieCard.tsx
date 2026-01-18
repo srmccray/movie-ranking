@@ -1,6 +1,22 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { StarRating } from './StarRating';
 import type { RankingWithMovie } from '../types';
+
+// Hook to detect clicks outside of a ref element
+function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        handler();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [ref, handler]);
+}
 
 // TMDB genre ID to name mapping
 const GENRE_MAP: Record<number, string> = {
@@ -67,11 +83,33 @@ export function MovieCard({ ranking, onRatingChange, onRatedAtChange, onDelete }
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [editedDate, setEditedDate] = useState('');
   const [isSavingDate, setIsSavingDate] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const { movie, rating, rated_at } = ranking;
+
+  // Close menu when clicking outside
+  const handleCloseMenu = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
+
+  useClickOutside(menuRef, handleCloseMenu);
+
+  const handleToggleMenu = () => {
+    setIsMenuOpen((prev) => !prev);
+  };
+
+  const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsMenuOpen(false);
+      menuButtonRef.current?.focus();
+    }
+  };
 
   const handleStartEditDate = () => {
     setEditedDate(toInputDateValue(rated_at));
@@ -123,14 +161,19 @@ export function MovieCard({ ranking, onRatingChange, onRatedAtChange, onDelete }
   };
 
   const handleDeleteClick = () => {
+    setIsMenuOpen(false);
     setShowDeleteConfirm(true);
   };
 
   const handleConfirmDelete = () => {
     if (onDelete) {
-      onDelete(ranking.id);
+      setShowDeleteConfirm(false);
+      setIsDeleting(true);
+      // Wait for animation to complete before calling onDelete
+      setTimeout(() => {
+        onDelete(ranking.id);
+      }, 400); // Match animation duration (0.4s)
     }
-    setShowDeleteConfirm(false);
   };
 
   const handleCancelDelete = () => {
@@ -138,7 +181,7 @@ export function MovieCard({ ranking, onRatingChange, onRatedAtChange, onDelete }
   };
 
   return (
-    <article className="card movie-card">
+    <article className={`card movie-card${isDeleting ? ' deleting' : ''}`}>
       <div className="movie-poster">
         {movie.poster_url ? (
           <img
@@ -159,10 +202,21 @@ export function MovieCard({ ranking, onRatingChange, onRatedAtChange, onDelete }
       </div>
       <div className="movie-info">
         <h3 className="movie-title">{movie.title}</h3>
-        {movie.year && <p className="movie-year">{movie.year}</p>}
-        {movie.genre_ids && movie.genre_ids.length > 0 && (
-          <p className="movie-genres">{getGenreNames(movie.genre_ids).join(' / ')}</p>
-        )}
+        <p className="movie-meta">
+          {movie.year}
+          {movie.genre_ids && movie.genre_ids.length > 0 && (
+            <> &mdash; {getGenreNames(movie.genre_ids).join(' / ')}</>
+          )}
+        </p>
+
+        <div className="movie-rating">
+          <StarRating
+            value={rating}
+            onChange={onRatingChange ? handleRatingChange : undefined}
+            readonly={!onRatingChange}
+            size="sm"
+          />
+        </div>
 
         {isEditingDate && onRatedAtChange ? (
           <div className={`movie-date-editor ${isSavingDate ? 'saving' : ''}`}>
@@ -217,28 +271,47 @@ export function MovieCard({ ranking, onRatingChange, onRatedAtChange, onDelete }
           <p className="movie-date">Rated {formatDate(rated_at)}</p>
         )}
       </div>
-      <div className="movie-actions">
-        <div className="movie-rating">
-          <StarRating
-            value={rating}
-            onChange={onRatingChange ? handleRatingChange : undefined}
-            readonly={!onRatingChange}
-            size="md"
-          />
-        </div>
-        {onDelete && (
+
+      {/* Kebab menu for secondary actions */}
+      {onDelete && (
+        <div className="movie-menu-container" ref={menuRef}>
           <button
-            className="btn-icon btn-delete"
-            onClick={handleDeleteClick}
-            aria-label={`Delete ${movie.title}`}
-            title="Delete ranking"
+            ref={menuButtonRef}
+            className="btn-icon btn-menu-toggle"
+            onClick={handleToggleMenu}
+            aria-label={`More options for ${movie.title}`}
+            aria-haspopup="menu"
+            aria-expanded={isMenuOpen}
+            title="More options"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+              <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none" />
             </svg>
           </button>
-        )}
-      </div>
+
+          {isMenuOpen && (
+            <div
+              className="movie-menu"
+              role="menu"
+              aria-label={`Options for ${movie.title}`}
+              onKeyDown={handleMenuKeyDown}
+            >
+              <button
+                className="movie-menu-item movie-menu-item-danger"
+                onClick={handleDeleteClick}
+                role="menuitem"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                </svg>
+                <span>Delete ranking</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {showDeleteConfirm && (
         <div className="delete-confirm">

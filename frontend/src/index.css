@@ -697,13 +697,29 @@ select {
   }
 }
 
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.95);
+  }
+}
+
+/* Movie card deleting state */
+.movie-card.deleting {
+  animation: slideOut 0.4s ease-out forwards;
+  pointer-events: none;
+}
+
 /* Movie Card */
 .movie-card {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-5);
-  padding: var(--space-5);
+  gap: var(--space-4);
+  padding: var(--space-4);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
@@ -713,7 +729,7 @@ select {
               border-color var(--transition-normal),
               background var(--transition-normal);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .movie-card::before {
@@ -724,6 +740,7 @@ select {
   opacity: 0;
   transition: opacity var(--transition-normal);
   pointer-events: none;
+  border-radius: inherit;
 }
 
 .movie-card:hover {
@@ -738,8 +755,8 @@ select {
 
 .movie-poster {
   flex-shrink: 0;
-  width: 100px;
-  height: 150px;
+  width: 80px;
+  height: 120px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   background-color: var(--color-bg-tertiary);
@@ -771,8 +788,6 @@ select {
 .movie-info {
   flex: 1;
   min-width: 0;
-  position: relative;
-  z-index: 1;
 }
 
 .movie-title {
@@ -785,15 +800,10 @@ select {
   white-space: nowrap;
 }
 
-.movie-year {
-  font-size: 0.875rem;
+.movie-meta {
+  font-size: 0.8125rem;
   color: var(--color-neutral-400);
-}
-
-.movie-genres {
-  font-size: 0.75rem;
-  color: var(--color-neutral-500);
-  margin-top: var(--space-1);
+  margin-bottom: var(--space-2);
 }
 
 .movie-date {
@@ -878,16 +888,7 @@ select {
 }
 
 .movie-rating {
-  flex-shrink: 0;
-}
-
-/* Movie Actions */
-.movie-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  position: relative;
-  z-index: 1;
+  margin-bottom: var(--space-2);
 }
 
 /* Icon Button */
@@ -905,13 +906,23 @@ select {
 }
 
 .btn-icon:hover {
-  color: var(--color-danger-500);
-  background-color: var(--color-danger-50);
+  color: var(--color-neutral-300);
+  background-color: var(--color-bg-tertiary);
 }
 
 .btn-icon:focus-visible {
   outline: 2px solid var(--color-primary-500);
   outline-offset: 2px;
+}
+
+/* Menu Toggle Button */
+.btn-menu-toggle {
+  color: var(--color-neutral-400);
+}
+
+.btn-menu-toggle:hover {
+  color: var(--color-neutral-200);
+  background-color: var(--color-bg-tertiary);
 }
 
 /* Small Icon Buttons (for inline actions) */
@@ -1010,6 +1021,82 @@ select {
 .btn-danger:focus-visible {
   outline: 2px solid var(--color-danger-500);
   outline-offset: 2px;
+}
+
+/* Movie Card Kebab Menu */
+.movie-menu-container {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 10;
+}
+
+.movie-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-1);
+  min-width: 160px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-1);
+  animation: menuFadeIn 150ms ease;
+  z-index: 20;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.movie-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--color-neutral-200);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.movie-menu-item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.movie-menu-item:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: -2px;
+}
+
+.movie-menu-item-danger {
+  color: var(--color-neutral-300);
+}
+
+.movie-menu-item-danger:hover {
+  background-color: var(--color-danger-50);
+  color: var(--color-danger-500);
+}
+
+.movie-menu-item-danger svg {
+  transition: color 150ms ease;
+}
+
+.movie-menu-item-danger:hover svg {
+  color: var(--color-danger-500);
 }
 
 /* Star Rating */
@@ -2130,8 +2217,8 @@ select {
   align-items: center;
   justify-content: center;
   gap: var(--space-3);
-  min-height: 180px;
-  padding: var(--space-6);
+  min-height: 152px;
+  padding: var(--space-4);
 
   /* Glassmorphism base */
   background: rgba(18, 18, 26, 0.4);
@@ -2297,8 +2384,8 @@ select {
   }
 
   .movie-poster {
-    width: 80px;
-    height: 120px;
+    width: 64px;
+    height: 96px;
   }
 
   .movie-info {
@@ -2306,14 +2393,10 @@ select {
     min-width: 120px;
   }
 
-  .movie-actions {
-    flex-basis: 100%;
-    margin-top: var(--space-3);
-    justify-content: space-between;
-  }
-
-  .movie-rating {
-    margin-top: 0;
+  /* Adjust menu position for mobile */
+  .movie-menu-container {
+    top: var(--space-2);
+    right: var(--space-2);
   }
 
   /* Show edit icon always on mobile (no hover) */
@@ -2344,8 +2427,8 @@ select {
   }
 
   .add-movie-card {
-    min-height: 140px;
-    padding: var(--space-4);
+    min-height: 128px;
+    padding: var(--space-3);
   }
 
   .add-movie-card-icon {
