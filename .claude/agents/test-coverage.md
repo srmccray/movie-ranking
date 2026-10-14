@@ -190,4 +190,5 @@ venv/bin/pytest <path> -k "test_name"     # Run specific test
 npm run test:run                          # Vitest single run
 npm run test                              # Vitest watch mode
 npm run test:coverage                     # Frontend with coverage
+npm run test:e2e                          # Playwright e2e (frontend/e2e/, Gherkin scenarios; see frontend/CLAUDE.md)
 ```

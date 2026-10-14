@@ -16,4 +16,4 @@ We establish a non-negotiable **Hard Invariant: Source files must remain under 5
 - **Negative**: Increases the number of files and requires explicit barrel exports (`__init__.py` or index modules).
 
 ## Project Note (movie-ranking)
-`spec-ops health` also scans `.css` files. Thirteen pre-existing files over the limit are grandfathered in `specops.toml` and `.specops/grandfathered_debt.json`; they are tracked by `TASK-REFACTOR-*` backlog tasks under PRD-0005. Frontend splits use `index.ts` re-exports or additional `@import` lines in `frontend/src/styles/index.css`, and backend splits use package `__init__.py` files.
+`spec-ops health` also scans `.css` files. Twelve pre-existing files over the limit are grandfathered in `specops.toml` and `.specops/grandfathered_debt.json`; they are tracked by `TASK-REFACTOR-*` backlog tasks under PRD-0005. Frontend splits use `index.ts` re-exports or additional `@import` lines in `frontend/src/styles/index.css`, and backend splits use package `__init__.py` files.

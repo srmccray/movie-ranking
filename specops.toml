@@ -48,7 +48,6 @@ grandfathered = [
   "frontend/src/__tests__/mocks/handlers.ts",
   "frontend/src/components/ImportReview.tsx",
   "frontend/src/components/MovieSearch.test.tsx",
-  "frontend/src/index.css",
   "frontend/src/styles/pages/analytics.css",
   "frontend/src/styles/pages/import.css",
   "tests/test_auth.py",
