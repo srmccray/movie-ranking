@@ -8,4 +8,3 @@ Strict sequential order of execution for engineering tasks.
 - **TASK-0005 (Complete)**: [`0005-amazon-prime-import-frontend-api-client-and-types`](complete/0005-amazon-prime-import-frontend-api-client-and-types.md)
 - **TASK-0006 (Complete)**: [`0006-amazon-prime-import-import-wizard-components`](complete/0006-amazon-prime-import-import-wizard-components.md)
 - **TASK-0007 (Complete)**: [`0007-amazon-prime-import-backend-integration-tests`](complete/0007-amazon-prime-import-backend-integration-tests.md)
-- **TASK-0001 (Refined)**: [`0001-initial-architecture-spike-and-setup`](refined/0001-initial-architecture-spike-and-setup.md)
