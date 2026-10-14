@@ -15,7 +15,7 @@ A React + TypeScript frontend built with Vite, featuring:
 - Email/password and Google OAuth sign-in, with automatic logout on any API 401
 - Vitest + React Testing Library + MSW for tests
 
-Scripts (`package.json`): `npm run dev` (port 3000, proxies `/api` to `localhost:8000`), `build` (`tsc -b && vite build`), `lint`, `test` (watch), `test:run`, `test:coverage`.
+Scripts (`package.json`): `npm run dev` (port 3000, proxies `/api` to `localhost:8000`), `build` (`tsc -b && vite build`), `lint`, `test` (watch), `test:run`, `test:coverage`, `test:e2e` (Playwright, see "End-to-End Tests" under Testing Patterns).
 
 ## Project Structure
 
@@ -73,8 +73,7 @@ frontend/src/
 │       ├── handlers.ts    # MSW handlers (`handlers` + `importHandlers`) and mock-data helpers
 │       └── server.ts      # MSW server instance
 ├── App.tsx                # Root component with routing
-├── main.tsx               # Application entry point (imports styles/index.css)
-└── index.css              # LEGACY monolithic stylesheet - not imported anywhere; do not edit
+└── main.tsx               # Application entry point (imports styles/index.css)
 ```
 
 Unit/component tests are colocated (`*.test.ts(x)` next to the source); `__tests__/` holds setup, mocks, and page-level tests.
@@ -782,7 +781,7 @@ http.get('/api/v1/movies/search/', () => {
 
 ### Design Tokens
 
-CSS is modular. `main.tsx` imports `/frontend/src/styles/index.css`, which `@import`s files in cascade order: `variables.css` (tokens), `base.css`, `components/*.css`, `pages/*.css`, then `utilities.css` last. Put new styles in the matching file (or add a new file and import it). The old `/frontend/src/index.css` is a legacy monolith that is no longer imported; ignore it.
+CSS is modular. `main.tsx` imports `/frontend/src/styles/index.css`, which `@import`s files in cascade order: `variables.css` (tokens), `base.css`, `components/*.css`, `pages/*.css`, then `utilities.css` last. Put new styles in the matching file (or add a new file and import it).
 
 The theme is a dark "cinematic" theme. All styling uses CSS custom properties defined in `/frontend/src/styles/variables.css` (excerpt; see the file for the full set):
 
@@ -1101,6 +1100,23 @@ components/
 ```
 
 Page-level tests may also live in `src/__tests__/` (e.g. `SettingsPage.test.tsx`).
+
+### End-to-End Tests (Playwright, ADR-0006)
+
+Gherkin scenarios from `docs/project/user_stories/accepted/` are automated with Playwright in `frontend/e2e/`. Vitest excludes `e2e/`.
+
+```bash
+cd frontend
+npm install
+npx playwright install chromium   # once per machine
+npm run test:e2e                  # headless; also `npm run test:e2e:ui`
+```
+
+- Prerequisites: the repo-root `venv` with `requirements-test.txt` installed (provides `aiosqlite`). No Postgres, Docker, TMDB key, or network is needed.
+- `playwright.config.ts` starts both servers itself: the real FastAPI app on a throwaway SQLite file (`e2e/support/run_backend.py`, port 8100) and Vite on port 3100 proxying `/api` to it (`API_PROXY_TARGET`). It never reuses a running dev server.
+- Naming: one spec per story, `e2e/us-XXXX-<slug>.spec.ts`, `test.describe('US-XXXX: <title>')`, and one `test('Scenario: <name>')` per Gherkin scenario, with `Given/When/Then` comments. Cross-story smoke specs are `e2e/smoke-*.spec.ts`; shared helpers go in `e2e/support/`.
+- ADR-0003 applies: drive the real UI and public API only. Setup is allowed via the UI or session injection (e.g. a token in `localStorage`); no DB access and no mocking of the app's own API. Flows needing TMDB (search, import) are not automated yet.
+- Chromium only for now (ADR-0006 also names Firefox and WebKit).
 
 ### Running Tests
 

@@ -55,6 +55,8 @@ The frontend will be available at http://localhost:3000
 | `npm test` | Run Vitest in watch mode |
 | `npm run test:run` | Run tests once |
 | `npm run test:coverage` | Run tests once with coverage |
+| `npm run test:e2e` | Run Playwright e2e specs in `e2e/` (starts its own backend and Vite; first run needs `npx playwright install chromium`) |
+| `npm run test:e2e:ui` | Playwright UI mode |
 
 `npm run build` runs `tsc -b` first, so type errors fail the build.
 
@@ -77,8 +79,7 @@ frontend/
 │   ├── types/          # TypeScript type definitions (index.ts)
 │   ├── __tests__/      # Test setup and MSW mocks (tests are also colocated)
 │   ├── App.tsx         # Root component with routing
-│   ├── main.tsx        # Application entry point
-│   └── index.css       # Legacy stylesheet, not imported (see styles/)
+│   └── main.tsx        # Application entry point (imports styles/index.css)
 ├── index.html          # HTML template
 ├── package.json        # Dependencies and scripts
 ├── tsconfig.json       # TypeScript configuration

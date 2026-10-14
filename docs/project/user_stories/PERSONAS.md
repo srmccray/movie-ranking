@@ -9,7 +9,7 @@ Casey is the only end-user persona and the target of PRD-0001 to PRD-0004. Alex 
 ## 1. Alex — The Systems Builder
 - **Role**: Maintainer and architect of Movie Ranking who builds it together with AI coding agents.
 - **Pain Points**:
-  - Oversized legacy files (13 are grandfathered over the 500-line limit, e.g. `tests/test_import_amazon.py` and `frontend/src/index.css`) that agents cannot read or edit reliably.
+  - Oversized legacy files (12 are grandfathered over the 500-line limit, e.g. `tests/test_import_amazon.py` and `frontend/src/styles/pages/analytics.css`) that agents cannot read or edit reliably.
   - Specifications drifting from the code (for example the legacy `.claude_docs/` plans that were migrated into `docs/project/`).
 - **Goals with this platform**:
   - Keep every source file under 500 lines (ADR-0002) and drive grandfathered debt to zero (PRD-0005).

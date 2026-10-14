@@ -1,7 +1,8 @@
 ---
 id: REFACTOR-frontend-index
 title: "frontend/src/index.css: delete the unused legacy stylesheet"
-status: Refined
+status: Complete
+completed_at: '2026-10-13'
 governing_adrs:
 - ADR-0002
 governing_prds:

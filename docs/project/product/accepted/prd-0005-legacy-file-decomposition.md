@@ -15,7 +15,7 @@ component: core
 
 ## What the person cannot do today
 
-- Thirteen legacy files exceed the 500-line limit set by ADR-0002 and are grandfathered in `.specops/grandfathered_debt.json` and `specops.toml` (2 backend routers, 5 backend test files, 6 frontend files; one of them, `frontend/src/index.css`, is a dead legacy stylesheet that can be deleted rather than split). Agents editing them lose context, produce noisy diffs, and risk regressions; the grandfather list also means the invariant is not fully enforced.
+- Twelve legacy files exceed the 500-line limit set by ADR-0002 and are grandfathered in `.specops/grandfathered_debt.json` and `specops.toml` (2 backend routers, 5 backend test files, 5 frontend files; the dead legacy stylesheet `frontend/src/index.css` was deleted rather than split). Agents editing them lose context, produce noisy diffs, and risk regressions; the grandfather list also means the invariant is not fully enforced.
 
 ## What good looks like
 

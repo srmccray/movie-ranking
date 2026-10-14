@@ -351,6 +351,10 @@ cd frontend
 npm run test:run     # single run (CI); `npm test` starts watch mode
 npm run lint
 npm run build        # tsc -b && vite build
+
+# End-to-end (Playwright, Chromium; starts its own backend on throwaway SQLite + Vite)
+npx playwright install chromium   # once
+npm run test:e2e
 ```
 
 ## Troubleshooting

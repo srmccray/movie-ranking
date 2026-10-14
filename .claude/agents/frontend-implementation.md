@@ -23,7 +23,7 @@ Implements React frontend features with clean, accessible, and maintainable code
 - State management (Context API; `AuthContext` in `src/context/`)
 - TypeScript for type safety
 - Component testing with Vitest, React Testing Library, and MSW
-- Plain CSS with custom properties (design tokens in `src/styles/variables.css` / `src/index.css`)
+- Plain CSS with custom properties (design tokens in `src/styles/variables.css`)
 
 ## Key Patterns to Follow
 
