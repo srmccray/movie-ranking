@@ -131,7 +131,7 @@ Output this instruction set, then stop:
 **Context to provide:**
 - Request: {request}
 - Tier: SMALL (create Quick Sketch only)
-- Output location: `.claude_docs/features/{slug}/sketch.md`
+- Output location: `docs/project/product/idea/prd-NNNN-{slug}.md`
 
 **After that agent completes:**
 Recommend invoking `backend-implementation` or `frontend-implementation` with reference to the sketch.
@@ -153,7 +153,7 @@ Output this instruction set, then stop:
 **Context to provide:**
 - Request: {request}
 - Tier: MEDIUM (create standard FRD)
-- Output location: `.claude_docs/features/{slug}/frd.md`
+- Output location: `docs/project/product/accepted/prd-NNNN-{slug}.md`
 
 **After that agent completes:**
 Recommend invoking `frd-refiner` for light refinement.
@@ -176,7 +176,7 @@ Output this instruction set, then stop:
 **Context to provide:**
 - Request: {request}
 - Tier: LARGE (create comprehensive FRD)
-- Output location: `.claude_docs/features/{slug}/frd.md`
+- Output location: `docs/project/product/accepted/prd-NNNN-{slug}.md`
 
 **After that agent completes:**
 Recommend invoking `frd-refiner` for thorough refinement.
@@ -209,8 +209,8 @@ Recommend invoking `frd-refiner` for thorough refinement.
 
 When invoked mid-workflow, check for existing artifacts to determine current phase:
 
-1. **Check `.claude_docs/features/{slug}/`** for FRD or sketch
-2. **Check `.claude_docs/tasks/{slug}/`** for task breakdown
+1. **Check `docs/project/product/*/prd-NNNN-{slug}.md`** for FRD or sketch
+2. **Check `docs/project/backlog/ (tasks with `governing_prds: [PRD-NNNN]`)`** for task breakdown
 3. **Read `_index.md`** to see task status
 
 Then output instructions for the next incomplete step.

@@ -107,7 +107,7 @@ Create `refinement.md` with findings.
 # Refinement Notes: {Feature Title}
 
 **Refined:** {date}
-**FRD Location:** `.claude_docs/features/{slug}/frd.md`
+**FRD Location:** `docs/project/product/accepted/prd-NNNN-{slug}.md`
 
 ## Codebase Alignment
 
@@ -144,7 +144,7 @@ Create `refinement.md` with findings.
 # Refinement Analysis: {Feature Title}
 
 **Refined:** {date}
-**FRD Location:** `.claude_docs/features/{slug}/frd.md`
+**FRD Location:** `docs/project/product/accepted/prd-NNNN-{slug}.md`
 **Refinement Status:** In Progress | Complete
 
 ---

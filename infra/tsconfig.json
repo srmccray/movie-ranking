@@ -17,9 +17,9 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "outDir": "./cdk.out",
+    "outDir": "./.cdk.out",
     "rootDir": "."
   },
   "include": ["bin/**/*", "lib/**/*"],
-  "exclude": ["node_modules", "cdk.out"]
+  "exclude": ["node_modules", ".cdk.out"]
 }

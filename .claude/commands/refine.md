@@ -9,7 +9,7 @@ $ARGUMENTS
 ## Instructions
 
 1. **Locate the FRD**
-   - Check `.claude_docs/features/{slug}/frd.md` or `.claude_docs/features/{slug}/sketch.md`
+   - Check `docs/project/product/{idea,shaped,accepted}/prd-NNNN-{slug}.md`
    - If slug not provided, list available features and ask for clarification
 
 2. **Determine Refinement Depth**
@@ -33,14 +33,14 @@ $ARGUMENTS
 
 4. **Create Refinement Document**
 
-   Save to `.claude_docs/features/{slug}/refinement.md`:
+   Save to `docs/project/product/accepted/prd-NNNN-{slug}.md` (`## Refinement Notes` section):
 
    For MEDIUM tier:
    ```markdown
    # Refinement Notes: {Title}
 
    **Refined:** {date}
-   **FRD:** `.claude_docs/features/{slug}/frd.md`
+   **FRD:** `docs/project/product/accepted/prd-NNNN-{slug}.md`
 
    ## Verified Assumptions
    - {Assumption} - confirmed at `{file:line}`

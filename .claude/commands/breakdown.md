@@ -9,8 +9,8 @@ $ARGUMENTS
 ## Instructions
 
 1. **Locate Inputs**
-   - FRD: `.claude_docs/features/{slug}/frd.md`
-   - Refinement: `.claude_docs/features/{slug}/refinement.md`
+   - FRD: `docs/project/product/accepted/prd-NNNN-{slug}.md`
+   - Refinement: `docs/project/product/accepted/prd-NNNN-{slug}.md` (`## Refinement Notes` section)
    - If not found, note what's missing
 
 2. **Identify Work Units**
@@ -34,12 +34,12 @@ $ARGUMENTS
 
 5. **Create Task Documents**
 
-   Create `.claude_docs/tasks/{slug}/_index.md`:
+   Add the task overview to the PRD's `## Implementing Backlog Tasks` section and append the tasks in order to `docs/project/backlog/PRIORITY.md`, using this index structure:
 
    ```markdown
    # Task Breakdown: {Title}
 
-   **FRD:** `.claude_docs/features/{slug}/frd.md`
+   **FRD:** `docs/project/product/accepted/prd-NNNN-{slug}.md`
    **Created:** {date}
    **Status:** Ready
 
@@ -63,7 +63,7 @@ $ARGUMENTS
    task-01 -> task-02 -> task-04
    ```
 
-   Create `.claude_docs/tasks/{slug}/task-{nn}-{name}.md` for each task:
+   Create `docs/project/backlog/proposed/NNNN-{slug}-{name}.md` for each task:
 
    ```markdown
    # Task {NN}: {Title}

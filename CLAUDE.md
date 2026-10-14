@@ -99,24 +99,30 @@ For detailed patterns, see:
 
 ## Documentation Structure
 
-All project documentation is stored in `.claude_docs/`:
+All project documentation is stored in `docs/project/` (SpecOps layout; validate with `uv run --project <spec-ops> spec-ops health`, `prd audit`, `trace`):
 
 ```
-.claude_docs/
-├── features/                    # Feature Requirements Documents (FRDs)
-│   └── {feature-slug}/
-│       ├── sketch.md            # SMALL tier (quick sketch)
-│       ├── frd.md               # MEDIUM/LARGE tier (full FRD)
-│       └── refinement.md        # Refinement notes
-├── tasks/                       # Task breakdowns for features
-│   └── {feature-slug}/
-│       ├── _index.md            # Master task list with dependencies
-│       └── task-{n}-{name}.md   # Individual tasks
-├── decisions/                   # Architecture Decision Records
-│   └── ADR-{n}-{slug}.md
-└── archive/                     # Completed/legacy documentation
-    ├── plans/                   # Old .claude/plans/ content
-    └── docs/                    # Old docs/ content
+docs/project/                          # SpecOps project-management-as-code tree
+├── product/                           # PRDs (create with `spec-ops prd create`)
+│   ├── idea/ shaped/ accepted/        #   lifecycle stages (SMALL sketches start in idea/)
+│   ├── shipped/                       #   delivered features
+│   └── REGISTRY.md
+│       # prd-NNNN-{feature-slug}.md: YAML frontmatter + Who/Cannot-do-today/
+│       # What-good-looks-like/Non-goals/Checkable Outcomes; refinement notes
+│       # go in a `## Refinement Notes` section of the same PRD
+├── backlog/                           # Tasks (TASK-NNNN), frontmatter `governing_prds`
+│   ├── proposed/ refined/ complete/   #   NNNN-{feature-slug}-{name}.md
+│   ├── PRIORITY.md                    #   execution order (replaces tasks/_index.md)
+│   └── ROADMAP.md
+├── user_stories/                      # Personas + Gherkin user stories (US-NNNN)
+│   ├── PERSONAS.md  REGISTRY.md
+│   └── accepted/us-NNNN-{slug}.md
+├── adrs/                              # Architecture Decision Records
+│   ├── accepted/adr-NNNN-{slug}.md
+│   └── REGISTRY.md
+└── archive/                           # Completed/legacy documentation
+    ├── plans/                         # Old .claude/plans/ content
+    └── docs/                          # Old docs/ content
 ```
 
 ## Agent Workflow

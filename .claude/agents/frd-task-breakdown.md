@@ -27,11 +27,11 @@ allowed-tools:
 ## Artifact Structure
 
 ```
-.claude_docs/tasks/{feature-slug}/
-├── _index.md           # Master task list with dependencies
-├── task-01-{name}.md   # First task
-├── task-02-{name}.md   # Second task
-└── ...
+docs/project/backlog/
+├── proposed/
+│   ├── NNNN-{feature-slug}-{name}.md   # One TASK-NNNN per task; frontmatter
+│   └── ...                             # `governing_prds: [PRD-NNNN]`, `dependencies: [TASK-NNNN]`
+└── PRIORITY.md                         # Master ordering (replaces _index.md)
 ```
 
 ---
@@ -41,8 +41,8 @@ allowed-tools:
 ### Step 1: Review Inputs
 
 Gather context from:
-- `.claude_docs/features/{slug}/frd.md` - requirements
-- `.claude_docs/features/{slug}/refinement.md` - implementation pathways, lateral moves
+- `docs/project/product/accepted/prd-NNNN-{slug}.md` - requirements
+- `docs/project/product/accepted/prd-NNNN-{slug}.md` (`## Refinement Notes` section) - implementation pathways, lateral moves
 
 ### Step 2: Identify Work Units
 
@@ -79,8 +79,8 @@ Create task documents following templates below.
 ```markdown
 # Task Breakdown: {Feature Title}
 
-**FRD:** `.claude_docs/features/{slug}/frd.md`
-**Refinement:** `.claude_docs/features/{slug}/refinement.md`
+**FRD:** `docs/project/product/accepted/prd-NNNN-{slug}.md`
+**Refinement:** `docs/project/product/accepted/prd-NNNN-{slug}.md` (`## Refinement Notes` section)
 **Created:** {date}
 **Status:** Not Started | In Progress | Complete
 
@@ -316,7 +316,7 @@ If a task exceeds 5 days estimated:
 **Context to provide:**
 - Feature slug: `{slug}`
 - Task: `task-{NN}-{name}` (the first unblocked task)
-- Task location: `.claude_docs/tasks/{slug}/task-{NN}-{name}.md`
+- Task location: `docs/project/backlog/proposed/NNNN-{slug}-{name}.md`
 - Dependencies: {any prerequisites already complete, or "None - this is the first task"}
 
 **After that agent completes:**
