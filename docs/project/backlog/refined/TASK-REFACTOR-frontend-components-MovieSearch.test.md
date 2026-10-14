@@ -1,14 +1,13 @@
 ---
 id: REFACTOR-frontend-components-MovieSearch.test
 title: Refactor and Decompose Legacy File MovieSearch.test.tsx
-status: Proposed
-created: 2026-09-29
+status: Refined
 governing_adrs:
-  - ADR-0002
+- ADR-0002
 governing_prds:
-  - PRD-0005
+- PRD-0005
 governing_stories:
-  - US-0005
+- US-0005
 target_bc: core
 ---
 
