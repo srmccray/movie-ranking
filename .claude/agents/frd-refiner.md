@@ -15,6 +15,8 @@ allowed-tools:
 
 **Purpose:** Validates FRDs against the actual codebase, identifies implementation pathways, documents lateral moves needed, and ensures the FRD is implementation-ready.
 
+> In this project the FRD is a SpecOps PRD at `docs/project/product/{shaped,accepted}/prd-NNNN-{slug}.md`. Refinement output is written into that same PRD under a `## Refinement Notes` heading; there is no separate `refinement.md`.
+
 ## When Invoked
 
 - **SMALL tier:** Not invoked (Quick Sketch is sufficient)
@@ -33,7 +35,7 @@ Focus on:
 - Confirming no major blockers exist
 - Flagging any surprises that might change scope
 
-**Output:** Brief refinement notes appended to FRD or separate `refinement.md`
+**Output:** Brief `## Refinement Notes` section appended to the PRD
 
 ### LARGE Tier: Thorough Refinement
 
@@ -45,7 +47,7 @@ Focus on:
 - Identifying reusable code vs. new implementation needs
 - Risk validation with specific code references
 
-**Output:** Comprehensive `refinement.md` with implementation pathways
+**Output:** Comprehensive `## Refinement Notes` section (using the LARGE template below, headings demoted one level) appended to the PRD
 
 ---
 
@@ -67,23 +69,28 @@ Systematically investigate:
 - [ ] Relevant models and their relationships
 - [ ] Existing API endpoints in the same domain
 - [ ] Service layer patterns
-- [ ] Database schema and potential migration complexity
+- [ ] Database schema and potential migration complexity (Alembic migrations in `alembic/versions/`)
 
 #### Frontend (if applicable)
 - [ ] Existing components that could be extended/reused
-- [ ] State management patterns
+- [ ] State management patterns (React Context, e.g. `AuthContext`; hooks in `frontend/src/hooks/`)
 - [ ] API integration patterns
 - [ ] Related hooks or utilities
 
 #### Infrastructure (if applicable)
-- [ ] CDK stacks and constructs
-- [ ] Lambda functions and configurations
-- [ ] Database resources
+- [ ] The single `MovieRankingStack` in `infra/lib/movie-ranking-stack.ts`
+- [ ] Lambda function configuration (the database is an external PostgreSQL, not a CDK resource)
 
 #### Integration Points
 - [ ] How do related features currently work?
 - [ ] What events might need to be emitted?
-- [ ] External service integrations affected
+- [ ] External service integrations affected (TMDB, Google OAuth)
+- [ ] API contract: backend `response_model` vs frontend types in `frontend/src/types/` and `frontend/src/api/client.ts`; trailing slashes on all endpoints
+
+#### SpecOps Invariants
+- [ ] Will any touched file approach or exceed 500 lines (ADR-0002)? Several are grandfathered in `specops.toml` (`[invariants.file_limits]`); flag a decomposition lateral move if the work lands in one
+- [ ] Can each outcome be verified through a public frontdoor (ADR-0003)?
+- [ ] Do the PRD's Checkable Outcomes and linked US-NNNN Gherkin scenarios agree with the code?
 
 ### Phase 3: Gap Analysis
 
@@ -95,7 +102,7 @@ Identify:
 
 ### Phase 4: Documentation
 
-Create `refinement.md` with findings.
+Append a `## Refinement Notes` section with findings to the PRD file. Do not modify the PRD's original sections; record corrections under "FRD Updates Recommended". Do not create files under `docs/project/backlog/` here (task creation belongs to `frd-task-breakdown`).
 
 ---
 
@@ -104,10 +111,10 @@ Create `refinement.md` with findings.
 ### MEDIUM Tier Template
 
 ```markdown
-# Refinement Notes: {Feature Title}
+## Refinement Notes: {Feature Title}
 
 **Refined:** {date}
-**FRD Location:** `docs/project/product/accepted/prd-NNNN-{slug}.md`
+**FRD Location:** `docs/project/product/{shaped|accepted}/prd-NNNN-{slug}.md`
 
 ## Codebase Alignment
 
@@ -141,10 +148,10 @@ Create `refinement.md` with findings.
 ### LARGE Tier Template
 
 ```markdown
-# Refinement Analysis: {Feature Title}
+## Refinement Notes: {Feature Title}
 
 **Refined:** {date}
-**FRD Location:** `docs/project/product/accepted/prd-NNNN-{slug}.md`
+**FRD Location:** `docs/project/product/{shaped|accepted}/prd-NNNN-{slug}.md`
 **Refinement Status:** In Progress | Complete
 
 ---
@@ -189,7 +196,7 @@ Create `refinement.md` with findings.
 | {Comp1} | `{path}` | Yes/No/Partial | {notes} |
 
 #### State Management
-| Store/Context | Location | Relevance | Notes |
+| Context/Hook | Location | Relevance | Notes |
 |---------------|----------|-----------|-------|
 | {store} | `{path}` | {relevance} | {notes} |
 

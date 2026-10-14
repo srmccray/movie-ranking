@@ -15,3 +15,6 @@ We adopt **Behavior-Driven Development (BDD)**:
 ## Consequences
 - **Positive**: User stories act as living, executable test suites; guarantees consistent cross-browser user journeys.
 - **Negative**: Browser automation suites take longer to execute than headless unit tests.
+
+## Project Note (movie-ranking)
+Playwright is not yet set up in this repository: there is no Playwright dependency or browser test suite. Current automated tests are `pytest` (backend, `tests/`) and Vitest with MSW (frontend, `frontend/src/**/*.test.ts(x)`). The Gherkin scenarios in `docs/project/user_stories/accepted/` are therefore not yet executed as Playwright suites, and UI tasks in `backlog/complete/` (TASK-0005, TASK-0006) were completed before this ADR was adopted.

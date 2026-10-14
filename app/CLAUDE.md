@@ -9,38 +9,51 @@ This document provides FastAPI/Python development guidance for the Movie Ranking
 ```
 app/
   __init__.py
-  main.py              # FastAPI app, lifespan, router registration
-  config.py            # Settings via pydantic-settings
-  database.py          # Async SQLAlchemy engine, session, Base, DbSession
+  main.py              # FastAPI app, lifespan (DB check), CORS, router registration, /health
+  config.py            # Settings via pydantic-settings (DB, JWT, TMDB, Google OAuth)
+  database.py          # Async engine (SQLite/Lambda/Postgres pooling), Base, get_db, DbSession
   dependencies.py      # Auth dependencies (CurrentUser, get_current_user)
   models/
     __init__.py        # Re-exports all models
-    user.py            # User model
-    movie.py           # Movie model
-    ranking.py         # Ranking model (with relationships)
+    user.py            # User (local and/or Google auth)
+    movie.py           # Movie (TMDB metadata fields)
+    ranking.py         # Ranking (user_id + movie_id unique, rating 1-5, rated_at)
+    genre.py           # Genre (TMDB genre id -> name reference table)
+    oauth_state.py     # OAuthState (short-lived CSRF state for Google OAuth)
   schemas/
-    __init__.py        # Re-exports all schemas
-    user.py            # UserCreate, UserResponse
-    movie.py           # MovieCreate, MovieResponse, MovieBrief
+    __init__.py        # Re-exports most schemas (analytics schemas are imported from app.schemas.analytics)
+    user.py            # UserCreate, UserResponse, UserProfileResponse
+    movie.py           # MovieCreate, MovieResponse, MovieBrief, TMDBSearchResult, TMDBSearchResponse, ...
     ranking.py         # RankingCreate, RankingResponse, RankingWithMovie, RankingListResponse
-    token.py           # Token schema
+    token.py           # Token
+    oauth.py           # GoogleAuthUrlResponse, GoogleCallbackError, AccountLinkingResponse
+    analytics.py       # ActivityResponse, GenreResponse, StatsResponse, RatingDistributionResponse
+    import_amazon.py   # Amazon Prime import request/response schemas
   routers/
     __init__.py
-    auth.py            # /register, /login endpoints
-    movies.py          # Movie CRUD
-    rankings.py        # Ranking CRUD with pagination
+    auth.py            # /register, /login, /me/ (mounted at /api/v1/auth)
+    google_auth.py     # /google/login/, /google/callback/, /google/link/, /google/link/callback/ (also /api/v1/auth)
+    movies.py          # GET /search/ (TMDB search), POST / (create movie) -- no list/get/update/delete
+    rankings.py        # Ranking upsert, paginated list, delete one, delete all
+    analytics.py       # /activity/, /genres/, /stats/, /rating-distribution/
+    import_amazon.py   # /amazon-prime/... CSV import workflow (mounted at /api/v1/import)
+  services/
+    __init__.py
+    tmdb.py            # TMDBService (async httpx client), search_movies, get_movie_details
+    csv_parser.py      # parse_amazon_prime_csv
+    import_session.py  # In-memory ImportSessionStore (import_session_store singleton)
   utils/
     __init__.py
     security.py        # Password hashing, JWT encode/decode
 alembic/
-  env.py               # Async migration config
+  env.py               # Async migration config (reads DATABASE_URL from settings)
   versions/
-    001_initial_schema.py
-tests/
+    001_initial_schema.py ... 006_add_oauth_state_linking_fields.py  (see Creating Migrations)
+tests/                 # At the repo root, not inside app/
   __init__.py
   conftest.py          # Fixtures: client, test_user, auth_headers, test_movie
-  test_auth.py
-  test_rankings.py
+  test_auth.py, test_google_auth.py, test_movies.py, test_rankings.py, test_analytics.py,
+  test_import_amazon.py, test_import_session.py, test_csv_parser.py, test_tmdb_service.py
 ```
 
 ## Adding a New Model
@@ -146,11 +159,13 @@ class Entity(Base):
 """SQLAlchemy models for the Movie Ranking API."""
 
 from app.models.entity import Entity  # Add this
+from app.models.genre import Genre
 from app.models.movie import Movie
+from app.models.oauth_state import OAuthState
 from app.models.ranking import Ranking
 from app.models.user import User
 
-__all__ = ["Entity", "Movie", "Ranking", "User"]  # Add to list
+__all__ = ["Entity", "Genre", "Movie", "OAuthState", "Ranking", "User"]  # Add to list
 ```
 
 ### Step 3: Add Relationship to Related Models
@@ -308,7 +323,8 @@ __all__ = [
 | `Field(None, ge=0)` | Optional fields with constraints |
 | `Optional[type]` | Always use for nullable fields |
 | Nested schemas | Create `*Brief` schemas for embedding (e.g., `MovieBrief`) |
-| List responses | Always include `items`, `total`, `limit`, `offset` for pagination |
+| Paginated lists | Include `items`, `total`, `limit`, `offset` (see `RankingListResponse`) |
+| Other wrappers | Analytics and import endpoints use named wrappers (`activity`, `genres`, `distribution`, `movies`); see their schemas |
 
 ---
 
@@ -346,9 +362,12 @@ class TMDBSearchResponse(BaseModel):
 
 | Pattern | When to Use | Example |
 |---------|-------------|---------|
-| Direct response | Single item CRUD operations | `MovieResponse` for GET /movies/{id}/ |
-| List wrapper | Paginated collections | `RankingListResponse` for GET /rankings/ |
-| Search wrapper | Search results with metadata | `TMDBSearchResponse` with query echo |
+| Direct response | Single item create/update | `MovieResponse` for POST /movies/, `RankingResponse` for POST /rankings/ |
+| List wrapper | Paginated collections | `RankingListResponse` (`items`, `total`, `limit`, `offset`) for GET /rankings/ |
+| Search wrapper | Search results with metadata | `TMDBSearchResponse` (`results`, `query`, `year`) for GET /movies/search/ |
+| Analytics wrapper | Aggregates for charts | `ActivityResponse` (`activity`, `start_date`, `end_date`), `GenreResponse` (`genres`, `total_movies`), `RatingDistributionResponse` (`distribution`, `total`); `StatsResponse` is a flat object |
+| Import wrapper | Amazon import session | `ImportSessionResponse` / `ImportSessionDetailResponse` (`movies` list plus counters) |
+| No body | Deletes and skip | 204 for `DELETE /rankings/{id}/`, `DELETE /rankings/all/`, import skip and cancel |
 
 ### Router Documentation
 
@@ -716,6 +735,61 @@ app.include_router(entities.router, prefix="/api/v1/entities")
 | Authorization | Always check `entity.user_id != current_user.id` for ownership |
 
 > **Important:** All endpoint paths MUST end with `/`. See the [root CLAUDE.md](../CLAUDE.md) for details on the trailing slash convention.
+>
+> **Known exceptions:** `POST /api/v1/auth/register` and `POST /api/v1/auth/login` are declared without a trailing slash (`/me/` and the Google routes have one). Do not copy this for new endpoints.
+
+---
+
+## Existing API Surface
+
+All routes are mounted in `app/main.py` under `/api/v1/...` (plus `GET /health` and `GET /` at the root). All routes below require a Bearer token (`CurrentUser`) unless noted.
+
+| Prefix | Endpoint | Response |
+|--------|----------|----------|
+| `/auth` | `POST /register` (no auth, 201, 409 on duplicate email) | `Token` |
+| `/auth` | `POST /login` (no auth, form data, 401 on bad credentials) | `Token` |
+| `/auth` | `GET /me/` | `UserProfileResponse` (`auth_provider`, `has_google_linked`, `has_password`) |
+| `/auth` | `GET /google/login/`, `GET /google/link/` | `GoogleAuthUrlResponse` (`/google/link/` needs auth; 409 if already linked) |
+| `/auth` | `GET /google/callback/`, `GET /google/link/callback/` | See "Google OAuth" below |
+| `/movies` | `GET /search/?q=&year=` | `TMDBSearchResponse` (503 on TMDB rate limit, 500 on other TMDB errors) |
+| `/movies` | `POST /` (201) | `MovieResponse` |
+| `/rankings` | `POST /` | `RankingResponse`; 201 on create, 200 when updating an existing ranking; 404 if movie missing |
+| `/rankings` | `GET /?limit=&offset=&sort_by=&sort_order=` | `RankingListResponse`; `sort_by` is `rated_at` (default), `rating`, `title` or `year`; `sort_order` `desc` (default) or `asc`; limit 1-100 (default 20) |
+| `/rankings` | `DELETE /{ranking_id}/` (204; 404/403) | none |
+| `/rankings` | `DELETE /all/` (204, deletes all of the user's rankings) | none |
+| `/analytics` | `GET /activity/`, `/genres/`, `/stats/`, `/rating-distribution/` | `ActivityResponse`, `GenreResponse`, `StatsResponse`, `RatingDistributionResponse` |
+| `/import` | `POST /amazon-prime/upload/` and session routes | See "Amazon Prime Import" below |
+
+### Google OAuth (`routers/google_auth.py`)
+
+- Requires `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (default empty); login/link return 500 "Google OAuth not configured" when unset. `GOOGLE_REDIRECT_URI` defaults to `http://localhost:8000/api/v1/auth/google/callback/`.
+- `GET /google/login/` creates an `OAuthState` row (random `state`, optional `redirect_uri` query param, `flow_type="login"`, 5-minute expiry) and returns the Google authorization URL. Expired states are cleaned up when new ones are created.
+- `GET /google/callback/` validates and deletes the state, exchanges the code, verifies the Google ID token (email must be present and verified), then: finds the user by `google_id`; else by email and links it (`auth_provider="linked"`); else creates a user with `hashed_password=None` and `auth_provider="google"`. It returns `Token` JSON, or a 302 to `{redirect_uri}?token=<jwt>` if a custom `redirect_uri` was stored. Errors return 400 (cancelled, missing params, invalid/expired state, unverified email).
+- Account linking: `GET /google/link/` (authenticated) stores the user id with `flow_type="link"`. The shared `/google/callback/` routes link-flow states to the link handler, and `/google/link/callback/` also exists; both respond with 302 redirects (errors go to `/settings?error=...`) rather than JSON.
+- Users created via Google have no password, so `/login` returns 401 for them (`hashed_password is None`).
+
+### Analytics (`routers/analytics.py`)
+
+All four endpoints are `GET`, take no query parameters, and are scoped to the current user. `activity` and `genres` cover a rolling window (activity runs from the Sunday on or before the first of the month one year ago through the end of the current month, and omits zero-activity days). `rating-distribution` always returns all five ratings 1-5. Genre names come from the static `GENRE_MAP` (TMDB id to name) in the router, using `Movie.genre_ids`. Watch time uses `Movie.runtime`.
+
+### TMDB (`services/tmdb.py`)
+
+`TMDBService` is an async context manager over `httpx` (10s timeout) configured by `TMDB_API_KEY` (required), `TMDB_BASE_URL`, `TMDB_IMAGE_BASE_URL`. Use `async with TMDBService() as service: await service.search_movies(query, year)`; module-level `search_movies` and `get_movie_details` helpers also exist. Errors: `TMDBServiceError` (base), `TMDBRateLimitError`, `TMDBAPIError`; routers map them to HTTP 503/500. Tests must mock TMDB rather than call it.
+
+### Amazon Prime Import (`routers/import_amazon.py`)
+
+Multi-step workflow mounted at `/api/v1/import`; all routes require auth:
+
+| Endpoint | Behavior |
+|----------|----------|
+| `POST /amazon-prime/upload/` (multipart `file`) | 201 `ImportSessionResponse`. 400 if not `.csv`, empty/unparseable, or no movies. Parses via `services/csv_parser.py` (UTF-8 then Latin-1; only `Type == Movie` rows kept, TV filtered), matches each movie against TMDB (best result plus up to 2 `alternatives`; `confidence` = 60% title similarity + 40% year match; pauses 1s every 35 searches; rate-limited or failed lookups become unmatched items with `tmdb_match=None`), skips movies the user already ranked (counted in `already_ranked`), and stores the result in a session |
+| `GET /amazon-prime/session/{session_id}/` | `ImportSessionDetailResponse`; 404 if missing, expired or owned by another user |
+| `POST /amazon-prime/session/{session_id}/movie/{index}/add/` | Body `ImportMovieAddRequest` (`rating` 1-5, optional `rated_at`; falls back to CSV watch date, then now). Creates or enriches the `Movie` by `tmdb_id` (fetching runtime), upserts the `Ranking`, marks the item `added`. 201 `RankingResponse`; 404 bad session/index; 400 if already processed or no TMDB match |
+| `POST .../movie/{index}/skip/` | 204; marks `skipped`; 400 if already processed |
+| `PATCH .../movie/{index}/match/` | Body `ImportMovieMatchRequest` (TMDB fields); sets that match with `confidence=1.0` and clears alternatives; returns `MatchedMovieItem` |
+| `DELETE /amazon-prime/session/{session_id}/` | 204; deletes the session |
+
+`index` is the 0-based position in the session's `movies` list. Sessions live in the in-memory `import_session_store` (`services/import_session.py`): one session per user (a new upload replaces the old one), 30-minute TTL, max 500 movies, lost on server restart (and not shared between Lambda instances or workers). Session reads take both `session_id` and `str(user_id)` so users cannot access each other's sessions. `ImportCompletionResponse` exists in the schemas but no endpoint currently returns it.
 
 ---
 
@@ -728,9 +802,9 @@ Create `alembic/versions/NNN_description.py`:
 ```python
 """Add entities table.
 
-Revision ID: 002_add_entities
-Revises: 001_initial_schema
-Create Date: 2024-01-15
+Revision ID: 007_add_entities
+Revises: 006_oauth_linking
+Create Date: 2026-02-01
 
 This migration adds the entities table for <feature description>.
 """
@@ -741,8 +815,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers
-revision: str = "002_add_entities"
-down_revision: Union[str, None] = "001_initial_schema"
+revision: str = "007_add_entities"
+down_revision: Union[str, None] = "006_oauth_linking"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -801,18 +875,19 @@ def downgrade() -> None:
 
 | Convention | Details |
 |------------|---------|
-| Naming | Sequential numbering: `001_`, `002_`, etc. |
-| down_revision | Must reference previous migration |
+| Naming | Sequential numbering: `001_`, `002_`, ... (currently `001`-`006`; next is `007_`) |
+| down_revision | Must reference the previous migration's `revision` string, which is not always the filename (file `006_add_oauth_state_linking_fields.py` has revision `006_oauth_linking`) |
 | UUID columns | Use `sa.UUID()` with `server_default=sa.text("gen_random_uuid()")` |
-| Timestamps | Use `sa.DateTime(timezone=True)` with `CURRENT_TIMESTAMP` |
+| Timestamps | Existing migrations use `sa.DateTime(timezone=True)` with `CURRENT_TIMESTAMP`, while the models use naive `Mapped[datetime]` (see root CLAUDE.md for the naive-UTC strategy); match the existing migrations |
 | Foreign keys | Name pattern: `fk_<table>_<column>`, always include `ondelete` |
-| Constraints | Name pattern: `chk_<table>_<field>` or `uq_<table>_<fields>` |
+| Constraints | Existing names: `chk_year`, `chk_rating`, `uq_user_movie`; use `chk_<field>` / `uq_<fields>` |
 | Indexes | Create for all foreign keys and frequently queried columns |
 | downgrade() | Must reverse all changes in upgrade() |
 
 ### Running Migrations
 
 ```bash
+# Run from the repo root (alembic.ini lives there; DATABASE_URL comes from .env / settings)
 # Apply migrations
 alembic upgrade head
 
@@ -1078,7 +1153,7 @@ class TestFullEntityFlow:
 | Convention | Details |
 |------------|---------|
 | Class organization | Group by endpoint: `TestCreate*`, `TestList*`, `TestDelete*`, `TestFull*Flow` |
-| Fixtures | Use `client`, `auth_headers`, `test_user`, `test_movie` from conftest.py |
+| Fixtures | Use `client`, `auth_headers`, `test_user`, `test_movie` from `tests/conftest.py` (`test_user` is `test@example.com` created through `/register`; `test_movie` is created through `POST /movies/`) |
 | Assertions | Check status code first, then response body |
 | Auth tests | Always test 401 (no auth) and 403 (wrong user) cases |
 | Validation tests | Test 422 for invalid input |
@@ -1089,25 +1164,26 @@ class TestFullEntityFlow:
 
 ### Running Tests
 
+Run from the repo root using the project virtualenv (`pytest.ini` sets `asyncio_mode = auto`, `testpaths = tests`):
+
 ```bash
 # Run all tests
-pytest
+venv/bin/pytest
 
 # Run with verbose output
-pytest -v
+venv/bin/pytest -v
 
 # Run specific test file
-pytest tests/test_entities.py
+venv/bin/pytest tests/test_rankings.py
 
 # Run specific test class
-pytest tests/test_entities.py::TestCreateEntity
+venv/bin/pytest tests/test_rankings.py::TestCreateRanking
 
 # Run specific test
-pytest tests/test_entities.py::TestCreateEntity::test_create_entity_success
-
-# Run with coverage
-pytest --cov=app
+venv/bin/pytest tests/test_rankings.py::TestCreateRanking::test_create_ranking_success
 ```
+
+Install test dependencies with `pip install -r requirements-test.txt`. Coverage (`--cov=app`) needs `pytest-cov`, which is not in `requirements-test.txt`.
 
 ---
 
@@ -1149,6 +1225,8 @@ DbSession = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 ```
 
+`get_db` commits after the request handler returns successfully and rolls back on an exception. Routers should `flush()` (never `commit()`) and let the dependency commit.
+
 ---
 
 ## Common Patterns and Utilities
@@ -1162,6 +1240,8 @@ The database stores naive UTC datetimes. Always convert timezone-aware input:
 ```python
 from datetime import datetime, timezone
 
+# Defined locally in app/routers/rankings.py and app/routers/import_amazon.py
+# (there is no shared helper module yet)
 def to_naive_utc(dt: datetime | None) -> datetime | None:
     """Convert a datetime to naive UTC datetime for database storage."""
     if dt is None:
@@ -1170,8 +1250,8 @@ def to_naive_utc(dt: datetime | None) -> datetime | None:
         dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
     return dt
 
-# Usage in router
-entity.timestamp = to_naive_utc(data.timestamp) or datetime.utcnow()
+# Usage in router (as in rankings.py)
+rated_at = to_naive_utc(ranking_data.rated_at) or datetime.utcnow()
 ```
 
 ### Database Operations Pattern
@@ -1314,7 +1394,7 @@ entities = result.scalars().unique().all()  # .unique() is important
 
 ### 5. SQLite Test Compatibility
 
-Tests use SQLite which doesn't support PostgreSQL's `gen_random_uuid()`. The conftest.py handles this with custom UUID generation, but be aware if adding new UUID columns.
+Tests use a per-test temporary SQLite file (`sqlite+aiosqlite`), which doesn't support PostgreSQL's `gen_random_uuid()`. `tests/conftest.py` handles this by patching `id`, `user_id` and `movie_id` columns to a `SQLiteUUID` type and generating UUIDs in a `before_flush` hook, but only for `User`, `Movie`, `Ranking` and `OAuthState`. If you add a model or UUID foreign key with a different name, update `patch_uuid_columns()` and the hook in `conftest.py`. The test app in `conftest.py` also registers routers by hand, so add new routers there too.
 
 ### 6. Import Models Before Migrations
 
@@ -1324,7 +1404,7 @@ The alembic `env.py` imports models to ensure metadata is registered:
 from app import models  # noqa: F401
 ```
 
-Always ensure new models are exported from `app/models/__init__.py`.
+Always ensure new models are exported from `app/models/__init__.py`. Run `alembic` from the repo root.
 
 ---
 
@@ -1339,7 +1419,7 @@ When adding a new feature:
 - [ ] Create schemas in `app/schemas/<entity>.py`
 - [ ] Export schemas from `app/schemas/__init__.py`
 - [ ] Create router in `app/routers/<entities>.py`
-- [ ] Register router in `app/main.py` with prefix `/api/v1/<entities>`
+- [ ] Register router in `app/main.py` with prefix `/api/v1/<entities>` (and in the test app in `tests/conftest.py`)
 - [ ] Create migration in `alembic/versions/NNN_description.py`
 - [ ] Create tests in `tests/test_<entities>.py`
 - [ ] All endpoints have trailing slashes

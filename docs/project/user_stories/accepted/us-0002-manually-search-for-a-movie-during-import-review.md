@@ -23,7 +23,7 @@ governing_prd: PRD-0002
 ```gherkin
 Scenario: Correcting a wrong match
 Given Casey is reviewing an imported movie with a low-confidence match
-When Casey clicks "Search", searches for the correct title and selects a result
+When Casey clicks "Search for different movie", searches for the correct title and selects a result
 Then PATCH "/api/v1/import/amazon-prime/session/{session_id}/movie/{index}/match/" returns the updated movie
 And the review shows the newly selected movie ready for rating
 ```

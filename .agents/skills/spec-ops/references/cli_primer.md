@@ -1,6 +1,6 @@
 # SpecOps CLI Primer & Lifecycle Cheatsheet
 
-This primer documents the public CLI entry points of SpecOps for orchestrators, agents, and human leads. SpecOps is managed via `uv run spec-ops <command>`.
+This primer documents the public CLI entry points of SpecOps for orchestrators, agents, and human leads. SpecOps is managed via the `spec-ops <command>` CLI (installed as a standalone tool; CI pins it from GitHub).
 
 ---
 
@@ -10,19 +10,19 @@ Inspect hard invariants, file lengths (<500 lines per ADR-0002), and backlog que
 
 ```bash
 # Run full codebase health check
-uv run spec-ops health
+spec-ops health
 
 # Check supply-chain security policies and allowed licenses
-uv run spec-ops health --security
+spec-ops health --security
 
-# Audit project dependencies and lockfile immutability
-uv run spec-ops audit
+# Scan dependencies for CVEs and license allowlist compliance
+spec-ops audit dependencies
 
 # Check constitution drift between specops.toml and AGENTS.md
-uv run spec-ops constitution check
+spec-ops constitution check
 
 # Re-synchronize AGENTS.md while preserving custom invariants
-uv run spec-ops constitution sync
+spec-ops constitution sync
 ```
 
 ---
@@ -33,10 +33,10 @@ PRDs live in `docs/project/product/` across lifecycle stages (`idea/`, `shaped/`
 
 ```bash
 # Audit PRD decomposition state and buffer readiness
-uv run spec-ops prd audit PRD-XXXX
+spec-ops prd audit PRD-XXXX
 
 # Lint PRDs against falsifiable criteria and checkable outcomes
-uv run spec-ops prd lint docs/project/product/accepted/PRD-XXXX.md
+spec-ops prd lint docs/project/product/accepted/PRD-XXXX.md
 ```
 
 ---
@@ -47,7 +47,7 @@ Tasks live in `docs/project/backlog/` across `proposed/`, `refined/`, and `compl
 
 ```bash
 # Scaffold a new PMaC task with Definition of Ready frontmatter
-uv run spec-ops task create \
+spec-ops task create \
   --title "My New Feature Slice" \
   --bc core \
   --prd PRD-0006 \
@@ -56,11 +56,14 @@ uv run spec-ops task create \
   --stage proposed \
   --non-interactive
 
-# Audit backlog flow telemetry, bottleneck detection, and queue depth
-uv run spec-ops backlog telemetry
+# Show backlog flow and JIT buffer telemetry (add --once for a snapshot)
+spec-ops backlog flow --once
+
+# Detect circular dependency deadlocks and choke points
+spec-ops backlog bottlenecks
 
 # Diagnose and repair backlog health (orphans, cycle blocks, priority drift)
-uv run spec-ops backlog doctor --repair
+spec-ops backlog doctor --repair
 ```
 
 ---
@@ -71,13 +74,13 @@ Curate proposed tasks into the ready buffer (`refined/`) to maintain ~10 ready t
 
 ```bash
 # Dry-run cognitive curation to inspect proposed tasks and architectural drift
-uv run spec-ops curate --infer --dry-run
+spec-ops curate --infer --dry-run
 
 # Execute cognitive curation (promotes tasks, reconciles drift, synthesizes DoR criteria)
-uv run spec-ops curate --infer
+spec-ops curate --infer
 
 # Traditional priority-based curation buffer fill
-uv run spec-ops curate
+spec-ops curate
 ```
 
 ---
@@ -88,19 +91,22 @@ SpecOps enforces strict backlog isolation (ADR-0005) by executing in isolated gi
 
 ```bash
 # Scaffold a human or agent worktree for a task
-uv run spec-ops worktree create TASK-XXXX
+spec-ops worktree start TASK-XXXX
 
-# List active worktrees and their status
-uv run spec-ops worktree list
+# Verify preflight, merge under MERGE_LOCK, and clean up the worktree
+spec-ops worktree finish --task-id TASK-XXXX
+
+# List active/stalled worktrees
+spec-ops rescue --list
 
 # Run autonomous worker on the next ready task
-uv run spec-ops worker
+spec-ops worker
 
 # Target a specific refined task
-uv run spec-ops worker --task TASK-XXXX --dry-run
+spec-ops worker --task TASK-XXXX --dry-run
 
 # Run full autonomous cycle with concurrent worker batching
-uv run spec-ops cycle --max-workers 2
+spec-ops cycle --max-workers 2
 ```
 
 ---
@@ -111,16 +117,16 @@ When a task fails or stalls during autonomous development:
 
 ```bash
 # Inspect stalled worktree diagnostics and error logs
-uv run spec-ops rescue inspect TASK-XXXX
+spec-ops rescue inspect TASK-XXXX
 
 # Salvage partial progress and stage clean files into a human branch
-uv run spec-ops rescue salvage TASK-XXXX --files src/core/
+spec-ops rescue salvage TASK-XXXX --files app/
 
 # Reset stalled task with anti-loop failure memory to prevent recurring errors
-uv run spec-ops rescue reset TASK-XXXX --anti-loop
+spec-ops rescue reset TASK-XXXX --anti-loop
 
 # Clean up orphaned worktree directories and branches safely
-uv run spec-ops rescue prune --older-than 7d
+spec-ops rescue prune --older-than 7d
 ```
 
 ---
@@ -130,17 +136,14 @@ uv run spec-ops rescue prune --older-than 7d
 Ensure 100% blackbox frontdoor pass rate before finalizing:
 
 ```bash
-# Run test suite
-uv run pytest
+# Run backend test suite (the specops.toml preflight)
+venv/bin/pytest
 
-# Check lockfile synchronization
-uv lock --check
+# Run frontend lint and tests (inside frontend/)
+npm run lint && npm run test:run
 
 # Audit for illegal private backdoor mocks (ADR-0003)
-uv run spec-ops test anti-mock
-
-# Run property-based invariant checks (Hypothesis)
-uv run spec-ops verify properties
+spec-ops test audit-anti-mock
 ```
 
 ---
@@ -149,14 +152,14 @@ uv run spec-ops verify properties
 
 ```bash
 # Build Diataxis documentation site
-uv run spec-ops docs build
+spec-ops docs build
 
 # Launch zero-dependency living 2D graph visualizer
-uv run spec-ops visualizer serve --port 8080
+spec-ops visualizer --serve --port 8080
 
 # Generate customer-facing release notes and business changelog
-uv run spec-ops release generate --milestone v1.0.0
+spec-ops release notes --milestone M1
 
 # Export executive roadmaps and stakeholder presentations
-uv run spec-ops report burndown --format html
+spec-ops report burndown --format html
 ```

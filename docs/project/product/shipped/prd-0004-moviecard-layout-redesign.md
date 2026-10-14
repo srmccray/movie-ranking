@@ -2,7 +2,7 @@
 id: '0004'
 title: MovieCard Layout Redesign
 status: Shipped
-created: 2026-10-13
+created: 2026-01-17
 target_persona: Casey (The Movie Enthusiast)
 component: rankings
 ---
@@ -47,11 +47,15 @@ component: rankings
 
 ## Shipped Evidence
 
-- Shipped in commit `c0ac154` ("Redesign MovieCard layout and add delete animation"), with follow-ups `f0fb2d6` and `1b4a1ec`.
+- Shipped in commit `c0ac154` (2026-01-17, "Redesign MovieCard layout and add delete animation"): `frontend/src/components/MovieCard.tsx` and the card styles. The same commit also added a `slideOut` delete animation, which is outside this PRD's scope.
+- Related later commits on the same day: `f0fb2d6` (moved the card styles into `frontend/src/styles/components/movie-card.css`) and `1b4a1ec` (fixed duplicate timing functions in CSS animations).
+- Verified in the current code: `.movie-poster` is 80x120 in `movie-card.css`, `StarRating` renders with `size="sm"` inside `.movie-info`, no `.movie-actions` class remains in `frontend/src`, and `.add-movie-card` has `min-height: 152px` (120px poster + 2 x 16px padding) in `cards.css`.
 
 ## Legacy Specification
 
 _Migrated verbatim (headings demoted) from the legacy `.claude_docs/` tree on 2026-10-13._
+
+_Historical design record: code samples and statuses below reflect the plan at the time (2026-01-17) and may differ from the shipped code; the sections above are authoritative. The `.claude_docs/` tree was removed in commit `fb641e6` and remains available in git history before that commit._
 
 ### Source: `.claude_docs/features/moviecard-layout-redesign/sketch.md`
 

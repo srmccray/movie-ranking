@@ -2,7 +2,7 @@
 id: '0001'
 title: Amazon Prime Watch History Import
 status: Shipped
-created: 2026-10-13
+created: 2026-01-17
 target_persona: Casey (The Movie Enthusiast)
 component: import
 ---
@@ -44,7 +44,7 @@ component: import
 6. User can set rating when adding a movie
 7. Already-ranked movies are identified and skipped
 8. User sees import summary upon completion
-9. Session data is cleaned up after completion or timeout
+9. Session data is bounded: it expires after 30 minutes (deleted lazily on next access), is removed when the wizard is cancelled, and is replaced by a new upload. (A fully completed session is not explicitly deleted; it is left to expire.)
 10. Invalid uploads and expired sessions return 4xx responses whose error message is displayed in the import wizard
 11. API endpoints use trailing slashes per project convention
 
@@ -63,11 +63,17 @@ component: import
 
 ## Shipped Evidence
 
-- Shipped in commit `0941314` (2026-01-17): `app/routers/import_amazon.py`, `app/services/csv_parser.py`, `app/services/import_session.py`, `frontend/src/components/Import*.tsx`, `tests/test_import_amazon.py`.
+- Shipped in commit `0941314` (2026-01-17, "Add Amazon Prime import feature and various improvements").
+- Backend: `app/routers/import_amazon.py` (mounted at `/api/v1/import` in `app/main.py`), `app/schemas/import_amazon.py`, `app/services/csv_parser.py`, `app/services/import_session.py`.
+- Frontend: `frontend/src/components/ImportWizard.tsx`, `ImportFileUpload.tsx`, `ImportReview.tsx`, `ImportComplete.tsx` (opened from the "Import Watch History" section of `frontend/src/pages/SettingsPage.tsx`), import methods in `frontend/src/api/client.ts`, types in `frontend/src/types/index.ts`.
+- Tests: `tests/test_import_amazon.py`, `tests/test_import_session.py`, `tests/test_csv_parser.py`.
+- Endpoints (all under `/api/v1/import/amazon-prime/`): `POST upload/`, `GET session/{session_id}/`, `POST session/{session_id}/movie/{index}/add/`, `POST session/{session_id}/movie/{index}/skip/`, `PATCH session/{session_id}/movie/{index}/match/` (see PRD-0002), `DELETE session/{session_id}/`.
 
 ## Legacy Specification
 
 _Migrated verbatim (headings demoted) from the legacy `.claude_docs/` tree on 2026-10-13._
+
+_Historical design record: code samples and statuses below reflect the plan at the time (2026-01-17) and may differ from the shipped code; the sections above are authoritative. The `.claude_docs/` tree was removed in commit `fb641e6` and remains available in git history before that commit._
 
 ### Source: `.claude_docs/features/amazon-prime-import/frd.md`
 
@@ -77,7 +83,7 @@ _Migrated verbatim (headings demoted) from the legacy `.claude_docs/` tree on 20
 **Refined:** 2026-01-17
 **Tier:** MEDIUM
 **Triage Scores:** Complexity 6.5/10, Risk 4.3/10
-**Status:** Refined
+**Status:** Refined (at the time of writing; the feature has since shipped, see the frontmatter of this PRD)
 
 #### Problem Statement
 
@@ -822,6 +828,8 @@ Task breakdown document with implementation steps, ready for backend and fronten
 
 _Migrated verbatim (headings demoted) from the legacy `.claude_docs/` tree on 2026-10-13._
 
+_Historical design record: code samples and statuses below reflect the plan at the time (2026-01-17) and may differ from the shipped code; the sections above are authoritative. The `.claude_docs/` tree was removed in commit `fb641e6` and remains available in git history before that commit._
+
 ### Source: `.claude_docs/tasks/amazon-prime-import/_index.md`
 
 ### Task Breakdown: Amazon Prime Movie History Import
@@ -846,12 +854,12 @@ Enable users to upload a CSV export of their Amazon Prime Video watch history, a
 
 | # | Task | Agent | Status | Blocked By |
 |---|------|-------|--------|------------|
-| 01 | Backend Schemas and Session Storage | backend-implementation | Not Started | - |
-| 02 | CSV Parser Service | backend-implementation | Not Started | 01 |
-| 03 | Import Router and Endpoints | backend-implementation | Not Started | 01, 02 |
-| 04 | Frontend API Client and Types | frontend-implementation | Not Started | 03 |
-| 05 | Import Wizard Components | frontend-implementation | Not Started | 04 |
-| 06 | Backend Integration Tests | test-coverage | Not Started | 03 |
+| 01 (TASK-0002) | Backend Schemas and Session Storage | backend-implementation | Complete | - |
+| 02 (TASK-0003) | CSV Parser Service | backend-implementation | Complete | 01 |
+| 03 (TASK-0004) | Import Router and Endpoints | backend-implementation | Complete | 01, 02 |
+| 04 (TASK-0005) | Frontend API Client and Types | frontend-implementation | Complete | 03 |
+| 05 (TASK-0006) | Import Wizard Components | frontend-implementation | Complete | 04 |
+| 06 (TASK-0007) | Backend Integration Tests | test-coverage | Complete | 03 |
 
 **Status Legend:**
 - Not Started

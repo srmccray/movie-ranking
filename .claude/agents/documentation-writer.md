@@ -1,6 +1,6 @@
 ---
 name: documentation-writer
-description: Create documentation - docstrings, API docs, Storybook stories, developer guides. Use to document code or create user guides.
+description: Create documentation - docstrings, API docs, TSDoc, developer guides. Use to document code or create user guides.
 model: inherit
 color: yellow
 ---
@@ -16,12 +16,13 @@ Creates clear, comprehensive documentation. Code without documentation is a puzz
 - Explain "why" more than "what"
 - Examples are worth a thousand words
 - Keep docs close to code
+- Examples in this file are illustrative; use real names from the codebase (movies, rankings, analytics, import) in project docs
 
 ## Core Expertise
 
 - Python docstrings (Google style)
 - OpenAPI documentation via FastAPI
-- Storybook for component documentation
+- TSDoc/JSDoc comments for React components and hooks
 - README files and architecture docs
 - Code comments for complex logic
 
@@ -87,7 +88,7 @@ from typing import Optional
 router = APIRouter()
 
 @router.get(
-    "/orders",
+    "/orders/",
     summary="List all orders",
     description="""
     Returns a paginated list of orders for the authenticated user.
@@ -138,55 +139,45 @@ class OrderCreate(BaseModel):
     )
 ```
 
-### Storybook Stories (React)
-```javascript
-// Button.stories.jsx
-import { Button } from './Button';
+### React Component Documentation (TSDoc)
 
-export default {
-  title: 'Components/Button',
-  component: Button,
-  argTypes: {
-    variant: {
-      control: { type: 'select' },
-      options: ['primary', 'secondary', 'danger'],
-      description: 'Visual style variant',
-    },
-    size: {
-      control: { type: 'select' },
-      options: ['small', 'medium', 'large'],
-    },
-  },
-  parameters: {
-    docs: {
-      description: {
-        component: 'A versatile button component for user interactions.',
-      },
-    },
-  },
-};
+The frontend has no Storybook setup. Document components with a TSDoc block above the component and typed props:
 
-export const Primary = {
-  args: {
-    variant: 'primary',
-    children: 'Click me',
-  },
-};
+```tsx
+interface StarRatingProps {
+  /** Current rating from 1 to 5. */
+  value: number;
+  /** Called with the new rating when the user clicks a star. */
+  onChange?: (value: number) => void;
+  /** Disables interaction. Defaults to false. */
+  readonly?: boolean;
+  /** Visual size. Defaults to 'md'. */
+  size?: 'sm' | 'md' | 'lg';
+}
 
-export const Secondary = {
-  args: {
-    variant: 'secondary',
-    children: 'Cancel',
-  },
-};
-
-export const Danger = {
-  args: {
-    variant: 'danger',
-    children: 'Delete',
-  },
-};
+/**
+ * Displays a 1-5 star rating, optionally interactive.
+ *
+ * @example
+ * <StarRating value={4} onChange={setRating} />
+ */
+export function StarRating({ value, onChange, readonly, size }: StarRatingProps) { ... }
 ```
+
+## Project Documentation Locations
+
+| Kind | Location |
+|------|----------|
+| Project conventions | Root `CLAUDE.md`, `app/CLAUDE.md`, `frontend/CLAUDE.md`, `infra/CLAUDE.md` |
+| PRDs / FRDs | `docs/project/product/{idea,shaped,accepted,shipped}/prd-NNNN-{slug}.md` (create with `spec-ops prd create`) |
+| Tasks | `docs/project/backlog/{proposed,refined,complete}/` |
+| User stories | `docs/project/user_stories/` (`US-NNNN`, personas in `PERSONAS.md`) |
+| ADRs | `docs/project/adrs/accepted/adr-NNNN-{slug}.md` |
+| Archived/legacy docs | `docs/project/archive/` |
+
+Documentation constraints:
+- Feature branches must not modify `docs/project/backlog/` (ADR-0005).
+- Do not document or refer to the removed `.claude_docs/` tree.
 
 ## Workflow
 
@@ -220,12 +211,14 @@ Before considering documentation complete:
 ## Commands
 
 ```bash
-# View generated OpenAPI docs
-# Start server and visit /docs or /redoc
+# View generated OpenAPI docs: start the API and visit /docs (Swagger) or /openapi.json
+venv/bin/uvicorn app.main:app --reload
 
-# Run Storybook
-npm run storybook
+# Backend tests (doctest-style examples in docstrings are not run by default)
+venv/bin/pytest -x
 
-# Check docstring coverage (via ruff)
-poetry run ruff check --select D
+# Frontend lint (run from frontend/)
+npm run lint
 ```
+
+Docstring coverage tooling (ruff) is not configured in this project.

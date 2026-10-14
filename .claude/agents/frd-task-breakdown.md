@@ -26,13 +26,50 @@ allowed-tools:
 
 ## Artifact Structure
 
+Tasks are SpecOps backlog tasks. There is no per-feature folder or `_index.md`.
+
 ```
 docs/project/backlog/
 ├── proposed/
-│   ├── NNNN-{feature-slug}-{name}.md   # One TASK-NNNN per task; frontmatter
-│   └── ...                             # `governing_prds: [PRD-NNNN]`, `dependencies: [TASK-NNNN]`
-└── PRIORITY.md                         # Master ordering (replaces _index.md)
+│   ├── NNNN-{feature-slug}-{name}.md   # One TASK-NNNN per task
+│   └── ...
+├── refined/                            # Tasks that meet the Definition of Ready
+├── complete/
+├── PRIORITY.md                         # Strict execution order across all tasks
+└── ROADMAP.md
 ```
+
+Task frontmatter (see `docs/project/backlog/complete/0003-*.md` for a real example):
+
+```yaml
+---
+id: 'NNNN'
+title: '{Feature}: {Task title}'
+status: Proposed
+created: {YYYY-MM-DD}
+governing_prds:
+- PRD-NNNN
+governing_stories:
+- US-NNNN
+governing_adrs:        # optional
+- ADR-NNNN
+dependencies:          # optional
+- TASK-NNNN
+target_bc: {bounded context, e.g. import, auth, rankings, core}
+---
+```
+
+Create tasks with the CLI so IDs and frontmatter stay valid; check `spec-ops task create --help` for current flags:
+
+```bash
+spec-ops task create --title "{Feature}: {Task title}" --bc {target_bc} \
+  --prd PRD-NNNN --story US-NNNN --deps TASK-NNNN --stage proposed --non-interactive
+spec-ops task decompose PRD-NNNN --dry-run   # preview INVEST-style decomposition of a PRD
+```
+
+Order the tasks in `docs/project/backlog/PRIORITY.md`.
+
+> Backlog isolation (ADR-0005): backlog files are written during planning on `main` (or by the orchestrator), never on a feature branch. If you are running inside a feature/worktree branch, stop and report this to the parent session instead of writing tasks.
 
 ---
 
@@ -41,209 +78,90 @@ docs/project/backlog/
 ### Step 1: Review Inputs
 
 Gather context from:
-- `docs/project/product/accepted/prd-NNNN-{slug}.md` - requirements
-- `docs/project/product/accepted/prd-NNNN-{slug}.md` (`## Refinement Notes` section) - implementation pathways, lateral moves
+- `docs/project/product/accepted/prd-NNNN-{slug}.md` - requirements, Checkable Outcomes
+- The same PRD's `## Refinement Notes` section - implementation pathways, lateral moves
+- Linked Gherkin stories in `docs/project/user_stories/accepted/us-NNNN-*.md`
+- Governing ADRs in `docs/project/adrs/accepted/`
 
 ### Step 2: Identify Work Units
 
 Break down into tasks that are:
-- **Atomic:** Can be completed independently (after dependencies met)
-- **Testable:** Has clear acceptance criteria
+- **Atomic:** Can be completed independently (after dependencies met); a thin vertical slice rather than a horizontal layer
+- **Testable:** Has clear acceptance criteria verifiable through a public frontdoor (HTTP endpoint or rendered UI; ADR-0003)
 - **Routeable:** Maps to a specific implementation agent
+- **Small:** Each task's resulting files should stay under 500 lines (ADR-0002)
 - **Sized appropriately:** Small=hours, Medium=1-2 days, Large=2-5 days max
 
 ### Step 3: Map Dependencies
 
 Create a dependency graph:
-- Which tasks block others?
+- Which tasks block others? (record as `dependencies: [TASK-NNNN]`)
 - What can run in parallel?
 - What are the critical path items?
 
 ### Step 4: Assign to Agents
 
 Route each task to appropriate agent:
-- `backend-implementation` - FastAPI endpoints, services, models
+- `backend-implementation` - FastAPI endpoints, services, models, Alembic migrations
 - `frontend-implementation` - React components, state, UI
 - `infrastructure-implementation` - AWS infrastructure, CDK, Lambda
-- `database-migrations` - Database migrations
 - `test-coverage` - Test coverage
 
 ### Step 5: Document Tasks
 
-Create task documents following templates below.
-
----
-
-## Index Template
-
-```markdown
-# Task Breakdown: {Feature Title}
-
-**FRD:** `docs/project/product/accepted/prd-NNNN-{slug}.md`
-**Refinement:** `docs/project/product/accepted/prd-NNNN-{slug}.md` (`## Refinement Notes` section)
-**Created:** {date}
-**Status:** Not Started | In Progress | Complete
-
----
-
-## Summary
-
-{1-2 sentence summary of the feature being built}
-
-**Total Tasks:** {N}
-**Estimated Complexity:** {T-shirt size for total}
-
----
-
-## Task Overview
-
-| # | Task | Agent | Status | Blocked By |
-|---|------|-------|--------|------------|
-| 01 | {task name} | {agent} | 🔲 Not Started | - |
-| 02 | {task name} | {agent} | 🔲 Not Started | 01 |
-| 03 | {task name} | {agent} | 🔲 Not Started | 01 |
-| 04 | {task name} | {agent} | 🔲 Not Started | 02, 03 |
-
-**Status Legend:**
-- 🔲 Not Started
-- 🔄 In Progress
-- ✅ Complete
-- ⏸️ Blocked
-- ❌ Cancelled
-
----
-
-## Dependency Graph
-
-```
-task-01 (Backend Models)
-    │
-    ├──► task-02 (API Endpoints)
-    │         │
-    │         └──► task-04 (Frontend Integration)
-    │
-    └──► task-03 (Migrations)
-              │
-              └──► task-05 (Testing)
-```
-
----
-
-## Critical Path
-
-1. task-01 → task-02 → task-04 (longest path)
-
----
-
-## Parallel Opportunities
-
-- task-02 and task-03 can run in parallel after task-01
-- Frontend scaffolding can begin while backend completes
-
----
-
-## Lateral Moves (Prerequisites)
-
-These tasks must complete before main feature work:
-
-| Task | Description | Status |
-|------|-------------|--------|
-| {lateral-01} | {description} | 🔲 |
-
----
-
-## Progress Log
-
-| Date | Task | Update |
-|------|------|--------|
-| {date} | - | Breakdown created |
-
-```
+Create task files following the template below, then update `PRIORITY.md` with the execution order.
 
 ---
 
 ## Task Template
 
+Body of a task file (frontmatter shown above):
+
 ```markdown
-# Task {NN}: {Task Title}
+# TASK-NNNN: {Task Title}
 
-**Feature:** {feature-slug}
 **Agent:** {agent-name}
-**Status:** Not Started | In Progress | Complete
-**Blocked By:** {task numbers or "None"}
 
----
+## Summary
 
-## Objective
-
-{1-2 sentence description of what this task accomplishes}
-
----
+{1-2 sentence description of what this task accomplishes, and why}
 
 ## Context
 
-{Brief context from FRD/refinement - what the implementer needs to know}
+{Brief context from the PRD/refinement - what the implementer needs to know}
 
-### Relevant FRD Sections
-- {Link to specific FRD section}
-
-### Relevant Refinement Notes
-- {Key findings from refinement}
-
----
+- PRD: `docs/project/product/accepted/prd-NNNN-{slug}.md`
+- Refinement: the PRD's `## Refinement Notes` section
+- Story: `docs/project/user_stories/accepted/us-NNNN-{slug}.md`
 
 ## Scope
 
 ### In Scope
 - {Specific deliverable 1}
-- {Specific deliverable 2}
 
 ### Out of Scope
 - {What this task does NOT include}
 
----
-
 ## Implementation Notes
 
-### Key Files
 | File | Action | Notes |
 |------|--------|-------|
 | `{path}` | Create/Modify | {notes} |
 
-### Patterns to Follow
-- {Pattern 1} - see `{example location}`
+- Patterns to follow: {pattern} - see `{example location}`
+- Technical decisions: {decision}: {rationale}
 
-### Technical Decisions
-- {Decision 1}: {rationale}
+## Definition of Done
 
----
-
-## Acceptance Criteria
-
-- [ ] {Criterion 1}
-- [ ] {Criterion 2}
-- [ ] {Criterion 3}
-- [ ] Tests passing
-- [ ] Code reviewed
-
----
-
-## Testing Requirements
-
-- [ ] Unit tests for {scope}
-- [ ] Integration tests for {scope}
-- [ ] {Other testing requirements}
-
----
+1. {Observable, blackbox-verifiable criterion, e.g. "POST /api/v1/.../ returns 201 with ..."}
+2. {Criterion 2}
+3. `venv/bin/pytest` (backend) and `npm run lint` + `npm run test:run` in `frontend/` (frontend) pass
+4. No source file touched exceeds 500 lines
 
 ## Handoff Notes
 
-### For Next Task
-{What the next task needs to know from this one}
-
-### Artifacts Produced
-- {File or artifact 1}
-- {File or artifact 2}
+- For next task: {what the next task needs to know}
+- Artifacts produced: {files}
 ```
 
 ---
@@ -315,7 +233,7 @@ If a task exceeds 5 days estimated:
 
 **Context to provide:**
 - Feature slug: `{slug}`
-- Task: `task-{NN}-{name}` (the first unblocked task)
+- Task: `TASK-NNNN` (the first unblocked task)
 - Task location: `docs/project/backlog/proposed/NNNN-{slug}-{name}.md`
 - Dependencies: {any prerequisites already complete, or "None - this is the first task"}
 
@@ -332,7 +250,6 @@ Look at the task breakdown's dependency graph and recommend the agent for the fi
 | FastAPI endpoints, services, models | `backend-implementation` |
 | React components, state, UI | `frontend-implementation` |
 | AWS infrastructure, CDK | `infrastructure-implementation` |
-| Database migrations | `database-migrations` |
 | Test coverage | `test-coverage` |
 
 The parent session invokes the recommended agent. When that task completes, the implementation agent will recommend the next task based on what's now unblocked.
@@ -341,8 +258,8 @@ The parent session invokes the recommended agent. When that task completes, the 
 
 ## Maintenance
 
-As implementation progresses:
-- Update task statuses in `_index.md`
-- Add progress log entries
-- Note any scope changes or discoveries
-- Update blocked-by relationships if they change
+As implementation progresses (done by the orchestrator on `main`, not on feature branches; ADR-0005):
+- Move finished tasks from `refined/` to `complete/` (or `spec-ops queue complete <task-id>`) and keep `PRIORITY.md` in sync
+- Note any scope changes or discoveries in the affected task files
+- Update `dependencies` if they change
+- Run `spec-ops health` to verify `PRIORITY.md` sync

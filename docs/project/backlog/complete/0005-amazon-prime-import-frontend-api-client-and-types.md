@@ -2,7 +2,7 @@
 id: '0005'
 title: 'Amazon Prime Import: Frontend API Client and Types'
 status: Complete
-created: 2026-10-13
+created: 2026-01-17
 completed_at: '2026-01-17'
 governing_prds:
 - PRD-0001
@@ -10,7 +10,7 @@ governing_stories:
 - US-0001
 dependencies:
 - TASK-0004
-target_bc: import
+target_bc: frontend
 ---
 
 # TASK-0005: Amazon Prime Import — Frontend API Client and Types
@@ -39,6 +39,8 @@ Implemented in commit `0941314` ("Add Amazon Prime import feature and various im
 ## Legacy Specification
 
 _Migrated verbatim (headings demoted) from the legacy `.claude_docs/` tree on 2026-10-13._
+
+_Historical design record: code samples and statuses below reflect the plan at the time (2026-01-17) and may differ from the shipped code; the sections above are authoritative. The `.claude_docs/` tree was removed in commit `fb641e6` and remains available in git history before that commit._
 
 ### Source: `.claude_docs/tasks/amazon-prime-import/task-04-frontend-api-types.md`
 

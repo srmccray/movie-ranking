@@ -145,32 +145,16 @@ Complexity    ├──────────┼──────────
 **Criteria:** (Complexity ≤3 AND Risk 4-6) OR (Complexity 4-6 AND Risk ≤3)
 
 **Workflow:**
-1. Create a Quick Sketch (not full FRD)
+1. Create a Quick Sketch (a short SpecOps PRD created with `spec-ops prd create`, not a full FRD)
 2. Route to implementation agent(s)
 3. Standard code review
 
-**Quick Sketch Template:**
-```markdown
-# Quick Sketch: {title}
+**Quick Sketch content** (mandatory PRD sections plus a short technical note; `frd-creator` owns the exact template):
+- Who this is for / What the person cannot do today / What good looks like / What this does not do
+- Checkable Outcomes (observable through a public frontdoor)
+- Technical note: approach, files likely affected, risks/considerations
 
-## What
-{1-2 sentence description}
-
-## Why
-{Business justification}
-
-## Approach
-{Bullet points of implementation approach}
-
-## Files Likely Affected
-- {file1}
-- {file2}
-
-## Risks/Considerations
-- {any notable risks}
-```
-
-**Artifacts:** `docs/project/product/idea/prd-NNNN-{slug}.md`
+**Artifacts:** `docs/project/product/idea/prd-NNNN-{slug}.md` (plus a Gherkin story in `docs/project/user_stories/accepted/` via `spec-ops story create` when the change is user-visible)
 
 ---
 
@@ -179,7 +163,7 @@ Complexity    ├──────────┼──────────
 
 **Workflow:**
 1. Create FRD (standard template)
-2. Light refinement (codebase alignment check)
+2. Light refinement (codebase alignment check, appended to the PRD as `## Refinement Notes`)
 3. Route to implementation agent(s)
 4. Code review + testing validation
 
@@ -192,7 +176,7 @@ Complexity    ├──────────┼──────────
 
 **Artifacts:**
 - `docs/project/product/accepted/prd-NNNN-{slug}.md`
-- `docs/project/backlog/ (tasks with `governing_prds: [PRD-NNNN]`)` (if multi-task)
+- `docs/project/backlog/proposed/NNNN-{slug}-{name}.md` with `governing_prds: [PRD-NNNN]` (only if multi-task; created by `frd-task-breakdown`)
 
 ---
 
@@ -211,12 +195,10 @@ Complexity    ├──────────┼──────────
 **Additional Requirements:**
 - Risk mitigation plan
 - Cross-team coordination (if needed)
-- Feature flag strategy
 - Monitoring/alerting additions
 
 **Artifacts:**
-- `docs/project/product/accepted/prd-NNNN-{slug}.md`
-- `docs/project/product/accepted/prd-NNNN-{slug}.md` (`## Refinement Notes` section)
+- `docs/project/product/accepted/prd-NNNN-{slug}.md` (including a `## Refinement Notes` section)
 - `docs/project/backlog/PRIORITY.md`
 - `docs/project/backlog/proposed/NNNN-{slug}-{name}.md` (per task)
 - `docs/project/adrs/accepted/adr-NNNN-{slug}.md` (if architectural)
@@ -275,6 +257,8 @@ Automatically escalate to LARGE tier if ANY of these apply:
 - Infrastructure/deployment changes
 - Changes affecting all users simultaneously
 
+Note for scoring: work that lands in a file already over the 500-line limit (grandfathered in `specops.toml`) usually needs a decomposition step first (ADR-0002); reflect that in Scope and Complexity.
+
 Automatically cap at SMALL tier if:
 - Explicitly labeled as "quick fix" or "hotfix" by user
 - Time-boxed request (e.g., "spend 30 minutes max")
@@ -295,9 +279,9 @@ After triage completes:
 | Tier | Next Agent | Context to Include |
 |------|------------|-------------------|
 | TRIVIAL | `backend-implementation` or `frontend-implementation` | Original request, key files identified |
-| SMALL | `frd-creator` | Request, tier=SMALL, create Quick Sketch |
-| MEDIUM | `frd-creator` | Request, tier=MEDIUM, create standard FRD |
-| LARGE | `frd-creator` | Request, tier=LARGE, create comprehensive FRD |
+| SMALL | `frd-creator` | Request, tier=SMALL, create Quick Sketch (PRD) |
+| MEDIUM | `frd-creator` | Request, tier=MEDIUM, create standard PRD |
+| LARGE | `frd-creator` | Request, tier=LARGE, create comprehensive PRD |
 
 The parent session invokes the recommended agent, which will then recommend the next agent when it completes, continuing the chain until the workflow is done.
 

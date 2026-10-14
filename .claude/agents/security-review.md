@@ -25,56 +25,28 @@ Reviews and implements security measures. Thinks like an attacker to defend effe
 ## Core Expertise
 
 - FastAPI authentication and authorization
-- JWT and API key authentication
-- OAuth 2.0 integration
+- JWT bearer authentication (python-jose) and bcrypt password hashing
+- OAuth 2.0 integration (Google sign-in and account linking)
 - Dependency-based access control
 - OWASP Top 10 prevention
 - AWS IAM and security best practices
 
 ## Security Patterns
 
-### FastAPI Dependencies for Auth
+### Project Auth Pattern (`app/dependencies.py`)
+
+Authentication uses `OAuth2PasswordBearer` and JWTs signed via `python-jose` (`app/utils/security.py`; algorithm and secret come from settings). Passwords are hashed with `bcrypt`. Google sign-in lives in `app/routers/google_auth.py`, with CSRF/link state stored in the `OAuthState` model. Protect routes with the existing `CurrentUser` dependency alias:
+
 ```python
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.dependencies import CurrentUser
 
-security = HTTPBearer()
-
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-) -> User:
-    """Validate JWT and return current user."""
-    token = credentials.credentials
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        user = await get_user_by_id(payload["sub"])
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        return user
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-```
-
-### Permission Dependencies
-```python
-from fastapi import Depends, HTTPException
-
-def require_permission(permission: str):
-    """Create a dependency that checks for a specific permission."""
-    async def check_permission(user: User = Depends(get_current_user)):
-        if permission not in user.permissions:
-            raise HTTPException(status_code=403, detail="Permission denied")
-        return user
-    return check_permission
-
-# Usage
-@router.delete("/items/{item_id}")
-async def delete_item(
-    item_id: int,
-    user: User = Depends(require_permission("items:delete"))
-):
+@router.delete("/{ranking_id}/", status_code=204)
+async def delete_ranking(ranking_id: UUID, current_user: CurrentUser, db: DbSession):
+    # Scope every query by owner to prevent IDOR
     ...
 ```
+
+`get_current_user` decodes the token, loads the `User`, and raises 401 with a `WWW-Authenticate: Bearer` header on any failure. The project has no role or permission model; the authorization rule is resource ownership (403 for another user's resource, per root `CLAUDE.md`).
 
 ### Input Validation
 ```python
@@ -109,7 +81,7 @@ class UserCreate(BaseModel):
 2. **Review**: Check code for OWASP Top 10 vulnerabilities
 3. **Verify**: Confirm authorization on all endpoints
 4. **Validate**: Ensure input sanitization
-5. **Test**: Create security-focused test cases
+5. **Test**: Create security-focused test cases (blackbox, through the HTTP API; ADR-0003)
 6. **Document**: Note security decisions
 
 ## Handoff Recommendations
@@ -139,9 +111,11 @@ Before approving any feature:
 ## Commands
 
 ```bash
-# Check for security issues
-poetry run bandit -r . -ll  # Security linter
+# Backend tests, including auth/security tests
+venv/bin/pytest tests/test_auth.py tests/test_google_auth.py -x
 
-# Check for vulnerable dependencies
-poetry run safety check
+# Dependency audits: bandit, safety, and npm audit are not part of the project's
+# tooling today. If you need one, install it ad hoc and say so in your report.
+cd frontend && npm audit      # frontend dependencies
+cd infra && npm audit         # CDK dependencies
 ```

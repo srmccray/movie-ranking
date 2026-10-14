@@ -2,7 +2,7 @@
 id: '0002'
 title: Manual Movie Search in Import Wizard
 status: Shipped
-created: 2026-10-13
+created: 2026-01-17
 target_persona: Casey (The Movie Enthusiast)
 component: import
 ---
@@ -19,7 +19,7 @@ component: import
 
 ## What good looks like
 
-1. **Search from Review**: A "Search" action on matched movies and "Search for this movie" on unmatched ones open an inline `MovieSearch`.
+1. **Search from Review**: A "Search for different movie" link on matched movies and a "Search for this movie" button on unmatched ones open an inline search panel inside `ImportReview` (debounced `apiClient.searchMovies()` results with keyboard navigation, using `.import-search-*` styles; it does not render the standalone `MovieSearch` component).
 2. **Match Override**: `PATCH /api/v1/import/amazon-prime/session/{session_id}/movie/{index}/match/` with `tmdb_id` updates the in-memory session, sets confidence to 1.0 and clears alternatives.
 
 ## What this does not do
@@ -29,9 +29,9 @@ component: import
 
 ## Checkable Outcomes
 
-1. Users can click "Search" on a matched movie to search for a different match
+1. Users can click "Search for different movie" on a matched movie to search for a different match
 2. Users can click "Search for this movie" on unmatched movies to find a match
-3. Search results display in the same style as the main MovieSearch component
+3. Search results display in a list styled like the main MovieSearch component (separate `.import-search-result*` classes in `frontend/src/styles/pages/import.css`)
 4. Selecting a search result updates the current movie's match in the session
 5. After selection, the review UI shows the newly matched movie for rating
 6. Users can cancel the search and return to the previous state
@@ -47,11 +47,16 @@ component: import
 
 ## Shipped Evidence
 
-- Shipped in commit `0941314` (2026-01-17): PATCH `.../movie/{index}/match/` in `app/routers/import_amazon.py`; `apiClient.updateImportMovieMatch()` used by `frontend/src/components/ImportReview.tsx`.
+- Shipped in commit `0941314` (2026-01-17) together with PRD-0001.
+- Backend: `PATCH /api/v1/import/amazon-prime/session/{session_id}/movie/{index}/match/` (`update_import_movie_match` in `app/routers/import_amazon.py`, request schema `ImportMovieMatchRequest` in `app/schemas/import_amazon.py`); it sets `confidence` to 1.0, clears `alternatives`, and leaves `status` as `pending`.
+- Frontend: `apiClient.updateImportMovieMatch()` in `frontend/src/api/client.ts`, called from `handleSelectMovie` in `frontend/src/components/ImportReview.tsx`; styles in `frontend/src/styles/pages/import.css`.
+- Tests: `TestUpdateMovieMatch` in `tests/test_import_amazon.py`.
 
 ## Legacy Specification
 
 _Migrated verbatim (headings demoted) from the legacy `.claude_docs/` tree on 2026-10-13._
+
+_Historical design record: code samples and statuses below reflect the plan at the time (2026-01-17) and may differ from the shipped code; the sections above are authoritative. The `.claude_docs/` tree was removed in commit `fb641e6` and remains available in git history before that commit._
 
 ### Source: `.claude_docs/features/import-manual-search/sketch.md`
 

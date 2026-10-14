@@ -12,16 +12,16 @@ These rules are non-negotiable. Autonomous agents and human contributors must fo
 
 1. **File Length Limit (<500 lines)**:
    - Source files over ~500 lines are strictly forbidden. Decompose large files into focused, single-responsibility modules.
-   - Enforced by `uv run spec-ops health` (warns proactively at >=400 lines). Governed by ADR-0002.
+   - Enforced by `spec-ops health` (warns proactively at >=400 lines). Governed by ADR-0002.
 2. **Blackbox Frontdoor Verification**:
-   - Tests must exercise public interfaces (CLI commands, public module entry points, domain models) rather than reaching into private internals or backdoor state manipulation.
+   - Tests must exercise public interfaces (HTTP API endpoints, rendered UI behavior) rather than reaching into private internals or backdoor state manipulation.
    - Governed by ADR-0003.
 3. **Strict Backlog Isolation**:
    - Multi-agent workers execute in isolated git worktrees (`.worktrees/<task-id>`) on dedicated task branches (`task/<task-id>` or `feat/<task-id>`).
    - Shared backlog files (`docs/project/backlog/`) must never be modified directly on feature branches; transitions are synchronized upon integration.
    - Governed by ADR-0005.
-4. **UV Workspace Package Management**:
-   - All Python tools and dependencies are managed through root UV workspace (`uv run pytest`, `uv run spec-ops ...`). Never invoke bare `pip` or create ad-hoc virtual environments.
+4. **Project Toolchain**:
+   - Backend Python dependencies live in `requirements.txt` / `requirements-test.txt` and run in the repo-root `venv/`. Backend tests: `venv/bin/pytest` (the `specops.toml` preflight). Frontend (`frontend/`) uses npm. SpecOps is the standalone `spec-ops` CLI (there is no UV workspace or `uv.lock`).
 5. **Specification as Code (PMaC)**:
    - Every requirement, persona, architectural decision, and work item lives under `docs/project/` as Markdown with YAML frontmatter.
    - Governed by ADR-0001.
@@ -29,12 +29,13 @@ These rules are non-negotiable. Autonomous agents and human contributors must fo
    - User stories in `docs/project/user_stories/accepted/` must provide executable Gherkin scenarios.
    - All acceptance tests must verify observable outcomes without private mock backdoors.
    - Governed by ADR-0006.
-8. **Property-Based Testing (Hypothesis) & Mutation Testing (Mutmut)**:
-   - Domain models, state machines, parsers, and health algorithms must maintain generative property tests (`@given(...)`).
-   - Core domain modules must maintain a minimum 80% mutation kill score under `mutmut`.
-   - Governed by ADR-0009.
 
 <!-- BEGIN CUSTOM INVARIANTS -->
+7. **Project Layout & Verification Commands**:
+   - Components (`specops.toml`): `backend` = `app/` (FastAPI), `frontend` = `frontend/src` (React/TypeScript), `infra` = `infra/lib` (AWS CDK). Backend tests live in `tests/`.
+   - Backend: `venv/bin/pytest`. Frontend (run inside `frontend/`): `npm run lint`, `npm run test:run`, `npm run build`.
+   - Installed profiles are `core` and `bdd` (ADR-0001 to ADR-0006). The DDD, property-testing, and mutation-testing profiles are not installed, so Hypothesis and Mutmut are not required.
+   - Pre-existing files over the limit are grandfathered in `specops.toml` (`[invariants.file_limits]`) and `.specops/grandfathered_debt.json`, and tracked by `TASK-REFACTOR-*` tasks in `docs/project/backlog/`.
 <!-- END CUSTOM INVARIANTS -->
 
 ---
@@ -81,10 +82,8 @@ A backlog task or feature may only be transitioned to `refined/` and pulled into
 1. **Task Metadata Complete**: Task frontmatter contains `id`, `title`, `status: Refined`, `target_bc`, and explicit dependencies.
 2. **Governing Artifacts Linked**: Reference PRD in `docs/project/product/accepted/`, Persona in `docs/project/user_stories/PERSONAS.md`, and governing ADRs in `docs/project/adrs/accepted/` are cited.
 3. **Executable BDD Specification**: Governing user story in `docs/project/user_stories/accepted/` provides executable Gherkin scenarios (`Given ... When ... Then`) whose test setup is achievable strictly through public frontdoors without backdoor tampering (ADR-0006).
-4. **Generative Property Invariants Identified**: Core domain state spaces, combinatorial parsers, and health algorithms identify invariant properties for Hypothesis `@given(...)` testing (ADR-0009).
-5. **Mutation Testing Scope Defined**: Target modules for Mutmut mutation testing identified with target >=80% mutant kill score (ADR-0009).
-6. **INVEST Criteria Satisfied**: Validated as a thin vertical slice (Independent, Negotiable, Valuable, Estimable, Small [<500 lines per file], Testable) with zero speculative horizontal layers.
-7. **Documentation Review**: Relevant existing documentation in `docs/` reviewed to prevent conflicting conventions.
+4. **INVEST Criteria Satisfied**: Validated as a thin vertical slice (Independent, Negotiable, Valuable, Estimable, Small [<500 lines per file], Testable) with zero speculative horizontal layers.
+5. **Documentation Review**: Relevant existing documentation in `docs/` reviewed to prevent conflicting conventions.
 
 ---
 
@@ -92,18 +91,15 @@ A backlog task or feature may only be transitioned to `refined/` and pulled into
 
 Work is complete and ready for integration into `main` only when:
 
-1. **Blackbox Frontdoor Verification**: 100% test pass rate (`uv run pytest`) verifying observable contracts through public frontdoors with zero private mock backdoors (ADR-0003).
-2. **Executable BDD Scenarios Passing**: All Gherkin acceptance criteria executed via `pytest-bdd` pass cleanly without mock backdoors (ADR-0006).
-3. **Hypothesis Property Tests Passing**: Generative property tests verify domain invariants across randomized inputs without shrinking failures (ADR-0009).
-4. **Mutmut Mutation Score Attained**: Target domain modules achieve >=80% mutant kill score under `mutmut` (ADR-0009).
-5. **Codebase Health Check**: `uv run spec-ops health` reports 0 file limit violations (<500 lines) and 0 proactive warnings (<400 lines), and verifies `PRIORITY.md` sync (ADR-0002).
-6. **Lockfile Integrity**: `uv lock --check` passes cleanly without unstaged dependency drifts.
-7. **Documentation Integrity (Diataxis)**:
+1. **Blackbox Frontdoor Verification**: 100% test pass rate (`venv/bin/pytest` for the backend; `npm run test:run` in `frontend/` for the frontend) verifying observable contracts through public frontdoors with zero private mock backdoors (ADR-0003).
+2. **Executable BDD Scenarios Passing**: All Gherkin acceptance criteria pass cleanly without mock backdoors; UI scenarios are automated with Playwright (ADR-0006).
+3. **Codebase Health Check**: `spec-ops health` reports 0 file limit violations (<500 lines) and 0 proactive warnings (<400 lines), and verifies `PRIORITY.md` sync (ADR-0002).
+4. **Documentation Integrity (Diataxis)**:
    - Inaccurate or stale docs discovered during work are corrected.
    - Reusable patterns, CLI commands, and architectural changes documented in `docs/how-to/` or `docs/reference/`.
-   - Documentation builds cleanly (`uv run spec-ops docs build`).
-8. **Strict Backlog Progression**: Task is moved from `refined/` to `complete/` (or via `spec-ops queue complete <task-id>`) and `PRIORITY.md` updated atomically upon integration (ADR-0005).
-9. **Commit Provenance**: Commits include structured trailers referencing governing tasks and stories (`SpecOps-Task: TASK-XXXX`).
+   - Documentation builds cleanly (`spec-ops docs build`).
+5. **Strict Backlog Progression**: Task is moved from `refined/` to `complete/` (or via `spec-ops queue complete <task-id>`) and `PRIORITY.md` updated atomically upon integration (ADR-0005).
+6. **Commit Provenance**: Commits include structured trailers referencing governing tasks and stories (`SpecOps-Task: TASK-XXXX`).
 
 ---
 
@@ -113,10 +109,8 @@ When picking up engineering work:
 
 1. **Select Task**: Always select the highest-priority unassigned task in `docs/project/backlog/PRIORITY.md` located in `refined/`.
 2. **Review Invariants & DoR**: Verify task meets the Definition of Ready (DoR); read governing ADRs, PRDs, and user stories cited in the frontmatter.
-3. **Implement**: Develop the solution using test-driven development through public frontdoors. Maintain BDD scenarios and Hypothesis property tests alongside feature code.
+3. **Implement**: Develop the solution using test-driven development through public frontdoors. Maintain BDD scenarios alongside feature code.
 4. **Preflight Verification**:
-   - Run `uv run spec-ops health` (verify 0 file limit violations, 0 warnings, and PRIORITY.md sync).
-   - Run `uv run pytest` (verify 100% test pass rate across unit, BDD, and Hypothesis property tests).
-   - Run `uv run mutmut run` (verify mutant kill score on mutated domain modules).
-   - Run `uv lock --check` (verify lockfile synchronization).
+   - Run `spec-ops health` (verify 0 file limit violations, 0 warnings, and PRIORITY.md sync).
+   - Run `venv/bin/pytest` (verify 100% backend test pass rate), and for frontend changes `npm run lint` and `npm run test:run` inside `frontend/`.
 5. **Complete**: Verify all Definition of Done (DoD) criteria; move task to `complete/` or use `spec-ops queue complete <task-id>`, update `PRIORITY.md`, and link commit or PR.

@@ -15,3 +15,6 @@ We establish automated **Pre-flight Verification and In-Worktree CI Healing**:
 ## Consequences
 - **Positive**: Branches merged to `main` have an extraordinarily high pass rate; CI failures are treated as immediate feedback loops rather than discarded work.
 - **Negative**: Requires robust local tooling and access to GitHub CLI.
+
+## Project Note (movie-ranking)
+This repository has no `Makefile`, so there is no `make preflight` target. The preflight command configured in `specops.toml` is `venv/bin/pytest`, and `spec-ops health` is run alongside it; CI (`.github/workflows/ci.yml`) runs `spec-ops health --numbering`, `spec-ops health`, and the blackbox test suite.

@@ -14,12 +14,12 @@ Traditional agent workflows stall after every sub-action, awaiting human proddin
 
 2. **Tri-Directional Equilibrium**:
    - Development is not merely writing feature code. A healthy software system maintains strict balance across:
-     - **Architecture (ADRs)**: Non-negotiable invariants, bounded contexts, mutation resistance, and security constraints.
+     - **Architecture (ADRs)**: Non-negotiable invariants, bounded contexts, component boundaries, and security constraints.
      - **Product & Journeys (PRDs & User Stories)**: Measurable customer value, observable outcomes, and executable Gherkin journeys.
      - **Living Knowledge (Diataxis Docs)**: Up-to-date tutorials, how-to guides, reference specs, and architecture explanations.
 
 3. **Strict Invariant Governance**:
-   - Every vertical slice must respect hard invariants: file length <500 lines (proactive warning at >=400 lines), blackbox frontdoor verification without backdoor mocks, git worktree isolation, and lockfile immutability.
+   - Every vertical slice must respect hard invariants: file length <500 lines (proactive warning at >=400 lines), blackbox frontdoor verification without backdoor mocks, and git worktree isolation.
 
 ---
 
@@ -63,7 +63,7 @@ At the start of every cycle (or whenever the ready buffer needs replenishment), 
 - **Audit Heuristics**:
   1. Inspect all accepted user stories (`docs/project/user_stories/accepted/us-XXXX-*.md`).
   2. Inspect Gherkin scenarios (`Scenario:` or `Scenario Outline:`).
-  3. Check test implementation coverage under `tests/test_bdd_*.py`.
+  3. Check test implementation coverage in `tests/` (backend) and `frontend/src` (UI, Playwright per ADR-0006).
   4. Cross-reference against target personas in `docs/project/user_stories/PERSONAS.md` to identify neglected user roles or workflow edges.
   5. **Discovery Action**: Prioritize uncompleted scenarios into INVEST-compliant task candidates.
 
@@ -74,8 +74,8 @@ At the start of every cycle (or whenever the ready buffer needs replenishment), 
   2. Scan all backlog tasks across stages (`complete/`, `refined/`, `proposed/`) and aggregate counts of `governing_adrs: [ADR-XXXX]`.
   3. Identify "zero-coverage" or "low-coverage" ADRs:
      - ADRs with 0 or 1 associated tasks.
-     - ADRs specifying quality attributes (e.g. mutation kill rate, AST seam boundaries, property testing) that lack automated CI/health check enforcement.
-  4. **Discovery Action**: Synthesize architectural hardening tasks (e.g., property tests via Hypothesis, mutation kill benchmarks via Mutmut, health check rules) citing the unrepresented ADRs.
+     - ADRs specifying quality attributes (e.g. AST seam boundaries, file-length limits) that lack automated CI/health check enforcement.
+  4. **Discovery Action**: Synthesize architectural hardening tasks (e.g., file-length decomposition, health check rules) citing the unrepresented ADRs.
 
 ### Vector 4: Diataxis Documentation Balance (System Knowledge)
 - **Objective**: Ensure documentation expands concurrently with codebase capabilities, adhering to the Diataxis framework (`tutorials/`, `how-to/`, `reference/`, `explanation/`).
@@ -97,7 +97,7 @@ To avoid skewing purely toward features (accumulating architectural debt) or pur
 | Category | Target Ratio | Focus Areas |
 |---|---|---|
 | **Product Value** | ~40% | PRD checkable outcomes, persona pain points, customer-facing CLI subcommands |
-| **Architectural Hardening** | ~30% | Low-coverage ADR implementation, AST decomposition, property tests, mutation kill scores |
+| **Architectural Hardening** | ~30% | Low-coverage ADR implementation, AST decomposition, file-length decomposition |
 | **Diataxis & Journey Docs** | ~30% | Executable BDD scenarios, how-to recipes, CLI reference guides, architecture explanations |
 
 ### Task Slicing Rules (INVEST Standards)
@@ -138,7 +138,7 @@ The orchestrator executes an infinite balancing loop that only pauses when the b
   ▼                                                             │
 [Stage 4: Preflight Verification & Integration]                 │
   - Verify `spec-ops health` (0 violations, 0 warnings)         │
-  - Verify test suite (`pytest`) and lockfile (`uv lock --check`)│
+  - Verify test suite (`venv/bin/pytest`)           │
   - Integrate branch under merge lock                           │
   - Mark task complete and sync `PRIORITY.md`                   │
   │                                                             │
@@ -156,7 +156,7 @@ The orchestrator executes an infinite balancing loop that only pauses when the b
 ### Transition & Non-Blocking Rules:
 1. **Never Stall on Completion**: Immediately upon completing Stage 5, the orchestrator begins Stage 1 of the next cycle without prompting the user for permission to continue.
 2. **Autonomous Error Triage**: If an implementation step fails or stalls:
-   - Run `uv run spec-ops rescue inspect TASK-XXXX` to extract diagnostics.
+   - Run `spec-ops rescue inspect TASK-XXXX` to extract diagnostics.
    - If recoverable, salvage and retry with anti-loop memory.
    - If an architectural or toolchain defect is identified, document an immediate high-priority remediation task and prioritize it first.
 3. **Graceful Quiescence**: The loop pauses only when:

@@ -1,6 +1,6 @@
 ---
 name: test-coverage
-description: Create tests and ensure coverage - pytest for backend, Jest for frontend. Use after implementation or to fix flaky tests.
+description: Create tests and ensure coverage - pytest for backend, Vitest for frontend. Use after implementation or to fix flaky tests.
 model: inherit
 color: yellow
 ---
@@ -20,163 +20,132 @@ Ensures code quality through comprehensive test coverage. Untested code is legac
 ## Core Expertise
 
 ### Backend Testing
-- pytest with pytest-asyncio for async tests
-- Factory Boy or fixtures for test data
-- HTTPX or TestClient for API testing
-- Freezegun for time mocking
-- Moto for AWS service mocking
-- Responses or respx for HTTP mocking
+- pytest with pytest-asyncio (`asyncio_mode = auto` in `pytest.ini`)
+- HTTPX `AsyncClient` against the real FastAPI app (fixtures in `tests/conftest.py`)
+- Tests run on a per-test temporary SQLite database (via aiosqlite), not PostgreSQL; be careful with PostgreSQL-only features such as UUID defaults (see `app/CLAUDE.md`)
+- `unittest.mock` for external services (TMDB, Google OAuth)
+- Installed test deps are listed in `requirements-test.txt`; do not assume Factory Boy, Freezegun, Moto, or pytest-cov are available
 
 ### Frontend Testing
-- Jest with React Testing Library
-- MSW for API mocking
+- Vitest (globals enabled, jsdom) with React Testing Library and `@testing-library/user-event`
+- MSW 2.x for API mocking; shared handlers in `frontend/src/__tests__/mocks/handlers.ts`, server in `server.ts`, setup in `src/__tests__/setup.ts`
+- Tests are co-located (`Foo.tsx` / `Foo.test.tsx`)
 - Component rendering and interaction testing
-- User event simulation
+
+### Testing Philosophy (SpecOps)
+- Blackbox frontdoor verification (ADR-0003): assert on observable outputs through public entrypoints (HTTP endpoints, rendered UI) with no private backdoor manipulation of internals or the database
+- Keep test files under 500 lines (ADR-0002); split by endpoint/feature. Grandfathered oversize files are listed in `specops.toml`; do not add to them
+- Feature branches must not modify `docs/project/backlog/` (ADR-0005)
+- Acceptance criteria may come from Gherkin stories in `docs/project/user_stories/` (US-NNNN)
 
 ## Test Patterns
 
 ### Backend Test Structure
+
+Real fixtures from `tests/conftest.py`: `client` (AsyncClient), `test_user`, `auth_headers`, `test_movie`. All API paths end with a trailing slash.
+
 ```python
 import pytest
 from httpx import AsyncClient
-from freezegun import freeze_time
-
-from app.main import app
-from app.models import User
-from tests.factories import UserFactory, ItemFactory
 
 
-class TestItemEndpoints:
-    """Tests for item API endpoints."""
+class TestCreateRanking:
+    """Tests for POST /api/v1/rankings/ endpoint."""
 
-    @pytest.fixture
-    async def user(self, db_session):
-        """Create a test user."""
-        return await UserFactory.create()
-
-    @pytest.fixture
-    async def auth_client(self, user):
-        """Create an authenticated test client."""
-        async with AsyncClient(app=app, base_url="http://test") as client:
-            client.headers["Authorization"] = f"Bearer {create_token(user)}"
-            yield client
-
-    async def test_list_items_returns_user_items(self, auth_client, user):
-        """Test that list endpoint returns only the user's items."""
+    @pytest.mark.asyncio
+    async def test_create_ranking_success(
+        self, client: AsyncClient, auth_headers: dict, test_movie: dict
+    ):
+        """Test successful ranking creation."""
         # Arrange
-        my_item = await ItemFactory.create(owner=user)
-        other_item = await ItemFactory.create()  # Different owner
+        payload = {"movie_id": test_movie["movie_id"], "rating": 5}
 
         # Act
-        response = await auth_client.get("/api/items")
-
-        # Assert
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data["items"]) == 1
-        assert data["items"][0]["id"] == my_item.id
-
-    async def test_create_item_success(self, auth_client):
-        """Test successful item creation."""
-        # Arrange
-        payload = {"name": "Test Item", "description": "A test"}
-
-        # Act
-        response = await auth_client.post("/api/items", json=payload)
+        response = await client.post(
+            "/api/v1/rankings/", json=payload, headers=auth_headers
+        )
 
         # Assert
         assert response.status_code == 201
-        assert response.json()["name"] == "Test Item"
+        data = response.json()
+        assert data["rating"] == 5
+        assert data["movie_id"] == test_movie["movie_id"]
 
-    @freeze_time("2024-01-15 12:00:00")
-    async def test_time_sensitive_feature(self, auth_client):
-        """Test time-dependent behavior."""
-        pass
+    @pytest.mark.asyncio
+    async def test_create_ranking_requires_auth(
+        self, client: AsyncClient, test_movie: dict
+    ):
+        """Unauthenticated requests are rejected."""
+        response = await client.post(
+            "/api/v1/rankings/",
+            json={"movie_id": test_movie["movie_id"], "rating": 5},
+        )
+
+        assert response.status_code == 401
 ```
+
+See `tests/test_rankings.py` for the full pattern.
 
 ### Service Layer Tests
+
+Services in `app/services/` (`tmdb.py`, `csv_parser.py`, `import_session.py`) are tested directly; mock outbound HTTP with `unittest.mock`.
+
 ```python
-import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.item_service import ItemService
+from app.services.tmdb import TMDBService
 
 
-class TestItemService:
-    """Tests for ItemService business logic."""
+class TestTMDBService:
+    """Tests for the TMDB service."""
 
-    async def test_process_item_sends_notification(self, db_session):
-        """Test that processing an item sends a notification."""
-        # Arrange
-        service = ItemService(db_session)
-        item = await ItemFactory.create(status="pending")
+    @pytest.mark.asyncio
+    async def test_search_movies_parses_results(self, mock_settings):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"results": []}
 
-        with patch.object(service, "notify") as mock_notify:
-            mock_notify.return_value = None
+        with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = mock_response
 
-            # Act
-            await service.process_item(item.id)
+            async with TMDBService() as service:
+                results = await service.search_movies("The Matrix")
 
-            # Assert
-            mock_notify.assert_called_once_with(item.owner_id, "Item processed")
-
-    async def test_process_item_updates_status(self, db_session):
-        """Test that processing updates the item status."""
-        service = ItemService(db_session)
-        item = await ItemFactory.create(status="pending")
-
-        await service.process_item(item.id)
-
-        await db_session.refresh(item)
-        assert item.status == "processed"
+            assert results == []
 ```
 
+`mock_settings` is a fixture local to `tests/test_tmdb_service.py`; copy the surrounding setup from that file.
+
 ### Frontend Test Structure
-```javascript
+
+```typescript
+import { describe, it, expect } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { rest } from 'msw';
-import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
 
+import { server } from '../__tests__/mocks/server';
 import { ItemList } from './ItemList';
-
-const server = setupServer(
-  rest.get('/api/items', (req, res, ctx) => {
-    return res(ctx.json({ items: [{ id: 1, name: 'Test Item' }] }));
-  })
-);
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
 
 describe('ItemList', () => {
   it('renders items from API', async () => {
+    // Override the shared MSW handlers for this test (match the backend shape exactly)
+    server.use(
+      http.get('/api/v1/items/', () =>
+        HttpResponse.json({ items: [{ id: 1, name: 'Test Item' }] })
+      )
+    );
+
     render(<ItemList />);
 
     await waitFor(() => {
       expect(screen.getByText('Test Item')).toBeInTheDocument();
     });
   });
-
-  it('shows loading state initially', () => {
-    render(<ItemList />);
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
-  });
-
-  it('handles delete action', async () => {
-    const user = userEvent.setup();
-    render(<ItemList />);
-
-    await waitFor(() => screen.getByText('Test Item'));
-    await user.click(screen.getByRole('button', { name: /delete/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByText('Test Item')).not.toBeInTheDocument();
-    });
-  });
 });
 ```
+
+`ItemList` and `/api/v1/items/` are illustrative. Components that need auth or routing must be wrapped in `MemoryRouter` and `AuthProvider`; see `frontend/src/pages/LoginPage.test.tsx`. The MSW server lifecycle is already configured in `src/__tests__/setup.ts`, so do not call `server.listen()` in individual tests.
 
 ## Workflow
 
@@ -184,7 +153,7 @@ describe('ItemList', () => {
 2. **Design**: Plan test cases (happy path, edge cases, errors)
 3. **Create**: Write tests using appropriate patterns
 4. **Mock**: Set up mocks for external services
-5. **Verify**: Run `poetry run pytest -x` to confirm passing
+5. **Verify**: Run `venv/bin/pytest -x` (backend) or `npm run test:run` from `frontend/` (frontend) to confirm passing
 6. **Check**: Ensure no flaky behavior
 
 ## Handoff Recommendations
@@ -212,12 +181,13 @@ Before considering tests complete:
 ## Commands
 
 ```bash
-poetry run pytest <path>                    # Run tests
-poetry run pytest <path> -x                 # Stop on first failure
-poetry run pytest <path> -v                 # Verbose output
-poetry run pytest <path> --tb=short         # Short tracebacks
-poetry run pytest <path> -k "test_name"     # Run specific test
-poetry run pytest --cov=app                 # Run with coverage
-npm run test                                # Frontend Jest tests
-npm run test:coverage                       # Frontend with coverage
+venv/bin/pytest <path>                    # Run tests
+venv/bin/pytest <path> -x                 # Stop on first failure
+venv/bin/pytest <path> -v                 # Verbose output
+venv/bin/pytest <path> --tb=short         # Short tracebacks
+venv/bin/pytest <path> -k "test_name"     # Run specific test
+# Frontend (run from frontend/)
+npm run test:run                          # Vitest single run
+npm run test                              # Vitest watch mode
+npm run test:coverage                     # Frontend with coverage
 ```

@@ -63,7 +63,7 @@ $ARGUMENTS
    task-01 -> task-02 -> task-04
    ```
 
-   Create `docs/project/backlog/proposed/NNNN-{slug}-{name}.md` for each task:
+   Create `docs/project/backlog/proposed/NNNN-{slug}-{name}.md` for each task (or scaffold with `spec-ops task create --title "..." --prd PRD-NNNN --stage proposed --non-interactive`):
 
    ```markdown
    # Task {NN}: {Title}

@@ -2,7 +2,7 @@
 id: '0003'
 title: Auto-Logout on 401 Unauthorized
 status: Shipped
-created: 2026-10-13
+created: 2026-01-17
 target_persona: Casey (The Movie Enthusiast)
 component: auth
 ---
@@ -46,11 +46,14 @@ component: auth
 
 ## Shipped Evidence
 
-- Shipped in commit `1883317` ("Add auto-logout on 401 and fix spinner animation"): `setOnUnauthorized` in `frontend/src/api/client.ts`, registered in `frontend/src/context/AuthContext.tsx`.
+- Shipped in commit `1883317` (2026-01-17, "Add auto-logout on 401 and fix spinner animation"): `setOnUnauthorized()` in `frontend/src/api/client.ts` (invoked on a 401 in both `request()` and the multipart import upload), registered with `logout` in a `useEffect` in `frontend/src/context/AuthContext.tsx` and cleared on unmount.
+- Test coverage note: no automated test exercises `setOnUnauthorized()` or the 401 -> logout redirect directly. Outcome 4 is supported by `frontend/src/api/client.test.ts` (a failed login still rejects with an `ApiClientError` of status 401) and by the code path (the callback only clears the token, then the error is still thrown). Outcome 6 (no loops/races) is a code-review claim: `logout` is idempotent and `setOnUnauthorized` is registered once per `logout` identity.
 
 ## Legacy Specification
 
 _Migrated verbatim (headings demoted) from the legacy `.claude_docs/` tree on 2026-10-13._
+
+_Historical design record: code samples and statuses below reflect the plan at the time (2026-01-17) and may differ from the shipped code; the sections above are authoritative. The `.claude_docs/` tree was removed in commit `fb641e6` and remains available in git history before that commit._
 
 ### Source: `.claude_docs/features/auto-logout-on-401/sketch.md`
 

@@ -12,7 +12,7 @@ $ARGUMENTS
 
    If a specific feature slug is provided:
    - Check `docs/project/product/*/prd-NNNN-{slug}.md` for FRD/sketch
-   - Check `docs/project/backlog/ (tasks with `governing_prds: [PRD-NNNN]`)` for task breakdown
+   - Check `docs/project/backlog/{proposed,refined,complete}/` for tasks with `governing_prds: [PRD-NNNN]` in their frontmatter (task breakdown)
    - Report what exists and current state
 
    If no slug provided:
@@ -24,11 +24,11 @@ $ARGUMENTS
    | Phase | Indicators |
    |-------|------------|
    | Triage | No artifacts yet |
-   | FRD | `sketch.md` or `frd.md` exists, no refinement |
-   | Refinement | `refinement.md` exists or in progress |
-   | Breakdown | `tasks/{slug}/` directory exists |
-   | Implementation | Tasks have `in_progress` status |
-   | Complete | All tasks marked complete |
+   | FRD | PRD exists in `docs/project/product/{idea,shaped,accepted}/`, no `## Refinement Notes` section |
+   | Refinement | PRD has a `## Refinement Notes` section, or refinement is in progress |
+   | Breakdown | Tasks citing the PRD exist in `docs/project/backlog/` (`proposed/` or `refined/`) |
+   | Implementation | Task work is in progress on a `feat/` branch or worktree |
+   | Complete | All tasks are in `docs/project/backlog/complete/` (PRD in `shipped/`) |
 
 3. **Generate Status Report**
 

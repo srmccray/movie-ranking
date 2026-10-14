@@ -43,10 +43,24 @@ infra/
     infra.ts              # CDK app entry point, stack configuration
   lib/
     movie-ranking-stack.ts # Main stack definition (~370 lines)
-  cdk.json                # CDK configuration and feature flags
-  package.json            # NPM dependencies
+  cdk.json                # CDK app command, output dir, feature flags
+  package.json            # NPM dependencies and scripts
   tsconfig.json           # TypeScript configuration
+  .cdk.out/               # Generated: synth output (git-ignored, see below)
 ```
+
+The CDK app runs through `ts-node` (`"app": "npx ts-node --prefer-ts-exts bin/infra.ts"` in `cdk.json`), so there is no compile step before `synth`, `diff`, or `deploy`.
+
+### CDK Output Directory (`.cdk.out`)
+
+CDK writes its synth output (`manifest.json`, `MovieRankingStack.template.json`, `tree.json`, and staged `asset.*` directories including the Lambda code bundle) to **`infra/.cdk.out/`**, not the CDK default `cdk.out/`. This is set by `"output": ".cdk.out"` in `cdk.json`. The dot-prefix keeps the large generated output out of SpecOps file scanners.
+
+Keep these in sync if you touch any of them:
+- `cdk.json`: `"output": ".cdk.out"` (and `.cdk.out` in the `watch.exclude` list)
+- `tsconfig.json`: `"outDir": "./.cdk.out"` and `.cdk.out` in `exclude`
+- `infra/.gitignore`: `.cdk.out/`
+
+Do not reference `cdk.out/` or `infra/cdk.out/` in commands or scripts; that directory no longer exists. For example, the synthesized template is at `infra/.cdk.out/MovieRankingStack.template.json`. Deleting `.cdk.out` is safe; it is regenerated on the next synth.
 
 ## Key Patterns
 
@@ -57,23 +71,37 @@ The distribution routes requests based on path patterns:
 ```typescript
 // Default behavior - S3 for frontend assets
 defaultBehavior: {
-  origin: S3BucketOrigin.withOriginAccessControl(bucket, { oac }),
+  origin: origins.S3BucketOrigin.withOriginAccessControl(bucket, { originAccessControl: oac }),
   cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,  // Long cache
 }
 
 // API behavior - proxy to Lambda via API Gateway
 "/api/*": {
-  origin: new HttpOrigin(`${httpApi.httpApiId}.execute-api.${region}.amazonaws.com`),
+  origin: new origins.HttpOrigin(`${httpApi.httpApiId}.execute-api.${region}.amazonaws.com`),
   cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,  // No cache
   originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
 }
 ```
 
-**Additional API paths proxied to Lambda:**
+**Additional API paths proxied to Lambda** (each is its own exact-path behavior, GET/HEAD/OPTIONS only, caching disabled):
 - `/health` - Health check endpoint
 - `/docs` - FastAPI Swagger UI
 - `/redoc` - FastAPI ReDoc documentation
 - `/openapi.json` - OpenAPI schema
+
+All behaviors redirect HTTP to HTTPS. `/api/*` allows all methods. The default (S3) behavior allows GET/HEAD/OPTIONS and compresses responses.
+
+### Backend Resources
+
+| Resource | Details |
+|----------|---------|
+| Lambda (`ApiFunction`) | Name `movie-ranking-api`, Python 3.12, ARM64, 256MB, 30s timeout, handler `lambda_handler.handler` |
+| HTTP API (`HttpApi`) | Name `movie-ranking-api`; proxy routes `/{proxy+}` and `/` (ANY method) to the Lambda |
+| S3 bucket (`FrontendBucket`) | Name `movies-stephenmccray-com-frontend` (domain with dots replaced by dashes + `-frontend`), S3-managed encryption, `RemovalPolicy.DESTROY` with `autoDeleteObjects` |
+
+`lambda_handler.py` (repo root) wraps the FastAPI app with Mangum using `lifespan="off"`, since Lambda does not support ASGI lifespan events. The `lifespan` startup/shutdown handler in `app/main.py` therefore does not run on Lambda.
+
+The bucket is deleted (with its contents) if the stack is destroyed. The database is external PostgreSQL; the stack creates no RDS or Secrets Manager resources.
 
 ### Origin Access Control (OAC)
 
@@ -114,6 +142,8 @@ errorResponses: [
 
 This allows React Router to handle client-side routing - any path that doesn't match a static file or `/api/*` returns `index.html`.
 
+Note that CloudFront error responses are distribution-wide, not per-behavior: a 403 or 404 returned by the API behaviors (for example `/api/*`) is also rewritten to `200` with `index.html`. Keep this in mind when debugging unexpected HTML responses from the API.
+
 ### GitHub OIDC Authentication
 
 GitHub Actions authenticates using OIDC (OpenID Connect) instead of storing AWS credentials:
@@ -138,10 +168,12 @@ const deployRole = new iam.Role(this, "GitHubActionsDeployRole", {
 });
 ```
 
-The deploy role has permissions for:
-- S3: Upload/delete frontend files
-- CloudFront: Create cache invalidations
-- Lambda: Update function code and configuration
+The role is named `movie-ranking-deploy` and has permissions for:
+- S3: `PutObject`, `DeleteObject`, `ListBucket`, `GetObject` on the frontend bucket
+- CloudFront: `CreateInvalidation` on this distribution
+- Lambda: `UpdateFunctionCode`, `UpdateFunctionConfiguration`, `GetFunction`, `GetFunctionConfiguration` on the API function
+
+It has **no CloudFormation/CDK permissions**: the GitHub Actions workflow does not run `cdk deploy`. Infrastructure changes are deployed manually (see below).
 
 ## Commands
 
@@ -151,16 +183,16 @@ Run these from the `infra/` directory:
 # Install dependencies
 npm install
 
-# Compile TypeScript to JavaScript
+# Type-check / compile TypeScript (emits JS into .cdk.out; not needed for synth/deploy)
 npm run build
 
-# Synthesize CloudFormation template (preview what will be created)
+# Synthesize CloudFormation template (written to infra/.cdk.out/)
 npm run synth
 
 # Preview changes before deploying
 npm run diff
 
-# Deploy stack to AWS
+# Deploy stack to AWS (manual; CI does not do this)
 npm run deploy
 
 # Destroy all resources (use with caution!)
@@ -179,9 +211,11 @@ npx cdk deploy --require-approval never
 # List all stacks
 npx cdk list
 
-# Show CloudFormation template
+# Print the CloudFormation template (YAML) to a file
 npx cdk synth > template.yaml
 ```
+
+Deploying requires local AWS credentials for the target account (`CDK_DEFAULT_ACCOUNT` is read from them) and a CDK-bootstrapped `us-east-1` environment. The synthesized JSON template is also always available at `.cdk.out/MovieRankingStack.template.json` after any `synth`/`diff`/`deploy`.
 
 ## Lambda Environment Variables
 
@@ -199,7 +233,7 @@ The Lambda function requires these environment variables:
 
 ### Initial Setup
 
-After first deployment, manually set secrets via AWS CLI:
+After first deployment, manually set secrets via AWS CLI. Note that `--environment` **replaces the whole variable map**, so include every variable you want to keep (the next CI deploy re-adds `SECRET_KEY` and the `GOOGLE_*` values):
 
 ```bash
 # Update Lambda environment variables
@@ -215,32 +249,34 @@ aws lambda update-function-configuration \
 
 ## Deployment Workflow
 
-The GitHub Actions workflow (`.github/workflows/deploy.yml`) runs on push to `main`:
+The GitHub Actions workflow (`.github/workflows/deploy.yml`) runs on push to `main` (and can be started manually via `workflow_dispatch`). It deploys the **application** (frontend files and Lambda code). It does **not** deploy CDK infrastructure changes and does not run Alembic migrations.
 
 ### 1. Test Phase (Parallel)
-- **Backend tests**: Python 3.12, pytest with in-memory SQLite
-- **Frontend tests**: Node.js 20, Vitest
+- **Backend tests**: Python 3.12, `pytest tests/ -v` against in-memory SQLite (`aiosqlite`)
+- **Frontend tests**: Node.js 20, `npm run test:run` (Vitest)
 
 ### 2. Deploy Phase (After tests pass)
 
 ```
 1. Configure AWS credentials via OIDC
 2. Set up QEMU for ARM64 Docker builds
-3. Build frontend (Vite)
-4. Upload frontend to S3:
-   - Static assets (JS/CSS): max-age=31536000 (1 year)
+3. Build frontend (`npx vite build` in frontend/, output frontend/dist)
+4. Upload frontend to S3 (two `aws s3 sync` passes):
+   - Everything except HTML/JSON, with --delete: max-age=31536000 (1 year)
    - HTML/JSON files: max-age=3600 (1 hour)
-5. Package Lambda:
-   - Docker build with ARM64 Python 3.12 base image
-   - Install requirements.txt
-   - Copy app/ and lambda_handler.py
-   - Create zip file
+5. Package Lambda (does not use the repo Dockerfile):
+   - `docker run` of public.ecr.aws/lambda/python:3.12 (linux/arm64)
+   - pip install requirements.txt into package/
+   - Copy app/ and lambda_handler.py (alembic/ is not included)
+   - Zip to lambda.zip
 6. Deploy Lambda:
-   - Update function code
+   - update-function-code (--publish)
    - Wait for update to complete
-   - Update environment variables (secrets)
-7. Invalidate CloudFront cache
+   - Merge secrets into existing environment variables
+7. Invalidate CloudFront cache (/*)
 ```
+
+The code zip built by CI replaces the CDK-bundled code asset; the CDK `code:` asset is only what a manual `cdk deploy` uploads.
 
 ### Required GitHub Secrets
 
@@ -295,7 +331,9 @@ environment: {
 }
 ```
 
-The GitHub Actions workflow updates `SECRET_KEY`, `GOOGLE_*` variables automatically. `DATABASE_URL` and `TMDB_API_KEY` must be set manually.
+The GitHub Actions workflow merges `SECRET_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` into the existing variables automatically (the redirect URI is hardcoded in the workflow as `https://movies.stephenmccray.com/api/v1/auth/google/callback/`). `DATABASE_URL` and `TMDB_API_KEY` must be set manually.
+
+**Warning:** because the CDK stack declares these placeholders, running `cdk deploy` resets the Lambda environment to the placeholder values (dropping `GOOGLE_*` and the real `DATABASE_URL`/`TMDB_API_KEY`). After any manual CDK deploy that touches the function, re-run the GitHub Actions deploy (for `SECRET_KEY`/`GOOGLE_*`) and re-set `DATABASE_URL` and `TMDB_API_KEY`.
 
 ### 3. CORS Handling
 
@@ -324,10 +362,13 @@ code: lambda.Code.fromAsset(path.join(__dirname, "../.."), {
     ".git/**",
     "*.md",
     ".env*",
-    // ... more exclusions
+    // ... also .claude, docs, __pycache__, Dockerfile, docker-compose.yml,
+    // pyproject.toml, pytest.ini, alembic.ini, etc.
   ],
 }),
 ```
+
+The asset is staged under `infra/.cdk.out/` during synth. Because `infra/**` is excluded, the output directory is not bundled into the Lambda.
 
 ### 5. ARM64 Architecture
 
@@ -341,9 +382,11 @@ Lambda uses ARM64 (Graviton2) for cost savings. The GitHub Actions workflow uses
 
 - name: Package Lambda function
   run: |
-    docker run --platform linux/arm64 \
+    docker run --rm --entrypoint "" \
+      -v "$(pwd)":/var/task -v "$(pwd)/package":/opt/package \
+      --platform linux/arm64 \
       public.ecr.aws/lambda/python:3.12 \
-      bash -c "pip install -r requirements.txt ..."
+      bash -c "pip install -r /var/task/requirements.txt -t /opt/package ..."
 ```
 
 ### 6. HTTP API vs REST API
@@ -374,7 +417,7 @@ After deployment, these outputs are available:
 | `BucketName` | S3 bucket name for frontend files |
 | `DistributionId` | CloudFront distribution ID |
 | `LambdaFunctionName` | Lambda function name |
-| `DeployRoleArn` | IAM role ARN for GitHub Actions |
+| `DeployRoleArn` | IAM role ARN for GitHub Actions (`movie-ranking-deploy`) |
 | `SiteUrl` | Production website URL |
 | `HttpApiUrl` | Direct API Gateway URL (bypasses CloudFront) |
 
@@ -391,7 +434,7 @@ aws cloudformation describe-stacks \
 ### Checklist
 
 - [ ] Review existing patterns in `lib/movie-ranking-stack.ts`
-- [ ] Run `npm run diff` to preview changes before deploying
+- [ ] Run `npm run diff` to preview changes before deploying (remember `cdk deploy` resets Lambda env vars to placeholders)
 - [ ] Test changes in a separate stack if making significant modifications
 - [ ] Update this documentation if adding new resources or patterns
 - [ ] Ensure GitHub Actions workflow is updated if new secrets are required

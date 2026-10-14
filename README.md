@@ -1,41 +1,52 @@
 # Movie Ranking
 
-A full-stack movie ranking application. Users can register, log in, add movies, and rank them on a 1-5 scale.
+A full-stack movie ranking application. Users can register, log in, search for movies, and rank them on a 1-5 scale.
 
 ## Current State
 
-**MVP Complete** - Full stack with React frontend and FastAPI backend:
+Full stack with a React frontend, a FastAPI backend, and AWS CDK infrastructure:
 
-- User registration and login (JWT authentication)
-- Add movies (title + optional year)
+- User registration and login (JWT authentication), plus Google Sign-In and linking a Google account
+- Movie search backed by TMDB (requires a TMDB API key) and adding movies to your library
 - Rank movies 1-5 (upsert behavior - re-ranking updates existing)
-- List your rankings with pagination
-- Responsive React frontend
+- List your rankings with pagination; delete one ranking or all rankings
+- Analytics: activity, genre breakdown, stats, and rating distribution
+- Amazon Prime Video watch-history import (CSV upload, review/match each movie, add or skip)
+- Settings, analytics, and auth pages in the React frontend
+- AWS deployment (CloudFront, Lambda via Mangum) through GitHub Actions
 
 ## Tech Stack
 
 ### Backend
 - **Framework:** FastAPI
 - **Database:** PostgreSQL with async SQLAlchemy 2.0
-- **Authentication:** JWT (python-jose) + bcrypt password hashing
+- **Authentication:** JWT (python-jose) + bcrypt password hashing; Google OAuth (google-auth)
 - **Validation:** Pydantic v2
+- **External data:** TMDB API (via httpx)
+- **Migrations:** Alembic
+- **Lambda adapter:** Mangum
+- **Runtime:** Python 3.12 (Docker image and deploy workflow; `pyproject.toml` requires >=3.11)
 
 ### Frontend
-- **Framework:** React 18 with TypeScript
-- **Build Tool:** Vite
-- **Routing:** React Router
+- **Framework:** React 18 with TypeScript 5.6
+- **Build Tool:** Vite 6
+- **Routing:** React Router 6
 - **Styling:** CSS with custom properties (design tokens)
+- **Testing:** Vitest, Testing Library, MSW
+
+### Infrastructure
+- **IaC:** AWS CDK v2 (TypeScript), see `infra/`
 
 ## Quick Start (Full Stack)
 
 ### Prerequisites
 - Docker and Docker Compose
-- Node.js 18+ (for frontend development)
+- Node.js 20+ (for frontend development; CI uses Node 20)
 
 ### Start Everything
 
 ```bash
-# 1. Copy environment template
+# 1. Copy environment template (set SECRET_KEY and TMDB_API_KEY)
 cp .env.example .env
 
 # 2. Start the backend (database + API)
@@ -65,7 +76,9 @@ movie-ranking/
 │   │   ├── context/         # React context (auth)
 │   │   ├── hooks/           # Custom hooks
 │   │   ├── pages/           # Page components
-│   │   └── types/           # TypeScript types
+│   │   ├── styles/          # Design tokens and shared styles
+│   │   ├── types/           # TypeScript types
+│   │   └── __tests__/       # Test setup and shared tests
 │   ├── package.json
 │   └── vite.config.ts
 ├── app/                      # FastAPI backend
@@ -75,13 +88,22 @@ movie-ranking/
 │   ├── dependencies.py      # Auth dependencies
 │   ├── models/              # SQLAlchemy models
 │   ├── schemas/             # Pydantic schemas
-│   ├── routers/             # API route handlers
+│   ├── routers/             # API route handlers (auth, google_auth, movies,
+│   │                        #   rankings, analytics, import_amazon)
+│   ├── services/            # TMDB client, CSV parser, import sessions
 │   └── utils/               # Utilities (security)
 ├── alembic/                  # Database migrations
-├── docs/                     # Documentation
+├── tests/                    # Backend pytest suite
+├── infra/                    # AWS CDK infrastructure (TypeScript)
+├── lambda_handler.py         # Lambda entry point (Mangum)
+├── .github/workflows/        # ci.yml, deploy.yml, deploy-pages.yml
+├── docs/                     # SpecOps docs site sources
+│   └── project/              # PRDs, backlog, user stories, ADRs, archive
+├── specops.toml              # SpecOps configuration
 ├── Dockerfile
 ├── docker-compose.yml
-└── requirements.txt
+├── requirements.txt
+└── requirements-test.txt
 ```
 
 ## Backend Development
@@ -93,7 +115,7 @@ The fastest way to get the backend running.
 ```bash
 # Copy environment template
 cp .env.example .env
-# Edit .env to set a secure SECRET_KEY (or use defaults for development)
+# Edit .env to set SECRET_KEY and TMDB_API_KEY (both required by app/config.py)
 
 # Start everything (database + API)
 docker compose up
@@ -160,6 +182,10 @@ Configure via `.env` file or environment variables:
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | SECRET_KEY | Yes | - | JWT signing key (use a secure random string) |
+| DATABASE_URL | Yes | - | Async SQLAlchemy URL, e.g. `postgresql+asyncpg://user:password@localhost:5432/movie_ranking` (set by docker-compose for the `api` service) |
+| TMDB_API_KEY | Yes | - | TMDB API key for movie search ([get one](https://www.themoviedb.org/settings/api)) |
+| TMDB_BASE_URL | No | https://api.themoviedb.org/3 | TMDB API base URL |
+| TMDB_IMAGE_BASE_URL | No | https://image.tmdb.org/t/p/w185 | TMDB poster base URL |
 | POSTGRES_USER | No | postgres | Database user |
 | POSTGRES_PASSWORD | No | postgres | Database password |
 | POSTGRES_DB | No | movie_ranking | Database name |
@@ -197,7 +223,7 @@ GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 ```
 
-For detailed setup instructions, see [Google OAuth Setup Guide](.claude/plans/08-google-oauth/SETUP.md).
+For detailed setup instructions, see [Google OAuth Setup Guide](docs/project/archive/plans/08-google-oauth/SETUP.md).
 
 ## Local Development (without Docker)
 
@@ -205,7 +231,7 @@ If you prefer running without Docker:
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.11+ (3.12 matches Docker and deploy)
 - PostgreSQL 16+
 
 ### Installation
@@ -220,7 +246,7 @@ pip install -r requirements.txt
 
 # Copy and configure environment
 cp .env.example .env
-# Set DATABASE_URL to your local PostgreSQL instance
+# Set DATABASE_URL (postgresql+asyncpg://...), SECRET_KEY, and TMDB_API_KEY
 ```
 
 ### Run Locally
@@ -249,16 +275,34 @@ Once running, interactive docs are available at:
 
 ### Endpoints
 
+All API routes except `/health`, `/api/v1/auth/register`, and `/api/v1/auth/login` use trailing slashes.
+
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/health` | No | Health check |
-| POST | `/api/v1/auth/register` | No | Create account |
-| POST | `/api/v1/auth/login` | No | Login (returns JWT) |
+| POST | `/api/v1/auth/register` | No | Create account (returns JWT) |
+| POST | `/api/v1/auth/login` | No | Login, form-encoded (returns JWT) |
+| GET | `/api/v1/auth/me/` | Yes | Current user |
 | GET | `/api/v1/auth/google/login/` | No | Get Google OAuth URL |
 | GET | `/api/v1/auth/google/callback/` | No | Handle Google OAuth callback |
+| GET | `/api/v1/auth/google/link/` | Yes | Start linking a Google account |
+| GET | `/api/v1/auth/google/link/callback/` | OAuth state | Finish linking a Google account |
+| GET | `/api/v1/movies/search/` | Yes | Search TMDB for movies |
 | POST | `/api/v1/movies/` | Yes | Add a movie |
 | POST | `/api/v1/rankings/` | Yes | Create/update ranking |
 | GET | `/api/v1/rankings/` | Yes | List your rankings |
+| DELETE | `/api/v1/rankings/{ranking_id}/` | Yes | Delete one ranking |
+| DELETE | `/api/v1/rankings/all/` | Yes | Delete all your rankings |
+| GET | `/api/v1/analytics/activity/` | Yes | Ranking activity over time |
+| GET | `/api/v1/analytics/genres/` | Yes | Genre breakdown |
+| GET | `/api/v1/analytics/stats/` | Yes | Summary stats |
+| GET | `/api/v1/analytics/rating-distribution/` | Yes | Rating distribution |
+| POST | `/api/v1/import/amazon-prime/upload/` | Yes | Upload Prime Video CSV, start import session |
+| GET | `/api/v1/import/amazon-prime/session/{session_id}/` | Yes | Get import session |
+| POST | `/api/v1/import/amazon-prime/session/{session_id}/movie/{index}/add/` | Yes | Add matched movie |
+| POST | `/api/v1/import/amazon-prime/session/{session_id}/movie/{index}/skip/` | Yes | Skip movie |
+| PATCH | `/api/v1/import/amazon-prime/session/{session_id}/movie/{index}/match/` | Yes | Change the TMDB match |
+| DELETE | `/api/v1/import/amazon-prime/session/{session_id}/` | Yes | Cancel import session |
 
 ## Testing
 
@@ -280,6 +324,10 @@ curl -X POST http://localhost:8000/api/v1/movies/ \
   -H "Content-Type: application/json" \
   -d '{"title": "Inception", "year": 2010}'
 
+# Or search TMDB first
+curl "http://localhost:8000/api/v1/movies/search/?q=inception" \
+  -H "Authorization: Bearer TOKEN"
+
 # Rank a movie (replace MOVIE_ID with the movie's id)
 curl -X POST http://localhost:8000/api/v1/rankings/ \
   -H "Authorization: Bearer TOKEN" \
@@ -294,12 +342,15 @@ curl http://localhost:8000/api/v1/rankings/ \
 ### Run Automated Tests
 
 ```bash
-# With Docker
-docker compose exec api pytest
+# Backend (from the repo root, using the local venv; tests use SQLite via aiosqlite)
+venv/bin/pip install -r requirements-test.txt
+venv/bin/pytest
 
-# Without Docker
-pip install pytest pytest-asyncio httpx
-pytest
+# Frontend
+cd frontend
+npm run test:run     # single run (CI); `npm test` starts watch mode
+npm run lint
+npm run build        # tsc -b && vite build
 ```
 
 ## Troubleshooting
@@ -330,13 +381,18 @@ docker compose up --build
 docker compose exec api alembic upgrade head
 ```
 
-## Documentation
+## Deployment
 
-Detailed documentation is available in the `/docs` folder:
+Pushes to `main` run `.github/workflows/deploy.yml`: backend tests (`pytest tests/`), frontend tests (`npm run test:run`), then deploy to AWS (`us-east-1`) with CDK from `infra/`. See [`infra/CLAUDE.md`](infra/CLAUDE.md).
 
-- `features.md` - Product requirements and user stories
-- `architecture.md` - Technical architecture and design decisions
-- `api-spec.md` - Complete API specification with examples
-- `frontend-requirements.md` - Frontend product requirements
-- `design-system.md` - UI design system and component specs
-- `api-frontend-contracts.md` - API/frontend contract verification
+## Documentation and Workflow
+
+This project uses [SpecOps](https://github.com/tyevans/spec-ops) (project management as code). Specs, backlog, user stories, and ADRs live under `docs/project/` and are configured in `specops.toml`. CI runs `spec-ops health` (including the 500-line file limit) and `spec-ops health --numbering`; `deploy-pages.yml` builds the docs site with `spec-ops docs build`. See `AGENTS.md` for the agent operating manual and `docs/contributing.md` for contributing.
+
+- `docs/project/product/` - PRDs (idea, shaped, accepted, shipped)
+- `docs/project/backlog/` - Tasks, `PRIORITY.md`, `ROADMAP.md`
+- `docs/project/user_stories/` - Personas and Gherkin user stories
+- `docs/project/adrs/` - Architecture decision records
+- `docs/project/archive/docs/` - Legacy docs (features, architecture, API spec, design system, frontend requirements, API/frontend contracts)
+
+Component guides: [`app/CLAUDE.md`](app/CLAUDE.md), [`frontend/CLAUDE.md`](frontend/CLAUDE.md), [`infra/CLAUDE.md`](infra/CLAUDE.md).

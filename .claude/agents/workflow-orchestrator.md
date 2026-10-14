@@ -194,10 +194,8 @@ Recommend invoking `frd-refiner` for thorough refinement.
 
 | Domain | Agent | Use For |
 |--------|-------|---------|
-| FastAPI endpoints, services, models | `backend-implementation` | API endpoints, business logic, database models |
+| FastAPI endpoints, services, models | `backend-implementation` | API endpoints, business logic, database models, Alembic migrations, query performance |
 | React components, state, UI | `frontend-implementation` | Components, state management, UX |
-| Database migrations | `database-migrations` | Schema changes, data migrations |
-| Query performance | `query-optimizer` | N+1 fixes, query optimization |
 | AWS infrastructure, CDK | `infrastructure-implementation` | Infrastructure, Lambda, API Gateway |
 | Security review | `security-review` | Auth changes, security-sensitive code |
 | Test coverage | `test-coverage` | Test creation, coverage gaps |
@@ -209,9 +207,9 @@ Recommend invoking `frd-refiner` for thorough refinement.
 
 When invoked mid-workflow, check for existing artifacts to determine current phase:
 
-1. **Check `docs/project/product/*/prd-NNNN-{slug}.md`** for FRD or sketch
-2. **Check `docs/project/backlog/ (tasks with `governing_prds: [PRD-NNNN]`)`** for task breakdown
-3. **Read `_index.md`** to see task status
+1. **Check `docs/project/product/{idea,shaped,accepted,shipped}/prd-NNNN-{slug}.md`** (see `docs/project/product/REGISTRY.md`) for the FRD or sketch, and whether it has a `## Refinement Notes` section
+2. **Check `docs/project/backlog/{proposed,refined,complete}/`** for tasks whose frontmatter has `governing_prds: [PRD-NNNN]`
+3. **Read `docs/project/backlog/PRIORITY.md`** to see task order and status; `spec-ops queue tree` shows dependencies and blockers
 
 Then output instructions for the next incomplete step.
 
@@ -246,6 +244,16 @@ When asked for status, output this format then stop:
 
 ---
 
+## Project Invariants to Carry Forward
+
+When recommending implementation or test agents, remind the parent session of the SpecOps invariants:
+- Source files stay under 500 lines (ADR-0002); grandfathered files are listed in `specops.toml`
+- Tests are blackbox and go through public frontdoors (ADR-0003)
+- Feature branches/worktrees never modify `docs/project/backlog/` (ADR-0005); backlog moves and `PRIORITY.md` updates happen on `main`
+- Preflight before completion: `venv/bin/pytest` and, for frontend changes, `npm run lint` and `npm run test:run` in `frontend/`; `spec-ops health` for the SpecOps checks
+
+---
+
 ## Escalation Triggers
 
 Recommend escalation to user when:
@@ -262,7 +270,7 @@ Recommend escalation to user when:
 ```markdown
 ## Orchestrator Assessment
 
-**Request:** Add IP allowlist functionality to API keys
+**Request:** Let users add private notes to a ranking
 **Current Phase:** New request - needs triage
 **Tier:** Not yet determined
 
@@ -273,7 +281,7 @@ Recommend escalation to user when:
 **Agent:** `request-triage`
 
 **Context to provide:**
-Request: Add IP allowlist functionality to API keys. This would allow users to restrict which IP addresses can use each API key.
+Request: Let users add private notes to a ranking. Touches the Ranking model (migration), rankings router and schemas, and the rankings UI.
 
 **After that agent completes:**
 The request-triage agent will assess complexity/risk, assign a tier, and recommend the next agent (likely `frd-creator` for SMALL/MEDIUM/LARGE tiers, or an implementation agent for TRIVIAL tier).
