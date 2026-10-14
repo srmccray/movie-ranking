@@ -57,7 +57,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
         with:
           version: "latest"
-          enable-cache: true
+          enable-cache: false
 
       - name: Set up Python
         if: steps.filter.outputs.artifacts == 'true' || steps.filter.outputs.health == 'true' || steps.filter.outputs.python == 'true'
