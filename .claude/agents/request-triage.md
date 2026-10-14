@@ -170,7 +170,7 @@ Complexity    ├──────────┼──────────
 - {any notable risks}
 ```
 
-**Artifacts:** `.claude_docs/features/{slug}/sketch.md`
+**Artifacts:** `docs/project/product/idea/prd-NNNN-{slug}.md`
 
 ---
 
@@ -191,8 +191,8 @@ Complexity    ├──────────┼──────────
 - Rollback plan if applicable
 
 **Artifacts:**
-- `.claude_docs/features/{slug}/frd.md`
-- `.claude_docs/tasks/{slug}/` (if multi-task)
+- `docs/project/product/accepted/prd-NNNN-{slug}.md`
+- `docs/project/backlog/ (tasks with `governing_prds: [PRD-NNNN]`)` (if multi-task)
 
 ---
 
@@ -215,11 +215,11 @@ Complexity    ├──────────┼──────────
 - Monitoring/alerting additions
 
 **Artifacts:**
-- `.claude_docs/features/{slug}/frd.md`
-- `.claude_docs/features/{slug}/refinement.md`
-- `.claude_docs/tasks/{slug}/_index.md`
-- `.claude_docs/tasks/{slug}/task-{n}.md` (per task)
-- `.claude_docs/decisions/ADR-{n}-{slug}.md` (if architectural)
+- `docs/project/product/accepted/prd-NNNN-{slug}.md`
+- `docs/project/product/accepted/prd-NNNN-{slug}.md` (`## Refinement Notes` section)
+- `docs/project/backlog/PRIORITY.md`
+- `docs/project/backlog/proposed/NNNN-{slug}-{name}.md` (per task)
+- `docs/project/adrs/accepted/adr-NNNN-{slug}.md` (if architectural)
 
 ---
 

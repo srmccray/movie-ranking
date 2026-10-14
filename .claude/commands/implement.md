@@ -11,8 +11,8 @@ $ARGUMENTS
 1. **Identify Context**
 
    Check if this is:
-   - A task from `.claude_docs/tasks/{slug}/task-{nn}.md`
-   - A feature from `.claude_docs/features/{slug}/`
+   - A task from `docs/project/backlog/{proposed,refined}/NNNN-{slug}-{name}.md`
+   - A feature from `docs/project/product/*/prd-NNNN-{slug}.md`
    - A direct implementation request
 
 2. **Determine Domain**

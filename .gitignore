@@ -174,3 +174,13 @@ temp/
 .cache/
 *.cache
 frontend/tsconfig.tsbuildinfo
+.worktrees/
+site/
+*.pyc
+.hypothesis/
+.mutmut-cache/
+mutants/
+.task-prompt.md
+HANDOVER.md
+.specops/*
+!.specops/grandfathered_debt.json

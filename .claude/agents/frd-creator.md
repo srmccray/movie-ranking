@@ -25,21 +25,30 @@ allowed-tools:
 
 ## Artifact Locations
 
-All artifacts go under `.claude_docs/`:
+All artifacts go under `docs/project/` (SpecOps layout; see root CLAUDE.md "Documentation Structure"):
 
 ```
-.claude_docs/
-├── features/
-│   └── {feature-slug}/
-│       ├── sketch.md       # SMALL tier
-│       ├── frd.md          # MEDIUM/LARGE tier
-│       └── refinement.md   # Added by FRD Refiner
-├── tasks/
-│   └── {feature-slug}/
-│       ├── _index.md       # Task breakdown index
-│       └── task-{n}.md     # Individual tasks
-└── decisions/
-    └── ADR-{n}-{slug}.md   # Architecture Decision Records
+docs/project/                          # SpecOps project-management-as-code tree
+├── product/                           # PRDs (create with `spec-ops prd create`)
+│   ├── idea/ shaped/ accepted/        #   lifecycle stages (SMALL sketches start in idea/)
+│   ├── shipped/                       #   delivered features
+│   └── REGISTRY.md
+│       # prd-NNNN-{feature-slug}.md: YAML frontmatter + Who/Cannot-do-today/
+│       # What-good-looks-like/Non-goals/Checkable Outcomes; refinement notes
+│       # go in a `## Refinement Notes` section of the same PRD
+├── backlog/                           # Tasks (TASK-NNNN), frontmatter `governing_prds`
+│   ├── proposed/ refined/ complete/   #   NNNN-{feature-slug}-{name}.md
+│   ├── PRIORITY.md                    #   execution order (replaces tasks/_index.md)
+│   └── ROADMAP.md
+├── user_stories/                      # Personas + Gherkin user stories (US-NNNN)
+│   ├── PERSONAS.md  REGISTRY.md
+│   └── accepted/us-NNNN-{slug}.md
+├── adrs/                              # Architecture Decision Records
+│   ├── accepted/adr-NNNN-{slug}.md
+│   └── REGISTRY.md
+└── archive/                           # Completed/legacy documentation
+    ├── plans/                         # Old .claude/plans/ content
+    └── docs/                          # Old docs/ content
 ```
 
 ---
@@ -446,7 +455,7 @@ After creating the FRD/Sketch:
 **Context to provide:**
 - Feature slug: `{slug}`
 - Tier: {SMALL|MEDIUM|LARGE}
-- FRD location: `.claude_docs/features/{slug}/frd.md` (or sketch.md)
+- FRD location: `docs/project/product/accepted/prd-NNNN-{slug}.md`
 - {Any key context for the next agent}
 
 **After that agent completes:**

@@ -17,7 +17,7 @@ If tier is not specified, infer from the request complexity or ask for clarifica
 
 ## Quick Sketch Template (SMALL tier)
 
-Save to `.claude_docs/features/{slug}/sketch.md`:
+Scaffold with `spec-ops prd create --title "..." --stage idea` (assigns the next PRD-NNNN and frontmatter), then save to `docs/project/product/idea/prd-NNNN-{slug}.md`:
 
 ```markdown
 # Quick Sketch: {Title}
@@ -48,7 +48,7 @@ Save to `.claude_docs/features/{slug}/sketch.md`:
 
 ## Standard FRD Template (MEDIUM tier)
 
-Save to `.claude_docs/features/{slug}/frd.md`:
+Save to `docs/project/product/accepted/prd-NNNN-{slug}.md`:
 
 ```markdown
 # FRD: {Title}
@@ -92,7 +92,7 @@ Save to `.claude_docs/features/{slug}/frd.md`:
 
 ## Comprehensive FRD Template (LARGE tier)
 
-Save to `.claude_docs/features/{slug}/frd.md` with all sections from the frd-creator agent including:
+Save to `docs/project/product/accepted/prd-NNNN-{slug}.md` with all sections from the frd-creator agent including:
 - Executive Summary
 - Detailed Problem Statement with metrics
 - Full Technical Design

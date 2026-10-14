@@ -11,12 +11,12 @@ $ARGUMENTS
 1. **Locate Feature Artifacts**
 
    If a specific feature slug is provided:
-   - Check `.claude_docs/features/{slug}/` for FRD/sketch
-   - Check `.claude_docs/tasks/{slug}/` for task breakdown
+   - Check `docs/project/product/*/prd-NNNN-{slug}.md` for FRD/sketch
+   - Check `docs/project/backlog/ (tasks with `governing_prds: [PRD-NNNN]`)` for task breakdown
    - Report what exists and current state
 
    If no slug provided:
-   - Scan `.claude_docs/features/` for all features
+   - Scan `docs/project/product/` for all features
    - Report summary of all in-flight work
 
 2. **Determine Current Phase**
@@ -41,7 +41,7 @@ $ARGUMENTS
 
    ### Artifacts
    - [ ] Triage complete
-   - [x] FRD/Sketch created: `.claude_docs/features/{slug}/frd.md`
+   - [x] FRD/Sketch created: `docs/project/product/accepted/prd-NNNN-{slug}.md`
    - [ ] Refinement complete
    - [ ] Task breakdown complete
    - [ ] Implementation complete
