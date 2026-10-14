@@ -1,0 +1,36 @@
+{
+  "packages": {
+    "fastapi": {
+      "license": "MIT",
+      "source": "installed package metadata (venv)"
+    },
+    "uvicorn": {
+      "license": "BSD-3-Clause",
+      "source": "installed package metadata (venv)"
+    },
+    "asyncpg": {
+      "license": "Apache-2.0",
+      "source": "installed package metadata (venv)"
+    },
+    "alembic": {
+      "license": "MIT",
+      "source": "installed package metadata (venv)"
+    },
+    "python-jose": {
+      "license": "MIT",
+      "source": "installed package metadata (venv)"
+    },
+    "bcrypt": {
+      "license": "Apache-2.0",
+      "source": "installed package metadata (venv)"
+    },
+    "pydantic-settings": {
+      "license": "MIT",
+      "source": "installed package metadata (venv)"
+    },
+    "python-multipart": {
+      "license": "Apache-2.0",
+      "source": "installed package metadata (venv)"
+    }
+  }
+}

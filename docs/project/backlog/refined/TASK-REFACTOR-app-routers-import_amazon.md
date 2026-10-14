@@ -1,14 +1,13 @@
 ---
 id: REFACTOR-app-routers-import_amazon
 title: Refactor and Decompose Legacy File import_amazon.py
-status: Proposed
-created: 2026-09-29
+status: Refined
 governing_adrs:
-  - ADR-0002
+- ADR-0002
 governing_prds:
-  - PRD-0005
+- PRD-0005
 governing_stories:
-  - US-0005
+- US-0005
 target_bc: core
 ---
 
