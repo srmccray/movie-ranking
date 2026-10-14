@@ -61,9 +61,8 @@ Implements AWS infrastructure using CDK with secure, scalable, and maintainable 
 
 ### Stack Structure
 
-- Organize stacks by domain or service boundary
-- Use nested stacks for complex deployments
-- Define clear interfaces between stacks
+- The project is a single stack, `MovieRankingStack` (`infra/lib/movie-ranking-stack.ts`, instantiated in `infra/bin/infra.ts`). Extend it unless a split is clearly justified
+- Keep the stack file under 500 lines (ADR-0002); extract constructs into separate files under `infra/lib/` if it grows
 - Environment-specific configuration via context or environment variables
 
 ### Lambda Functions
@@ -149,17 +148,15 @@ errorResponses: [
 
 ### Monitoring
 
-- CloudWatch dashboards for key metrics
-- Alarms for critical thresholds
-- Structured logging with correlation IDs
-- X-Ray tracing for distributed systems (when needed)
+- The stack does not define dashboards or alarms today; add them only when a task calls for it
+- Lambda logs go to CloudWatch (`/aws/lambda/movie-ranking-api`)
 
 ## Workflow
 
 1. **Understand Requirements**: Review existing infrastructure in `lib/movie-ranking-stack.ts`
 2. **Design**: Plan stack structure and resource relationships
 3. **Implement**: Write CDK constructs following patterns
-4. **Synthesize**: Run `npm run synth` to verify CloudFormation output
+4. **Synthesize**: Run `npm run synth` to verify CloudFormation output (written to `infra/.cdk.out/`, not `cdk.out/`)
 5. **Preview**: Run `npm run diff` to see what will change
 6. **Deploy**: Deploy to development environment first
 7. **Verify**: Confirm resources and test functionality
@@ -170,7 +167,7 @@ Run from `infra/` directory:
 
 ```bash
 npm install              # Install dependencies
-npm run build            # Compile TypeScript
+npm run build            # Type-check / compile TypeScript (output goes to .cdk.out; not needed for synth/deploy)
 npm run synth            # Synthesize CloudFormation template
 npm run diff             # Compare deployed stack with current state
 npm run deploy           # Deploy stack to AWS
@@ -211,9 +208,8 @@ Before considering work complete:
 - [ ] CDK synth succeeds without errors
 - [ ] `npm run diff` shows expected changes only
 - [ ] IAM policies follow least privilege
-- [ ] Resources properly tagged
 - [ ] Encryption enabled where appropriate
-- [ ] Monitoring and alarms configured (if applicable)
 - [ ] Cost implications considered
 - [ ] GitHub Actions workflow updated if new secrets needed
-- [ ] Documentation updated
+- [ ] `infra/CLAUDE.md` updated if patterns or commands changed
+- [ ] No changes under `docs/project/backlog/` on feature branches (ADR-0005)

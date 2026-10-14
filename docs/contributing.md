@@ -9,4 +9,4 @@ We adhere strictly to the **Diataxis documentation framework**:
 
 ## Invariants
 - Keep all documentation synchronized with running code.
-- Run `uv run spec-ops docs build` to verify that all pages compile cleanly.
+- Run `spec-ops docs build` to verify that all pages compile cleanly.

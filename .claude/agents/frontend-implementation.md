@@ -20,10 +20,10 @@ Implements React frontend features with clean, accessible, and maintainable code
 ## Core Expertise
 
 - React functional components with hooks
-- State management (Context API, Redux, or Zustand)
+- State management (Context API; `AuthContext` in `src/context/`)
 - TypeScript for type safety
-- Component testing with Jest and React Testing Library
-- CSS Modules, Tailwind, or styled-components
+- Component testing with Vitest, React Testing Library, and MSW
+- Plain CSS with custom properties (design tokens in `src/styles/variables.css` / `src/index.css`)
 
 ## Key Patterns to Follow
 
@@ -31,7 +31,7 @@ Implements React frontend features with clean, accessible, and maintainable code
 - Use functional components with hooks
 - Define props with TypeScript interfaces
 - Keep components focused and composable
-- Co-locate styles with components
+- Styles are plain CSS under `src/styles/` (components/, pages/); use the existing CSS custom properties, not hard-coded values
 
 ### Hooks
 - Use built-in hooks (`useState`, `useEffect`, `useMemo`, `useCallback`)
@@ -42,18 +42,17 @@ Implements React frontend features with clean, accessible, and maintainable code
 ### State Management
 - Local state with `useState` for component-specific data
 - Context API for shared state across component trees
-- Redux/Zustand for complex global state
 - Keep state as close to where it's used as possible
 
 ### API Integration
 - Use custom hooks for data fetching
 - Handle loading, error, and success states
-- Consider React Query or SWR for server state
+- Go through the `src/api/client.ts` API client; match backend response shapes exactly (wrapper responses like `{ results: [...] }`)
+- All API URLs end with a trailing slash
 - Proper error boundaries for graceful failures
 
 ### Forms
 - Controlled components for form inputs
-- Form libraries (React Hook Form, Formik) for complex forms
 - Proper validation and error messaging
 - Accessible form labels and error announcements
 
@@ -63,8 +62,8 @@ Implements React frontend features with clean, accessible, and maintainable code
 2. **Design**: Plan component structure and state
 3. **Implement**: Use functional components with TypeScript
 4. **Integrate**: Connect to APIs with proper error handling
-5. **Verify**: Run `npm run lint` and `npm run test`
-6. **Document**: Create Storybook story if applicable
+5. **Verify**: Run `npm run lint` and `npm run test:run` from `frontend/`
+6. **Document**: Add JSDoc/TSDoc to new components and hooks
 
 ## Handoff Recommendations
 
@@ -85,16 +84,18 @@ Before considering work complete:
 - [ ] Accessible (ARIA labels, keyboard navigation)
 - [ ] Responsive design considered
 - [ ] Lint passes (`npm run lint`)
-- [ ] Tests pass (`npm run test`)
-- [ ] Storybook story created (if applicable)
+- [ ] Tests pass (`npm run test:run`)
+- [ ] New source files under 500 lines (ADR-0002); do not grow the grandfathered files in `specops.toml`
+- [ ] No changes under `docs/project/backlog/` on feature branches (ADR-0005)
 
 ## Commands
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Production build
-npm run test         # Run Jest tests
-npm run lint         # Run ESLint
-npm run lint:fix     # Fix auto-fixable lint issues
-npm run storybook    # Start Storybook
+# Run from frontend/
+npm run dev           # Start development server (Vite)
+npm run build         # Type-check (tsc -b) and production build
+npm run test          # Vitest in watch mode
+npm run test:run      # Vitest single run (use this in agents/CI)
+npm run test:coverage # Vitest with coverage
+npm run lint          # Run ESLint
 ```

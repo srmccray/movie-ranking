@@ -23,7 +23,7 @@ governing_prd: PRD-0001
 ```gherkin
 Scenario: Uploading a Prime CSV produces an import summary
 Given Casey is logged in and on the Settings page
-When Casey uploads a CSV containing 3 movies and 2 TV episodes via "Import from Amazon Prime"
+When Casey clicks "Import" under "Import Watch History", then uploads a CSV containing 3 movies and 2 TV episodes in the "Import from Amazon Prime" wizard
 Then the response from POST "/api/v1/import/amazon-prime/upload/" is 201
 And the summary reports 2 TV shows filtered and the movies ready for review
 ```

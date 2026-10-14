@@ -22,7 +22,7 @@ $ARGUMENTS
    | **Backend** | Models, APIs, FastAPI, services | `backend-implementation` patterns |
    | **Frontend** | React, components, state, UI | `frontend-implementation` patterns |
    | **Infrastructure** | AWS, CDK, Lambda, infrastructure | `infrastructure-implementation` patterns |
-   | **Migrations** | Schema changes, data backfill | `database-migrations` patterns |
+   | **Migrations** | Schema changes, data backfill | Alembic migrations in `alembic/` (see `app/CLAUDE.md`) |
    | **Testing** | Test coverage, fixtures | `test-coverage` patterns |
    | **Security** | Auth, permissions, sensitive data | `security-review` review |
 
@@ -46,7 +46,7 @@ $ARGUMENTS
    **Frontend (React)**:
    - Functional components with hooks
    - TypeScript interfaces for props
-   - State management with Context/Redux
+   - State management with React Context (no Redux)
    - React Testing Library for tests
 
    **DevOps (AWS CDK)**:
@@ -58,20 +58,21 @@ $ARGUMENTS
 
    Run appropriate checks:
    ```bash
-   # Backend
-   poetry run pytest <path> -x
-   poetry run ruff check <path>
+   # Backend (repo root)
+   venv/bin/pytest <path> -x
 
-   # Frontend
+   # Frontend (inside frontend/)
    npm run lint
-   npm run test
+   npm run test:run
+
+   # SpecOps invariants (file length < 500 lines, PRIORITY.md sync)
+   spec-ops health
    ```
 
 6. **Update Task Status**
 
    If implementing a tracked task:
-   - Update task status in the task file
-   - Update `_index.md` progress
+   - Do not edit `docs/project/backlog/` on a feature branch (ADR-0005); the move to `complete/` and the `PRIORITY.md` update happen on integration (`spec-ops queue complete <task-id>`)
    - Note any handoff requirements for next task
 
 7. **Report Completion**

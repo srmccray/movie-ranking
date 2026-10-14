@@ -6,15 +6,19 @@ A lightweight, responsive React frontend for the Movie Ranking API.
 
 - **React 18** - UI library
 - **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **React Router** - Client-side routing
+- **Vite 6** - Build tool and dev server
+- **React Router 6** - Client-side routing
+- **Vitest + React Testing Library + MSW** - Testing
 
 ## Features
 
-- User registration and login
-- Add movies with title and year
-- Rate movies from 1-5 stars
-- View and manage your movie rankings
+- User registration and login (email/password or Google sign-in)
+- Link a Google account to an existing account (Settings)
+- Search TMDB to add movies (or enter one manually) and rate them 1-5 stars
+- View, sort, re-rate, and delete your movie rankings
+- Analytics dashboard: stats, activity heatmap, genre radar chart, rating distribution
+- Import watch history from an Amazon Prime CSV (Settings)
+- Automatic logout when the API returns 401
 - Responsive design (mobile and desktop)
 
 ## Getting Started
@@ -22,7 +26,7 @@ A lightweight, responsive React frontend for the Movie Ranking API.
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
+- npm
 - Backend API running on http://localhost:8000
 
 ### Installation
@@ -33,9 +37,6 @@ cd frontend
 
 # Install dependencies
 npm install
-
-# Copy environment file (optional, defaults work for local dev)
-cp .env.example .env
 
 # Start development server
 npm run dev
@@ -51,6 +52,11 @@ The frontend will be available at http://localhost:3000
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
 | `npm run lint` | Run ESLint |
+| `npm test` | Run Vitest in watch mode |
+| `npm run test:run` | Run tests once |
+| `npm run test:coverage` | Run tests once with coverage |
+
+`npm run build` runs `tsc -b` first, so type errors fail the build.
 
 ## Project Structure
 
@@ -58,37 +64,29 @@ The frontend will be available at http://localhost:3000
 frontend/
 ├── public/              # Static assets
 ├── src/
-│   ├── api/            # API client
-│   │   └── client.ts   # HTTP client with auth
-│   ├── components/     # Reusable UI components
-│   │   ├── Button.tsx
-│   │   ├── Input.tsx
-│   │   ├── StarRating.tsx
-│   │   ├── Modal.tsx
-│   │   ├── Header.tsx
-│   │   ├── MovieCard.tsx
-│   │   ├── EmptyState.tsx
-│   │   ├── AddMovieForm.tsx
-│   │   └── ProtectedRoute.tsx
-│   ├── context/        # React context providers
-│   │   └── AuthContext.tsx
-│   ├── hooks/          # Custom React hooks
-│   │   └── useRankings.ts
-│   ├── pages/          # Page components
-│   │   ├── LoginPage.tsx
-│   │   ├── RegisterPage.tsx
-│   │   └── RankingsPage.tsx
-│   ├── types/          # TypeScript type definitions
-│   │   └── index.ts
+│   ├── api/            # API client (client.ts) with typed methods
+│   ├── components/     # Reusable UI components (buttons, forms, modal,
+│   │                   #   movie search/cards, analytics charts, import wizard,
+│   │                   #   Google sign-in button, ProtectedRoute)
+│   ├── context/        # AuthContext (auth state, token, 401 auto-logout)
+│   ├── hooks/          # useRankings
+│   ├── pages/          # Login, Register, GoogleCallback, Rankings,
+│   │                   #   Analytics, Settings
+│   ├── styles/         # Modular CSS (index.css imports variables, base,
+│   │                   #   components/, pages/, utilities)
+│   ├── types/          # TypeScript type definitions (index.ts)
+│   ├── __tests__/      # Test setup and MSW mocks (tests are also colocated)
 │   ├── App.tsx         # Root component with routing
 │   ├── main.tsx        # Application entry point
-│   └── index.css       # Global styles
+│   └── index.css       # Legacy stylesheet, not imported (see styles/)
 ├── index.html          # HTML template
 ├── package.json        # Dependencies and scripts
 ├── tsconfig.json       # TypeScript configuration
-├── vite.config.ts      # Vite configuration
+├── vite.config.ts      # Vite and Vitest configuration
 └── eslint.config.js    # ESLint configuration
 ```
+
+See [CLAUDE.md](CLAUDE.md) for the detailed component, route, and convention reference.
 
 ## Development
 
@@ -98,11 +96,11 @@ In development, API requests to `/api/*` are proxied to `http://localhost:8000`.
 
 ### Authentication
 
-The app uses JWT tokens stored in localStorage. The `AuthContext` manages authentication state and provides login/logout/register functions to all components.
+The app uses JWT tokens stored in localStorage (`movie_ranking_token`). The `AuthContext` manages authentication state and provides `login`, `register`, `logout`, and `loginWithToken` (used by the Google OAuth callback at `/auth/google/callback`) to all components. If any API call returns 401, the API client triggers `logout` automatically.
 
 ### Styling
 
-Styles are written in plain CSS with CSS custom properties (variables) for theming. The design system is documented in `/docs/design-system.md`.
+Styles are written in plain CSS with CSS custom properties (variables) for a dark theme. Design tokens live in `src/styles/variables.css`; component and page styles are split under `src/styles/components/` and `src/styles/pages/`, all imported by `src/styles/index.css`.
 
 ## Building for Production
 
@@ -116,20 +114,16 @@ npm run preview
 
 The build output will be in the `dist/` directory.
 
-### Environment Variables for Production
+### API Base URL
 
-Set `VITE_API_BASE_URL` to your production API URL:
-
-```bash
-VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
-```
+The API client uses the fixed base path `/api/v1` (`API_BASE` in `src/api/client.ts`), so in production `/api/*` must be routed to the backend (e.g. by the CDN/reverse proxy). `.env.example` lists `VITE_API_BASE_URL`, but no code currently reads it.
 
 ## Bundle Size
 
 The application is optimized for a lightweight footprint:
 
-- Target: < 100KB gzipped
-- Code splitting for React and React Router
+- Target: < 100KB gzipped (not measured here)
+- Manual chunks for React and React Router (see `vite.config.ts`)
 - Tree shaking via Vite/Rollup
 - No heavy UI framework dependencies
 

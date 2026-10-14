@@ -13,13 +13,14 @@ allowed-tools:
 
 # FRD Creator Agent
 
-**Purpose:** Creates Functional Requirements Documents at the appropriate depth based on the tier assigned by Request Triage.
+**Purpose:** Creates feature requirements at the appropriate depth based on the tier assigned by Request Triage. In this project, an "FRD" or "Quick Sketch" is a SpecOps PRD (`PRD-NNNN`) stored under `docs/project/product/`; the tier controls how much technical detail goes into it.
 
 ## When Invoked
 
-- **SMALL tier:** Create Quick Sketch only
-- **MEDIUM tier:** Create standard FRD
-- **LARGE tier:** Create comprehensive FRD with extended sections
+- **SMALL tier:** Create a Quick Sketch (a short PRD)
+- **MEDIUM tier:** Create a standard PRD with a Technical Approach section
+- **LARGE tier:** Create a comprehensive PRD with extended sections
+- **TRIVIAL tier:** No document; go straight to implementation
 
 ---
 
@@ -30,14 +31,14 @@ All artifacts go under `docs/project/` (SpecOps layout; see root CLAUDE.md "Docu
 ```
 docs/project/                          # SpecOps project-management-as-code tree
 ├── product/                           # PRDs (create with `spec-ops prd create`)
-│   ├── idea/ shaped/ accepted/        #   lifecycle stages (SMALL sketches start in idea/)
+│   ├── idea/ shaped/ accepted/        #   lifecycle stages
 │   ├── shipped/                       #   delivered features
 │   └── REGISTRY.md
 │       # prd-NNNN-{feature-slug}.md: YAML frontmatter + Who/Cannot-do-today/
 │       # What-good-looks-like/Non-goals/Checkable Outcomes; refinement notes
 │       # go in a `## Refinement Notes` section of the same PRD
 ├── backlog/                           # Tasks (TASK-NNNN), frontmatter `governing_prds`
-│   ├── proposed/ refined/ complete/   #   NNNN-{feature-slug}-{name}.md
+│   ├── proposed/ refined/ complete/   #   NNNN-{feature-slug}-{name}.md (refactors: TASK-REFACTOR-*.md)
 │   ├── PRIORITY.md                    #   execution order (replaces tasks/_index.md)
 │   └── ROADMAP.md
 ├── user_stories/                      # Personas + Gherkin user stories (US-NNNN)
@@ -47,401 +48,148 @@ docs/project/                          # SpecOps project-management-as-code tree
 │   ├── accepted/adr-NNNN-{slug}.md
 │   └── REGISTRY.md
 └── archive/                           # Completed/legacy documentation
-    ├── plans/                         # Old .claude/plans/ content
-    └── docs/                          # Old docs/ content
+    ├── plans/                         # Legacy plans (read-only history)
+    └── docs/                          # Legacy docs (read-only history)
 ```
+
+---
+
+## Creating the PRD
+
+All tiers start the same way. Do not hand-allocate IDs; let the CLI do it.
+
+```bash
+spec-ops prd create --title "{Title}" --persona "{Persona}" --component "{component}" \
+  --summary "{one-line problem statement}" --stage {idea|shaped|accepted}
+spec-ops prd lint docs/project/product/{stage}/prd-NNNN-{slug}.md
+```
+
+- Personas are defined in `docs/project/user_stories/PERSONAS.md` (e.g. Casey, the movie enthusiast, for end-user features).
+- Components come from `specops.toml`: `backend`, `frontend`, `infra` (existing PRDs also use bounded-context names such as `import`, `auth`, `rankings`).
+- Every PRD must have the mandatory sections below with falsifiable Checkable Outcomes (observable through a public frontdoor: an HTTP endpoint response or rendered UI, per ADR-0003).
+- Each PRD also needs at least one Gherkin user story (ADR-0006): `spec-ops story create --title "..." --prd PRD-NNNN --persona "..."` creates `docs/project/user_stories/accepted/us-NNNN-{slug}.md`.
+- Check available flags with `spec-ops <command> --help` if a command differs from the above.
+
+### Mandatory PRD sections (all tiers)
+
+```markdown
+---
+id: 'NNNN'
+title: {Title}
+status: Idea | Shaped | Accepted | Shipped
+created: {YYYY-MM-DD}
+target_persona: {Persona}
+component: {component}
+---
+
+# PRD-NNNN — {Title}
+
+## Who this is for
+## What the person cannot do today
+## What good looks like
+## What this does not do
+## Checkable Outcomes
+1. {Falsifiable, observable outcome}
+## Linked User Stories
+- [US-NNNN: {title}](../../user_stories/accepted/us-NNNN-{slug}.md)
+```
+
+The CLI scaffold is authoritative if it differs from this sketch.
 
 ---
 
 ## SMALL Tier: Quick Sketch
 
-For low-complexity, low-risk work that still benefits from minimal documentation.
-
-### Template
+For low-complexity, low-risk work. Use the mandatory sections only, plus a short technical note:
 
 ```markdown
-# Quick Sketch: {Title}
-
-**Created:** {date}
-**Tier:** SMALL
-**Triage Scores:** Complexity {X}/10, Risk {X}/10
-
-## What
-{1-2 sentence description of the change}
-
-## Why
-{Business justification - why is this needed?}
-
-## Approach
-- {Step 1}
-- {Step 2}
-- {Step 3}
-
-## Files Likely Affected
-- `{path/to/file1.py}` - {what changes}
-- `{path/to/file2.tsx}` - {what changes}
-
-## Considerations
-- {Any risks, edge cases, or things to watch for}
-
-## Acceptance Criteria
-- [ ] {Criterion 1}
-- [ ] {Criterion 2}
+## Technical Note
+- **Approach:** {2-4 steps}
+- **Files likely affected:** `{app/routers/...py}`, `{frontend/src/components/...tsx}`
+- **Considerations:** {risks, edge cases}
 ```
+
+Keep Checkable Outcomes to 2-4 items. Triage scores (Complexity X/10, Risk X/10) may be recorded in the PRD body.
 
 ---
 
-## MEDIUM Tier: Standard FRD
+## MEDIUM Tier: Standard PRD
 
-For moderate complexity or risk work requiring clearer specification.
-
-### Template
+For moderate complexity or risk. Mandatory sections plus:
 
 ```markdown
-# FRD: {Title}
-
-**Created:** {date}
-**Tier:** MEDIUM
-**Triage Scores:** Complexity {X}/10, Risk {X}/10
-**Status:** Draft | In Review | Approved | In Progress | Complete
-
-## Problem Statement
-
-{What problem are we solving? Why does it matter? Who is affected?}
-
 ## Proposed Solution
-
 ### Overview
-{High-level description of the solution approach}
-
-### Key Components
-1. **{Component 1}:** {Description}
-2. **{Component 2}:** {Description}
-
 ### User Experience
-{How will users interact with this? What changes will they see?}
 
 ## Technical Approach
-
 ### Backend Changes
-- {Model changes}
-- {API changes}
-- {Service layer changes}
-
+- Models (`app/models/`), schemas (`app/schemas/`), routers (`app/routers/`), services (`app/services/`)
+- API contract: method, path (trailing slash), request/response schema
 ### Frontend Changes
-- {Component changes}
-- {State management changes}
-- {UI/UX changes}
-
+- Components (`frontend/src/components/`), pages, hooks, API client (`frontend/src/api/client.ts`), types (`frontend/src/types/`)
 ### Data Model
-{Any new models, fields, or relationships}
+- New tables/columns (primary keys are UUIDs), Alembic migration in `alembic/versions/`
 
 ## Implementation Notes
-
 ### Dependencies
-- {What must exist before this can be built?}
-
 ### Integration Points
-- {What systems/services does this touch?}
-
-### Feature Flags
-- {Will this be behind a feature flag? Which one?}
 
 ## Testing Strategy
-
-- Unit tests: {scope}
-- Integration tests: {scope}
-- Manual testing: {key scenarios}
+- Backend: pytest through the HTTP API (`tests/`)
+- Frontend: Vitest + React Testing Library + MSW (co-located `*.test.tsx`)
+- Manual scenarios
 
 ## Rollback Plan
 
-{How do we undo this if something goes wrong?}
-
-## Acceptance Criteria
-
-- [ ] {Criterion 1}
-- [ ] {Criterion 2}
-- [ ] {Criterion 3}
-
 ## Open Questions
-
-- [ ] {Question 1}
-- [ ] {Question 2}
+- [ ] {Question}
 ```
 
----
-
-## LARGE Tier: Comprehensive FRD
-
-For high-complexity or high-risk work requiring thorough specification.
-
-### Template
-
-```markdown
-# FRD: {Title}
-
-**Created:** {date}
-**Tier:** LARGE
-**Triage Scores:** Complexity {X}/10, Risk {X}/10
-**Status:** Draft | In Review | Approved | In Progress | Complete
-**Owner:** {who is responsible}
-**Stakeholders:** {who needs to be informed}
+The project has no feature-flag system; do not propose flags unless the feature requires introducing one.
 
 ---
 
-## Executive Summary
-
-{2-3 paragraph summary for stakeholders who won't read the full document}
-
----
-
-## Problem Statement
-
-### Current State
-{Describe how things work today}
-
-### Pain Points
-1. {Pain point 1}
-2. {Pain point 2}
-
-### Impact
-- **Users affected:** {who and how many}
-- **Business impact:** {revenue, support costs, churn, etc.}
-- **Technical debt:** {if applicable}
-
-### Success Metrics
-- {Metric 1}: {target}
-- {Metric 2}: {target}
-
----
-
-## Proposed Solution
-
-### Overview
-{High-level description of the solution approach}
-
-### Design Principles
-- {Principle 1}
-- {Principle 2}
-
-### Key Components
-
-#### {Component 1}
-{Detailed description}
-
-**Responsibilities:**
-- {Responsibility 1}
-- {Responsibility 2}
-
-#### {Component 2}
-{Detailed description}
-
-### User Experience
-
-#### User Flows
-1. {Flow 1}: {description}
-2. {Flow 2}: {description}
-
-#### UI Mockups / Wireframes
-{Links or embedded images if available}
-
-### Alternatives Considered
-
-| Alternative | Pros | Cons | Why Not Chosen |
-|-------------|------|------|----------------|
-| {Alt 1} | {pros} | {cons} | {reason} |
-| {Alt 2} | {pros} | {cons} | {reason} |
-
----
-
-## Technical Design
-
-### Architecture Overview
-{Diagram or description of how components interact}
-
-### Backend Changes
-
-#### Models
-```python
-# Pseudocode or actual model definitions
-class NewModel(Base):
-    __tablename__ = "new_models"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    field1: Mapped[str] = mapped_column(String(255))
-```
-
-#### API Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/...` | {description} |
-| POST | `/api/v1/...` | {description} |
-
-#### Services
-- `{ServiceName}`: {responsibility}
-
-### Frontend Changes
-
-#### Components
-- `{ComponentName}`: {responsibility}
-
-#### State Management
-- {Context/Redux changes}
-
-#### API Integration
-- {How frontend consumes new APIs}
-
-### Database Changes
-
-#### New Tables
-{Schema definitions}
-
-#### Migrations
-- {Migration 1}: {description}
-- {Migration 2}: {description}
-
-#### Data Backfill
-{If existing data needs transformation}
-
-### Infrastructure Changes
-{Any AWS, CDK, or deployment needs}
-
----
-
-## Risk Assessment
-
-### Technical Risks
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| {Risk 1} | High/Med/Low | High/Med/Low | {mitigation} |
-
-### Business Risks
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-
-### Security Considerations
-- {Security concern 1}: {how addressed}
-- {Security concern 2}: {how addressed}
-
----
-
-## Implementation Plan
-
-### Phase 1: {Name}
-- {Task 1}
-- {Task 2}
-
-### Phase 2: {Name}
-- {Task 1}
-- {Task 2}
-
-### Dependencies
-```
-Task A ──► Task B ──► Task C
-              │
-              └──► Task D
-```
-
-### Estimated Effort
-| Phase | Complexity | Notes |
-|-------|------------|-------|
-| Phase 1 | {T-shirt size} | {notes} |
-| Phase 2 | {T-shirt size} | {notes} |
-
----
-
-## Testing Strategy
-
-### Unit Tests
-- {Coverage areas}
-
-### Integration Tests
-- {Coverage areas}
-
-### End-to-End Tests
-- {Key scenarios}
-
-### Performance Tests
-- {If applicable}
-
-### Manual Test Plan
-1. {Scenario 1}
-2. {Scenario 2}
-
----
-
-## Deployment Plan
-
-### Feature Flags
-- Flag name: `{flag_name}`
-- Rollout strategy: {percentage rollout, specific users, etc.}
-
-### Rollback Plan
-1. {Step 1}
-2. {Step 2}
-
-### Monitoring & Alerting
-- {New metrics to track}
-- {New alerts to create}
-
----
-
-## Documentation Updates
-
-- [ ] API documentation
-- [ ] User-facing help docs
-- [ ] Internal runbooks
-- [ ] Architecture diagrams
-
----
-
-## Acceptance Criteria
-
-- [ ] {Criterion 1}
-- [ ] {Criterion 2}
-- [ ] {Criterion 3}
-
----
-
-## Open Questions
-
-- [ ] {Question 1}
-- [ ] {Question 2}
-
----
-
-## Appendix
-
-### Glossary
-- **{Term}:** {Definition}
-
-### References
-- {Link 1}
-- {Link 2}
-```
+## LARGE Tier: Comprehensive PRD
+
+For high-complexity or high-risk work. Everything in the MEDIUM tier, plus the following sections as relevant:
+
+- **Executive Summary**: 2-3 paragraphs for stakeholders.
+- **Problem Statement**: current state, pain points, impact, success metrics.
+- **Design Principles** and **Alternatives Considered** (table: alternative, pros, cons, why not chosen). Architecture-level decisions should also become an ADR in `docs/project/adrs/accepted/`.
+- **Technical Design**: architecture overview; backend models, endpoints table (`| Method | Endpoint | Description |`, all `/api/v1/...` with trailing slashes), services; frontend components and state (React Context, not Redux); database changes with migrations and any data backfill; infrastructure changes (CDK in `infra/lib/`, deployed via GitHub Actions).
+- **Risk Assessment**: technical risks (likelihood, impact, mitigation), business risks, security considerations (auth, ownership checks).
+- **Implementation Plan**: phases and dependency graph. Phases map to backlog tasks created later by `frd-task-breakdown`.
+- **Testing Strategy**: unit, integration, end-to-end (Playwright for UI scenarios per ADR-0006), manual test plan.
+- **Deployment Plan**: rollback steps and any new monitoring.
+- **Documentation Updates**: affected CLAUDE.md guides and API docs.
+- **Open Questions** and **Appendix** (glossary, references).
 
 ---
 
 ## Process Notes
 
-### Creating the FRD
+### Creating the PRD
 
 1. **Start with the problem**, not the solution
 2. **Gather context** before writing - search codebase, read related code
 3. **Fill sections incrementally** - don't try to complete everything at once
 4. **Mark unknowns explicitly** - use `TBD` or add to Open Questions
-5. **Get early feedback** - share draft before fully polishing
+5. **Respect SpecOps invariants** when scoping: files under 500 lines (ADR-0002), blackbox frontdoor verification (ADR-0003), backlog isolation on feature branches (ADR-0005)
+6. **Run `spec-ops prd lint`** on the result
 
 ### Naming Conventions
 
 - **Feature slug:** lowercase, hyphenated (e.g., `user-notification-preferences`)
-- **Files:** `sketch.md`, `frd.md`, `refinement.md`
-- **Tasks:** `task-01-backend-models.md`, `task-02-api-endpoints.md`
+- **PRD:** `docs/project/product/{stage}/prd-NNNN-{slug}.md` (ID allocated by `spec-ops prd create`); refinement notes go in a `## Refinement Notes` section of the same PRD
+- **Stories:** `docs/project/user_stories/accepted/us-NNNN-{slug}.md`
+- **Tasks:** `docs/project/backlog/proposed/NNNN-{slug}-{name}.md` with frontmatter `governing_prds: [PRD-NNNN]` (created later by `frd-task-breakdown`)
+- Do not use the removed `.claude_docs/` paths (`sketch.md`, `frd.md`, `refinement.md`, `task-NN-*.md`)
 
 ### Handoff - Next Agent to Invoke
 
-After creating the FRD/Sketch:
-1. Mark status as "In Review" (for FRDs) or "Ready" (for Quick Sketches)
+After creating the PRD:
+1. Set PRD status to match its stage (`idea`/`shaped` while drafting, `accepted` when ready for refinement or implementation)
 2. **End your output with the "Next Agent to Invoke" section** - this is mandatory
 
 **Output format to use:**
@@ -455,7 +203,7 @@ After creating the FRD/Sketch:
 **Context to provide:**
 - Feature slug: `{slug}`
 - Tier: {SMALL|MEDIUM|LARGE}
-- FRD location: `docs/project/product/accepted/prd-NNNN-{slug}.md`
+- PRD location: `docs/project/product/{stage}/prd-NNNN-{slug}.md`
 - {Any key context for the next agent}
 
 **After that agent completes:**
@@ -468,6 +216,6 @@ After creating the FRD/Sketch:
 |------|------------|-------|
 | SMALL | `backend-implementation` or `frontend-implementation` | Quick Sketch is sufficient, go directly to implementation |
 | MEDIUM | `frd-refiner` | Light refinement before implementation |
-| LARGE | `frd-refiner` | Thorough refinement required |
+| LARGE | `frd-refiner` | Thorough refinement required, then `frd-task-breakdown` |
 
 The parent session invokes the recommended agent, continuing the workflow chain.

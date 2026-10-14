@@ -10,45 +10,88 @@ A React + TypeScript frontend built with Vite, featuring:
 - React Router for navigation
 - Context API for authentication state
 - Custom hooks for data fetching
-- CSS custom properties for theming
-- MSW for API mocking in tests
+- Modular plain CSS with custom properties (dark "cinematic" theme)
+- TMDB-backed movie search, analytics dashboard (hand-built SVG/CSS charts, no chart library), Amazon Prime CSV import wizard
+- Email/password and Google OAuth sign-in, with automatic logout on any API 401
+- Vitest + React Testing Library + MSW for tests
+
+Scripts (`package.json`): `npm run dev` (port 3000, proxies `/api` to `localhost:8000`), `build` (`tsc -b && vite build`), `lint`, `test` (watch), `test:run`, `test:coverage`.
 
 ## Project Structure
 
 ```
 frontend/src/
 ├── api/
-│   └── client.ts          # API client singleton with typed methods
+│   ├── client.ts          # API client singleton with typed methods
+│   └── client.test.ts
 ├── components/
-│   ├── index.ts           # Barrel exports for all components
+│   ├── index.ts           # Barrel exports (see note below for exceptions)
 │   ├── Button.tsx         # Reusable button with variants
 │   ├── Input.tsx          # Form input with label and error handling
 │   ├── Modal.tsx          # Accessible modal dialog
-│   ├── Header.tsx         # App header with auth state
+│   ├── Header.tsx         # App header with nav (Rankings/Analytics/Settings) and logout
 │   ├── StarRating.tsx     # Interactive star rating component
 │   ├── MovieCard.tsx      # Movie display with actions
+│   ├── AddMovieCard.tsx   # "Add a movie" placeholder card
+│   ├── AddMovieForm.tsx   # Add-movie form (search / selected / manual modes)
+│   ├── MovieSearch.tsx    # Debounced TMDB search with keyboard navigation
 │   ├── EmptyState.tsx     # Empty state placeholder
-│   ├── AddMovieForm.tsx   # Form for adding movies
-│   └── ProtectedRoute.tsx # Auth route wrapper
+│   ├── ProtectedRoute.tsx # Auth route wrapper
+│   ├── GoogleSignInButton.tsx    # Google-branded sign-in/sign-up button
+│   ├── StatsCard.tsx             # Analytics summary stats
+│   ├── RatingDistributionChart.tsx  # Analytics rating bars
+│   ├── ActivityChart.tsx         # Analytics activity heatmap (not in barrel)
+│   ├── GenreChart.tsx            # Analytics genre radar chart (not in barrel)
+│   ├── ImportWizard.tsx          # Amazon Prime import: orchestrates the 3 steps
+│   ├── ImportFileUpload.tsx      # Import step 1: CSV upload
+│   ├── ImportReview.tsx          # Import step 2: review/rate/skip/re-match movies
+│   └── ImportComplete.tsx        # Import step 3: summary
 ├── context/
-│   └── AuthContext.tsx    # Authentication provider and hook
+│   ├── AuthContext.tsx    # Authentication provider and hook
+│   └── AuthContext.test.tsx
 ├── hooks/
 │   └── useRankings.ts     # Rankings data hook with CRUD operations
 ├── pages/
-│   ├── LoginPage.tsx      # Login form page
-│   ├── RegisterPage.tsx   # Registration form page
-│   └── RankingsPage.tsx   # Main rankings display page
+│   ├── LoginPage.tsx           # Login form + Google sign-in
+│   ├── RegisterPage.tsx        # Registration form + Google sign-up
+│   ├── GoogleCallbackPage.tsx  # Receives ?token= from backend after Google OAuth
+│   ├── RankingsPage.tsx        # Main rankings display page
+│   ├── AnalyticsPage.tsx       # Stats, activity, genres, rating distribution
+│   └── SettingsPage.tsx        # Profile, Google linking, import wizard, clear rankings
+├── styles/                # Modular CSS (see Styling Conventions)
+│   ├── index.css          # Imports everything in cascade order
+│   ├── variables.css      # Design tokens
+│   ├── base.css, utilities.css
+│   ├── components/        # buttons, forms, cards, header, modal, movie-card, star-rating, alerts
+│   └── pages/             # auth, rankings, analytics, settings, import
 ├── types/
 │   └── index.ts           # All TypeScript interfaces
 ├── __tests__/
-│   ├── setup.ts           # Vitest setup with MSW
+│   ├── setup.ts           # Vitest setup: jest-dom, MSW server, localStorage + matchMedia mocks
+│   ├── SettingsPage.test.tsx
 │   └── mocks/
-│       ├── handlers.ts    # MSW request handlers
+│       ├── handlers.ts    # MSW handlers (`handlers` + `importHandlers`) and mock-data helpers
 │       └── server.ts      # MSW server instance
 ├── App.tsx                # Root component with routing
-├── main.tsx               # Application entry point
-└── index.css              # Global styles and design tokens
+├── main.tsx               # Application entry point (imports styles/index.css)
+└── index.css              # LEGACY monolithic stylesheet - not imported anywhere; do not edit
 ```
+
+Unit/component tests are colocated (`*.test.ts(x)` next to the source); `__tests__/` holds setup, mocks, and page-level tests.
+
+### Routes (`App.tsx`)
+
+| Path | Page | Access |
+|------|------|--------|
+| `/login`, `/register` | `LoginPage`, `RegisterPage` | Public |
+| `/auth/google/callback` | `GoogleCallbackPage` | Public |
+| `/` | `RankingsPage` | Protected |
+| `/rankings` | Redirects to `/` | Protected |
+| `/analytics` | `AnalyticsPage` | Protected |
+| `/settings` | `SettingsPage` | Protected |
+| `*` | Redirects to `/` | - |
+
+`ProtectedRoute` shows a spinner while `isLoading`, then redirects unauthenticated users to `/login` with `state={{ from: location }}`.
 
 ## Adding a New Component
 
@@ -106,15 +149,17 @@ Add to `/frontend/src/components/index.ts`:
 export { NewComponent } from './NewComponent';
 ```
 
+Note: `ActivityChart` and `GenreChart` are not in the barrel; `AnalyticsPage` imports them directly from their files.
+
 ### 3. Add Component Styles
 
-Add to `/frontend/src/index.css`:
+Create `/frontend/src/styles/components/new-component.css` and add an `@import './components/new-component.css';` line to `/frontend/src/styles/index.css` (in the Components block, before Pages and utilities). Do not add styles to the legacy `src/index.css`.
 
 ```css
 /* New Component */
 .new-component {
   background-color: var(--color-bg-primary);
-  border: 1px solid var(--color-neutral-200);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: var(--space-4);
 }
@@ -123,15 +168,18 @@ Add to `/frontend/src/index.css`:
   border-color: var(--color-primary-500);
 }
 
+/* NOTE: the neutral scale is inverted for the dark theme: 50 is lightest
+   (text), 900 is darkest. */
+
 .new-component-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--color-neutral-900);
+  color: var(--color-neutral-50);
   margin-bottom: var(--space-2);
 }
 
 .new-component-content {
-  color: var(--color-neutral-600);
+  color: var(--color-neutral-300);
 }
 ```
 
@@ -146,14 +194,16 @@ Add to `/frontend/src/index.css`:
 
 ### Extending HTML Elements
 
-For components wrapping HTML elements, extend native attributes:
+For components wrapping HTML elements, extend native attributes (simplified from the real `Button.tsx`, which also supports `size` and `fullWidth`):
 
 ```tsx
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
+  fullWidth?: boolean;
   children: ReactNode;
 }
 
@@ -186,6 +236,7 @@ Create `/frontend/src/pages/NewFeaturePage.tsx`:
 ```tsx
 import { useState, useEffect, useCallback } from 'react';
 import { Header, Button, EmptyState, Modal } from '../components';
+// (types such as CreateData, and ItemCard/NewItemForm, are placeholders)
 import { useNewFeature } from '../hooks/useNewFeature';
 
 export function NewFeaturePage() {
@@ -307,10 +358,13 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
 
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<RankingsPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/new-feature" element={<NewFeaturePage />} />
           </Route>
 
@@ -322,6 +376,8 @@ function App() {
   );
 }
 ```
+
+If the page should appear in the header nav, also add a `NavLink` in `components/Header.tsx`.
 
 ### Page Structure Pattern
 
@@ -527,7 +583,10 @@ class ApiClient {
 
 - **JSON requests** (default): Automatically set to `application/json`
 - **Form data** (login only): Use `application/x-www-form-urlencoded`
+- **File upload** (`uploadAmazonPrimeCSV`): `multipart/form-data` via `FormData`; do NOT set Content-Type manually (the browser adds the boundary). It uses its own `fetch` call rather than `request()`
 - **Delete requests**: No Content-Type needed (no body)
+
+**Trailing-slash exceptions:** `/auth/login` and `/auth/register` are the only routes WITHOUT a trailing slash, because the backend declares them that way (`app/routers/auth.py`). Every other endpoint has one.
 
 ```tsx
 // Login uses form-urlencoded
@@ -545,6 +604,14 @@ async login(email: string, password: string): Promise<Token> {
   });
 }
 ```
+
+### Existing API Client Methods
+
+`apiClient` (`src/api/client.ts`) exposes: `register`, `login`, `getGoogleAuthUrl`, `getGoogleLinkUrl`, `getCurrentUser`, `createMovie`, `searchMovies`, `createOrUpdateRanking`, `getRankings`, `deleteRanking`, `clearAllRankings`, `getActivity`, `getGenres`, `getStats`, `getRatingDistribution`, `uploadAmazonPrimeCSV`, `getImportSession`, `addImportMovie`, `skipImportMovie`, `cancelImportSession`, `updateImportMovieMatch`. The base path is the hardcoded constant `API_BASE = '/api/v1'` (the `VITE_API_BASE_URL` in `.env.example` is not read by any code). There is no client method for updating a ranking's rating or `rated_at`; `useRankings.updateRating` and `updateRatedAt` go through `createOrUpdateRanking` (POST upsert).
+
+### 401 Auto-Logout
+
+`ApiClient` holds an `onUnauthorized` callback (`setOnUnauthorized`). Any non-OK response with status 401 invokes it before the error is thrown. `AuthProvider` registers `logout` as that callback, which clears the token, so `ProtectedRoute` then redirects to `/login`. Do not add per-call 401 handling for session expiry. Note this applies to failed login attempts too (a 401 from `/auth/login` also triggers `logout`, which is harmless when already logged out).
 
 ### Handling 204 No Content
 
@@ -694,6 +761,8 @@ export interface SomeContextType {
    }
    ```
 
+Import-related wrapper types (`ImportSessionResponse`, `ImportSessionDetailResponse`, `MatchedMovieItem`, `ImportMovieAddRequest`, `ImportMovieMatchRequest`) mirror `app/schemas/import_amazon.py`; analytics types (`ActivityResponse`, `GenreResponse`, `StatsResponse`, `RatingDistributionResponse`) mirror `app/schemas/analytics.py`.
+
 ### Testing API Integrations
 
 When adding MSW handlers, match the backend response shape exactly:
@@ -713,35 +782,43 @@ http.get('/api/v1/movies/search/', () => {
 
 ### Design Tokens
 
-All styling uses CSS custom properties defined in `/frontend/src/index.css`:
+CSS is modular. `main.tsx` imports `/frontend/src/styles/index.css`, which `@import`s files in cascade order: `variables.css` (tokens), `base.css`, `components/*.css`, `pages/*.css`, then `utilities.css` last. Put new styles in the matching file (or add a new file and import it). The old `/frontend/src/index.css` is a legacy monolith that is no longer imported; ignore it.
+
+The theme is a dark "cinematic" theme. All styling uses CSS custom properties defined in `/frontend/src/styles/variables.css` (excerpt; see the file for the full set):
 
 ```css
 :root {
   /* Colors */
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-neutral-500: #64748b;
-  --color-error: #ef4444;
+  --color-bg-base / -primary / -secondary / -tertiary / -accent  /* dark layers */
+  --color-primary-500: #a855f7;   /* purple accent (50-200 are translucent, 600-700 darker) */
+  --color-secondary-500: #3b82f6; /* blue accent */
+  --color-highlight: #22d3ee;
+  --color-neutral-50 ... -900     /* INVERTED: 50 = lightest (text), 900 = darkest */
+  --color-success / --color-warning / --color-error (+ -bg variants)
+  --color-border, --color-border-hover, --color-border-focus
   --color-star-filled: #fbbf24;
+  --gradient-primary, --glass-bg, --glass-blur
 
   /* Spacing (4px base) */
   --space-1: 0.25rem;   /* 4px */
   --space-2: 0.5rem;    /* 8px */
   --space-3: 0.75rem;   /* 12px */
   --space-4: 1rem;      /* 16px */
-  --space-6: 1.5rem;    /* 24px */
-  --space-8: 2rem;      /* 32px */
+  --space-5 / --space-6: 1.5rem / --space-8: 2rem / --space-10 / --space-12
 
   /* Border Radius */
   --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-sm / --shadow-md / --shadow-lg / --shadow-xl
+  --shadow-card, --shadow-card-hover, --shadow-glow-purple, --shadow-glow-blue
+
+  /* Misc */
+  --font-family, --transition-fast (150ms) / -normal (200ms) / -slow (300ms)
 }
 ```
 
@@ -753,14 +830,14 @@ All styling uses CSS custom properties defined in `/frontend/src/index.css`:
 /* CORRECT */
 .component {
   padding: var(--space-4);
-  color: var(--color-neutral-700);
+  color: var(--color-neutral-100);
   border-radius: var(--radius-lg);
 }
 
 /* WRONG - hardcoded values */
 .component {
   padding: 16px;
-  color: #334155;
+  color: #e0e0e8;
   border-radius: 8px;
 }
 ```
@@ -773,6 +850,7 @@ All styling uses CSS custom properties defined in `/frontend/src/index.css`:
 .btn-sm, .btn-md, .btn-lg
 .btn-full (full width)
 .btn-icon (icon-only button)
+.btn-google (used by GoogleSignInButton)
 
 /* Forms */
 .form-group, .form-label, .form-input, .form-error
@@ -788,25 +866,30 @@ All styling uses CSS custom properties defined in `/frontend/src/index.css`:
 
 /* States */
 .loading-container, .spinner, .empty-state
+
+/* Misc */
+.badge, .badge-success, .badge-neutral
 ```
+
+Page-specific classes live in `styles/pages/*.css` (e.g. `auth-layout`/`auth-card`, analytics, import wizard).
 
 ### Adding New Styles
 
-Add styles to `/frontend/src/index.css` following existing patterns:
+Add styles to the appropriate file under `/frontend/src/styles/` (`components/` for reusable components, `pages/` for page-specific) following existing patterns:
 
 ```css
 /* New Feature Component */
 .new-feature {
   /* Use existing tokens */
   background-color: var(--color-bg-primary);
-  border: 1px solid var(--color-neutral-200);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: var(--space-4);
   box-shadow: var(--shadow-sm);
 }
 
 .new-feature:hover {
-  border-color: var(--color-neutral-300);
+  border-color: var(--color-border-hover);
 }
 
 /* Responsive adjustments */
@@ -827,7 +910,7 @@ Uses Context API via `AuthContext`:
 import { useAuth } from '../context/AuthContext';
 
 function Component() {
-  const { isAuthenticated, isLoading, login, logout, register } = useAuth();
+  const { token, isAuthenticated, isLoading, login, logout, register, loginWithToken } = useAuth();
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -840,6 +923,30 @@ function Component() {
   return <AuthenticatedContent />;
 }
 ```
+
+- The JWT is stored in `localStorage` under `movie_ranking_token` and mirrored into `apiClient` via `setToken`.
+- `loginWithToken(token)` stores a token obtained out-of-band; `GoogleCallbackPage` uses it.
+- `useAuth()` throws if used outside `AuthProvider`.
+
+### Google OAuth Flow
+
+1. `LoginPage`/`RegisterPage` render `GoogleSignInButton` (props: `variant: 'signin' | 'signup'`, `loading`, `fullWidth`, plus button attributes). Clicking calls `apiClient.getGoogleAuthUrl()` (passes `redirect_uri=<origin>/auth/google/callback`) and sets `window.location.href` to the returned `authorization_url`.
+2. The backend completes OAuth and redirects to `/auth/google/callback?token=...` (or `?error=...&error_description=...`).
+3. `GoogleCallbackPage` calls `loginWithToken(token)` and navigates to `/` (or shows an error with a link back to `/login`).
+4. Account linking for existing users happens on `SettingsPage` via `apiClient.getGoogleLinkUrl()` (redirect back to `/settings`) and `getCurrentUser()` (`UserProfileResponse.auth_provider`: `'local' | 'google' | 'linked'`).
+
+### Amazon Prime Import Wizard
+
+`SettingsPage` opens `ImportWizard` (`onClose`, optional `onComplete`). It is a three-step state machine (`upload` -> `review` -> `complete`) and owns the session state:
+
+- `ImportFileUpload` (`onUploadComplete(session)`) calls `uploadAmazonPrimeCSV`.
+- `ImportReview` (`movies`, `currentIndex`, `sessionId`, `onAdd`, `onSkip`, `onComplete`, `onMovieUpdated`) lets the user rate/add or skip each matched movie, and re-match via TMDB search (`updateImportMovieMatch`).
+- `ImportComplete` (`addedCount`, `skippedCount`, `unmatchedTitles`, `onDone`) shows the summary.
+- Cancelling calls `cancelImportSession` (errors ignored). Add/skip go to `addImportMovie` / `skipImportMovie` by session id + movie index.
+
+### Analytics Page
+
+`AnalyticsPage` fetches `getActivity`, `getGenres`, `getStats`, `getRatingDistribution` in parallel with `Promise.allSettled`, tracking loading and error state per section so one failure does not blank the page. Presentational components take data as props: `StatsCard`, `RatingDistributionChart` (has `isLoading`/`error` props), `ActivityChart` (heatmap; `activity`, `startDate`, `endDate`), `GenreChart` (radar; `genres`, `totalMovies`). Charts are plain SVG/CSS; there is no charting dependency.
 
 ### Feature Data State
 
@@ -855,10 +962,12 @@ function Component() {
     isLoading,     // Loading state
     error,         // Error message or null
     hasMore,       // Pagination flag
-    fetchRankings, // Fetch/refresh function
-    loadMore,      // Pagination function
+    sortBy, sortOrder, setSort, // Server-side sorting (SortField / SortOrder)
+    fetchRankings, // Fetch/refresh function (pass true to reset to page 1)
+    loadMore,      // Pagination function (page size 10)
     addMovieAndRank,
     updateRating,
+    updateRatedAt,
     deleteRanking,
   } = useRankings();
 }
@@ -983,19 +1092,29 @@ const validate = (): boolean => {
 
 ### Test File Location
 
-Place tests next to the file being tested:
+Place tests next to the file being tested (existing examples: `MovieSearch.test.tsx`, `GoogleSignInButton.test.tsx`, `ProtectedRoute.test.tsx`, `AuthContext.test.tsx`, page tests, `api/client.test.ts`):
 
 ```
 components/
   Button.tsx
-  Button.test.tsx  # or in __tests__ folder
+  Button.test.tsx
 ```
 
-Or in the `__tests__` folder for integration tests.
+Page-level tests may also live in `src/__tests__/` (e.g. `SettingsPage.test.tsx`).
+
+### Running Tests
+
+```bash
+npm test                # Vitest watch mode
+npm run test:run        # Single run (CI)
+npm run test:coverage   # Single run with coverage
+```
+
+Config is in the `test` block of `vite.config.ts`: `jsdom` environment, globals enabled, setup file `src/__tests__/setup.ts` (starts the MSW server with `onUnhandledRequest: 'warn'`, resets handlers and clears `localStorage` after each test, mocks `localStorage` and `window.matchMedia`). Stack: Vitest, React Testing Library, `@testing-library/user-event`, `jest-dom`, MSW 2.
 
 ### MSW Mock Handlers
 
-Add handlers in `/frontend/src/__tests__/mocks/handlers.ts`:
+Add handlers in `/frontend/src/__tests__/mocks/handlers.ts` (the `handlers` array for core API; import-wizard routes are in `importHandlers`; `server.ts` combines both). The file also exports helpers such as `resetMockData`, `setTmdbServiceError`, `setUserGoogleLinked`, `addValidOAuthState`, `resetImportSessions`, `createMockImportSession`, and constants `MOCK_TOKEN`, `MOCK_USER_EMAIL`. Note there is currently no handler for `PATCH .../movie/:index/match/`, or for `analytics/activity|genres`, `rankings/all/`; add one if a test needs it.
 
 ```tsx
 import { http, HttpResponse } from 'msw';
@@ -1123,6 +1242,8 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 ```
 
+Exception: `ActivityChart` and `GenreChart` are not exported from the barrel; import them from their files.
+
 ### 4. Form Event Handling
 
 Always prevent default and handle async properly:
@@ -1179,7 +1300,7 @@ Wrap protected routes with `<ProtectedRoute />` element wrapper:
 
 ```tsx
 <Route element={<ProtectedRoute />}>
-  <Route path="/dashboard" element={<DashboardPage />} />
+  <Route path="/analytics" element={<AnalyticsPage />} />
   <Route path="/settings" element={<SettingsPage />} />
 </Route>
 ```

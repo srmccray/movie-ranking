@@ -25,6 +25,8 @@ This document defines project-wide conventions that apply across the entire code
 @router.delete("/{ranking_id}")
 ```
 
+Current exceptions: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, and `GET /health` have no trailing slash. Do not copy them for new endpoints.
+
 ```typescript
 // Frontend - Correct
 await fetch(`/api/v1/rankings/${id}/`, { method: 'DELETE' });
@@ -99,7 +101,7 @@ For detailed patterns, see:
 
 ## Documentation Structure
 
-All project documentation is stored in `docs/project/` (SpecOps layout; validate with `uv run --project <spec-ops> spec-ops health`, `prd audit`, `trace`):
+All project documentation is stored in `docs/project/` (SpecOps layout; validate with `spec-ops health`; also `prd audit`, `trace`):
 
 ```
 docs/project/                          # SpecOps project-management-as-code tree
@@ -150,6 +152,9 @@ Specialized agents handle different aspects of development. See `.claude/agents/
 | `frontend-implementation` | Implements frontend features |
 | `test-coverage` | Adds/improves test coverage |
 | `documentation-writer` | Creates/updates documentation |
+| `infrastructure-implementation` | Implements AWS CDK infrastructure |
+| `security-review` | Reviews auth flows and security-sensitive code |
+| `workflow-orchestrator` | Entry point; recommends which agent to invoke next |
 
 ## Git Conventions
 

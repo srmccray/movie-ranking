@@ -6,3 +6,4 @@
 | `PRD-0002` | Manual Movie Search in Import Wizard | Shipped | Casey | import |
 | `PRD-0003` | Auto-Logout on 401 Unauthorized | Shipped | Casey | auth |
 | `PRD-0004` | MovieCard Layout Redesign | Shipped | Casey | rankings |
+| `PRD-0005` | Legacy File Decomposition | Accepted | Alex | core |

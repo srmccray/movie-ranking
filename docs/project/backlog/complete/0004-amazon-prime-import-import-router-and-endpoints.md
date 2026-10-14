@@ -2,7 +2,7 @@
 id: '0004'
 title: 'Amazon Prime Import: Import Router and Endpoints'
 status: Complete
-created: 2026-10-13
+created: 2026-01-17
 completed_at: '2026-01-17'
 governing_prds:
 - PRD-0001
@@ -11,7 +11,7 @@ governing_stories:
 dependencies:
 - TASK-0002
 - TASK-0003
-target_bc: import
+target_bc: backend
 ---
 
 # TASK-0004: Amazon Prime Import — Import Router and Endpoints
@@ -39,11 +39,13 @@ Implemented in commit `0941314` ("Add Amazon Prime import feature and various im
 15. DELETE /session/{id}/ removes session
 16. All endpoints enforce user ownership
 17. All endpoints use trailing slashes
-18. Rate limiting prevents TMDB 429 errors
+18. TMDB requests are rate-limited to mitigate 429 errors (1s pause every 35 lookups, plus one 2s wait-and-retry after a `TMDBRateLimitError`)
 
 ## Legacy Specification
 
 _Migrated verbatim (headings demoted) from the legacy `.claude_docs/` tree on 2026-10-13._
+
+_Historical design record: code samples and statuses below reflect the plan at the time (2026-01-17) and may differ from the shipped code; the sections above are authoritative. The `.claude_docs/` tree was removed in commit `fb641e6` and remains available in git history before that commit._
 
 ### Source: `.claude_docs/tasks/amazon-prime-import/task-03-import-router.md`
 
