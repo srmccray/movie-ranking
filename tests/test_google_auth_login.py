@@ -134,10 +134,10 @@ class TestGoogleOAuthFlow:
             "iss": "https://accounts.google.com",
         }
 
-        with patch("app.routers.google_auth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
+        with patch("app.routers.google_auth.oauth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
             mock_exchange.return_value = mock_tokens
 
-            with patch("app.routers.google_auth._verify_google_id_token") as mock_verify:
+            with patch("app.routers.google_auth.oauth._verify_google_id_token") as mock_verify:
                 mock_verify.return_value = mock_idinfo
 
                 response = await client.get(
@@ -170,10 +170,10 @@ class TestGoogleOAuthFlow:
             "iss": "https://accounts.google.com",
         }
 
-        with patch("app.routers.google_auth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
+        with patch("app.routers.google_auth.oauth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
             mock_exchange.return_value = mock_tokens
 
-            with patch("app.routers.google_auth._verify_google_id_token") as mock_verify:
+            with patch("app.routers.google_auth.oauth._verify_google_id_token") as mock_verify:
                 mock_verify.return_value = mock_idinfo
 
                 response = await client.get(
@@ -205,9 +205,9 @@ class TestGoogleOAuthFlow:
             "iss": "https://accounts.google.com",
         }
 
-        with patch("app.routers.google_auth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
+        with patch("app.routers.google_auth.oauth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
             mock_exchange.return_value = mock_tokens
-            with patch("app.routers.google_auth._verify_google_id_token") as mock_verify:
+            with patch("app.routers.google_auth.oauth._verify_google_id_token") as mock_verify:
                 mock_verify.return_value = mock_idinfo
 
                 # First login
@@ -222,9 +222,9 @@ class TestGoogleOAuthFlow:
         login_response2 = await client.get("/api/v1/auth/google/login/")
         state2 = login_response2.json()["authorization_url"].split("state=")[1].split("&")[0]
 
-        with patch("app.routers.google_auth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
+        with patch("app.routers.google_auth.oauth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
             mock_exchange.return_value = mock_tokens
-            with patch("app.routers.google_auth._verify_google_id_token") as mock_verify:
+            with patch("app.routers.google_auth.oauth._verify_google_id_token") as mock_verify:
                 mock_verify.return_value = mock_idinfo
 
                 response2 = await client.get(
@@ -251,9 +251,9 @@ class TestGoogleOAuthFlow:
             "iss": "https://accounts.google.com",
         }
 
-        with patch("app.routers.google_auth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
+        with patch("app.routers.google_auth.oauth._exchange_code_for_tokens", new_callable=AsyncMock) as mock_exchange:
             mock_exchange.return_value = mock_tokens
-            with patch("app.routers.google_auth._verify_google_id_token") as mock_verify:
+            with patch("app.routers.google_auth.oauth._verify_google_id_token") as mock_verify:
                 mock_verify.return_value = mock_idinfo
 
                 response = await client.get(
