@@ -606,7 +606,7 @@ async login(email: string, password: string): Promise<Token> {
 
 ### Existing API Client Methods
 
-`apiClient` (`src/api/client.ts`) exposes: `register`, `login`, `getGoogleAuthUrl`, `getGoogleLinkUrl`, `getCurrentUser`, `createMovie`, `searchMovies`, `createOrUpdateRanking`, `getRankings`, `deleteRanking`, `clearAllRankings`, `getActivity`, `getGenres`, `getStats`, `getRatingDistribution`, `uploadAmazonPrimeCSV`, `getImportSession`, `addImportMovie`, `skipImportMovie`, `cancelImportSession`, `updateImportMovieMatch`. The base path is the hardcoded constant `API_BASE = '/api/v1'` (the `VITE_API_BASE_URL` in `.env.example` is not read by any code). There is no client method for updating a ranking's rating or `rated_at`; `useRankings.updateRating` and `updateRatedAt` go through `createOrUpdateRanking` (POST upsert).
+`apiClient` (`src/api/client.ts`) exposes: `register`, `login`, `getGoogleAuthUrl`, `getGoogleLinkUrl`, `getCurrentUser`, `createMovie`, `searchMovies`, `createOrUpdateRanking`, `getRankings`, `deleteRanking`, `clearAllRankings`, `getActivity`, `getGenres`, `getStats`, `getRatingDistribution`, `uploadAmazonPrimeCSV`, `getImportSession`, `addImportMovie`, `skipImportMovie`, `cancelImportSession`, `updateImportMovieMatch`. The base path is the hardcoded constant `API_BASE = '/api/v1'`. There is no client method for updating a ranking's rating or `rated_at`; `useRankings.updateRating` and `updateRatedAt` go through `createOrUpdateRanking` (POST upsert).
 
 ### 401 Auto-Logout
 
