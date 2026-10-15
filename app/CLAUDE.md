@@ -758,7 +758,7 @@ All routes are mounted in `app/main.py` under `/api/v1/...` (plus `GET /health` 
 
 ### Analytics (`routers/analytics.py`)
 
-All four endpoints are `GET`, take no query parameters, and are scoped to the current user. `activity` and `genres` cover a rolling window (activity runs from the Sunday on or before the first of the month one year ago through the end of the current month, and omits zero-activity days). `rating-distribution` always returns all five ratings 1-5. Genre names come from the static `GENRE_MAP` (TMDB id to name) in the router, using `Movie.genre_ids`. Watch time uses `Movie.runtime`.
+All four endpoints are `GET`, take no query parameters, and are scoped to the current user. `activity` and `genres` cover a rolling window (activity runs from the Sunday on or before the first of the month one year ago through the end of the current month, and omits zero-activity days). `rating-distribution` always returns all five ratings 1-5. Genre names come from the static `GENRE_MAP` (TMDB id to name) in `app/constants/genres.py` (`genre_name()` supplies the `Unknown (<id>)` fallback; shared query and counting helpers live in `app/services/analytics_genres.py`), using `Movie.genre_ids`. Watch time uses `Movie.runtime`.
 
 ### TMDB (`services/tmdb.py`)
 
