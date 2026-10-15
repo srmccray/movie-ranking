@@ -1,10 +1,11 @@
 """User schemas for request/response validation."""
 
-from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.schemas.types import UTCDatetime
 
 
 class UserCreate(BaseModel):
@@ -32,7 +33,7 @@ class UserResponse(BaseModel):
 
     id: UUID
     email: str
-    created_at: datetime
+    created_at: UTCDatetime
 
 
 class UserProfileResponse(BaseModel):
@@ -63,4 +64,4 @@ class UserProfileResponse(BaseModel):
     has_password: bool = Field(
         ..., description="True if user has a password set for email/password login"
     )
-    created_at: datetime
+    created_at: UTCDatetime
