@@ -1,7 +1,8 @@
 ---
 id: '0045'
-title: 'app/routers/auth.py + app/dependencies.py: issue an httpOnly session cookie with CSRF double-submit and add POST /auth/logout/'
-status: Proposed
+title: 'app/routers/auth.py + app/dependencies.py: issue an httpOnly session cookie
+  with CSRF double-submit and add POST /auth/logout/'
+status: Refined
 governing_adrs:
 - ADR-0013
 - ADR-0003
@@ -9,9 +10,7 @@ governing_prds:
 - PRD-0007
 governing_stories:
 - US-0010
-dependencies: []
 target_bc: backend
-priority: P1
 ---
 
 # TASK-0045: app/routers/auth.py + app/dependencies.py: issue an httpOnly session cookie with CSRF double-submit and add POST /auth/logout/

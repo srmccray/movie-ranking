@@ -1,7 +1,8 @@
 ---
 id: '0040'
-title: 'requirements.txt: pin Python dependencies from a single source and complete docs/project/compliance/licenses.json'
-status: Proposed
+title: 'requirements.txt: pin Python dependencies from a single source and complete
+  docs/project/compliance/licenses.json'
+status: Refined
 governing_adrs:
 - ADR-0009
 - ADR-0001
@@ -9,9 +10,7 @@ governing_prds:
 - PRD-0007
 governing_stories:
 - US-0009
-dependencies: []
 target_bc: backend
-priority: P2
 ---
 
 # TASK-0040: requirements.txt: pin Python dependencies from a single source and complete docs/project/compliance/licenses.json

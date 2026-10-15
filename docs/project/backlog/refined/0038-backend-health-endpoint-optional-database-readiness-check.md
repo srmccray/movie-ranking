@@ -1,17 +1,17 @@
 ---
-id: '0038'
-title: 'app/main.py: GET /health?deep=true checks the database and returns 503 when it is unreachable'
-status: Proposed
+id: 0038
+title: 'app/main.py: GET /health?deep=true checks the database and returns 503 when
+  it is unreachable'
+status: Refined
+dependencies:
+- TASK-0037
 governing_adrs:
 - ADR-0003
 governing_prds:
 - PRD-0007
 governing_stories:
 - US-0009
-dependencies:
-- TASK-0037
 target_bc: backend
-priority: P2
 ---
 
 # TASK-0038: app/main.py: GET /health?deep=true checks the database and returns 503 when it is unreachable

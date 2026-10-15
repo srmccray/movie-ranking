@@ -2,7 +2,7 @@
 id: '0014'
 title: 'app/utils/time.py: add one naive-UTC helper module and replace every datetime.utcnow()
   call and duplicate to_naive_utc'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0010
 governing_prds:

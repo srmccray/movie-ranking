@@ -1,17 +1,17 @@
 ---
 id: '0030'
-title: 'infra/lib/movie-ranking-stack.ts: grant the Lambda SSM read access and remove placeholder secret environment variables'
-status: Proposed
+title: 'infra/lib/movie-ranking-stack.ts: grant the Lambda SSM read access and remove
+  placeholder secret environment variables'
+status: Refined
+dependencies:
+- TASK-0029
 governing_adrs:
 - ADR-0008
 governing_prds:
 - PRD-0007
 governing_stories:
 - US-0009
-dependencies:
-- TASK-0029
 target_bc: infra
-priority: P1
 ---
 
 # TASK-0030: infra/lib/movie-ranking-stack.ts: grant the Lambda SSM read access and remove placeholder secret environment variables

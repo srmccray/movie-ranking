@@ -2,7 +2,7 @@
 id: '0013'
 title: 'frontend/src/styles/variables.css: define the missing --color-primary-400
   token'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:

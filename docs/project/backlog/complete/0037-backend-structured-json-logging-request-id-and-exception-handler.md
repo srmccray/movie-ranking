@@ -2,7 +2,7 @@
 id: '0037'
 title: 'app/main.py: JSON logs with request ids, access logging and an unhandled-exception
   handler'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0003
 - ADR-0002

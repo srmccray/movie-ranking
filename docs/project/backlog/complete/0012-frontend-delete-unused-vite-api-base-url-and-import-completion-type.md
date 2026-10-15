@@ -2,7 +2,7 @@
 id: '0012'
 title: 'frontend: delete the unused VITE_API_BASE_URL setting and the unused ImportCompletionSummary
   type'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:

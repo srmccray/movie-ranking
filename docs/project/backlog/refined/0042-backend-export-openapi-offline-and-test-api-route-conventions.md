@@ -1,7 +1,8 @@
 ---
 id: '0042'
-title: 'scripts/export_openapi.py + tests: export the OpenAPI schema offline and test trailing-slash and response_model conventions'
-status: Proposed
+title: 'scripts/export_openapi.py + tests: export the OpenAPI schema offline and test
+  trailing-slash and response_model conventions'
+status: Refined
 governing_adrs:
 - ADR-0012
 - ADR-0003
@@ -9,9 +10,7 @@ governing_prds:
 - PRD-0006
 governing_stories:
 - US-0006
-dependencies: []
 target_bc: backend
-priority: P2
 ---
 
 # TASK-0042: scripts/export_openapi.py + tests: export the OpenAPI schema offline and test trailing-slash and response_model conventions

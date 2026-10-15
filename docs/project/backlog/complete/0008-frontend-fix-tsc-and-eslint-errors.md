@@ -1,7 +1,7 @@
 ---
 id: 0008
 title: 'frontend: fix all tsc -b errors and eslint problems'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0004
 governing_prds:
