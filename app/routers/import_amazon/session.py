@@ -19,6 +19,7 @@ from app.schemas.import_amazon import (
 from app.services.csv_parser import parse_amazon_prime_csv
 from app.services.import_session import import_session_store
 
+from .deps import get_session_or_404
 from .matching import match_movies_with_tmdb
 
 logger = logging.getLogger(__name__)
@@ -135,13 +136,7 @@ async def get_import_session(
     Raises:
         HTTPException: 404 if session not found or expired.
     """
-    session = import_session_store.get_session(session_id, str(current_user.id))
-
-    if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Import session not found or expired",
-        )
+    session = get_session_or_404(session_id, current_user)
 
     movies = [MatchedMovieItem(**m) for m in session.movies]
     pending_count = sum(1 for m in movies if m.status == "pending")
@@ -180,12 +175,6 @@ async def cancel_import_session(
     Raises:
         HTTPException: 404 if session not found.
     """
-    session = import_session_store.get_session(session_id, str(current_user.id))
-
-    if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Import session not found or expired",
-        )
+    session = get_session_or_404(session_id, current_user)
 
     import_session_store.delete_session(session_id)
