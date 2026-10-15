@@ -94,6 +94,74 @@ jobs:
           pip install -r requirements-dev.txt
           pytest
 
+  # Runs on every PR and push (no path filter) so the check always reports and can be made required (ADR-0007).
+  backend-postgres:
+    name: Backend Migrations (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: movie_ranking
+          POSTGRES_PASSWORD: ci_password # pragma: allowlist secret
+          POSTGRES_DB: movie_ranking
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U movie_ranking"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://movie_ranking:ci_password@localhost:5432/movie_ranking # pragma: allowlist secret
+      SECRET_KEY: ci-dummy-secret-key-not-for-production # pragma: allowlist secret
+      TMDB_API_KEY: ci-dummy-tmdb-key # pragma: allowlist secret
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # keep in sync with PYTHON_VERSION in deploy.yml (Lambda runtime)
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Apply all migrations from an empty database
+        run: alembic upgrade head
+
+      - name: Downgrade to base
+        run: alembic downgrade base
+
+      - name: Re-apply all migrations
+        run: alembic upgrade head
+
+      - name: Assert expected schema objects exist
+        run: |
+          python - <<'PY'
+          import asyncio, os
+          import asyncpg
+
+          async def main() -> None:
+              dsn = os.environ["DATABASE_URL"].replace("+asyncpg", "")
+              conn = await asyncpg.connect(dsn)
+              try:
+                  table = await conn.fetchval("SELECT to_regclass('public.rankings')")
+                  assert table is not None, "rankings table missing"
+                  con = await conn.fetchval(
+                      "SELECT 1 FROM pg_constraint WHERE conname = 'uq_user_movie'"
+                  )
+                  assert con == 1, "uq_user_movie constraint missing"
+              finally:
+                  await conn.close()
+
+          asyncio.run(main())
+          print("schema assertions passed")
+          PY
+
   # Deliberately NOT run here: Playwright e2e (needs a backend + browsers).
   # Runs on every PR (no path filter) so the check always reports and can be made required.
   frontend-tests:
