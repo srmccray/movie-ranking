@@ -231,35 +231,39 @@ npx cdk synth > template.yaml
 
 Deploying requires local AWS credentials for the target account (`CDK_DEFAULT_ACCOUNT` is read from them) and a CDK-bootstrapped `us-east-1` environment. The synthesized JSON template is also always available at `.cdk.out/MovieRankingStack.template.json` after any `synth`/`diff`/`deploy`.
 
-## Lambda Environment Variables
+## Secrets
 
-The Lambda function requires these environment variables:
+Secrets live in SSM Parameter Store as SecureString parameters under `/movie-ranking/prod/` (ADR-0008). The stack never creates them and holds no secret values; the Lambda environment contains only non-secret configuration, and the function role has `ssm:GetParametersByPath`/`ssm:GetParameters` on the prefix. The app reads the parameters once per cold start; environment variables take precedence over SSM.
 
-| Variable | Description | Set By |
-|----------|-------------|--------|
-| `DATABASE_URL` | PostgreSQL connection string | Manual (AWS Console/CLI) |
-| `SECRET_KEY` | JWT signing key | GitHub Actions |
-| `TMDB_API_KEY` | The Movie Database API key | Manual (AWS Console/CLI) |
-| `CORS_ORIGIN` | Allowed CORS origin | CDK (automatically set) |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID | GitHub Actions |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | GitHub Actions |
-| `GOOGLE_REDIRECT_URI` | OAuth callback URL | GitHub Actions |
+| Name | Description |
+|------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SECRET_KEY` | JWT signing key |
+| `TMDB_API_KEY` | The Movie Database API key |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 
-### Initial Setup
+Non-secret environment set by CDK: `CORS_ORIGIN`, `SSM_PARAMETER_PREFIX`, `GOOGLE_REDIRECT_URI` (derived from `domainName`).
 
-After first deployment, manually set secrets via AWS CLI. Note that `--environment` **replaces the whole variable map**, so include every variable you want to keep (the next CI deploy re-adds `SECRET_KEY` and the `GOOGLE_*` values):
+### Creating or rotating a parameter
 
 ```bash
-# Update Lambda environment variables
-aws lambda update-function-configuration \
-  --function-name movie-ranking-api \
-  --environment "Variables={
-    DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/dbname,
-    SECRET_KEY=your-secure-secret-key,
-    TMDB_API_KEY=your-tmdb-api-key,
-    CORS_ORIGIN=https://movies.stephenmccray.com
-  }"
+for name in DATABASE_URL SECRET_KEY TMDB_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
+  aws ssm put-parameter --name "/movie-ranking/prod/$name" --type SecureString \
+    --overwrite --value "<value for $name>"
+done
 ```
+
+### Cut-over order (one time)
+
+1. Read the current values from the Lambda configuration and GitHub secrets.
+2. `put-parameter` all five as SecureString (above).
+3. Deploy the release that reads SSM (TASK-0029).
+4. Verify `GET /health` and a password login.
+5. `cdk deploy` this change (run `npm run diff` first; expect only the removed variables, the two new ones and one IAM statement).
+6. Re-verify. A manual `cdk deploy` uploads a code asset without installed dependencies, so run the GitHub deploy workflow (`workflow_dispatch`) afterwards to republish the real package.
+
+Rollback: `aws lambda update-function-configuration` with the old variables (the application prefers environment variables over SSM).
 
 ## Deployment Workflow
 
@@ -333,21 +337,9 @@ env: {
 }
 ```
 
-### 2. Lambda Environment Placeholders
+### 2. Lambda Secrets
 
-The CDK defines placeholder environment variables that must be replaced after deployment:
-
-```typescript
-environment: {
-  DATABASE_URL: "postgresql+asyncpg://user:pass@host:5432/dbname",
-  SECRET_KEY: "placeholder-replace-after-deployment",
-  TMDB_API_KEY: "placeholder-replace-after-deployment",
-}
-```
-
-The GitHub Actions workflow merges `SECRET_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` into the existing variables automatically (the redirect URI is hardcoded in the workflow as `https://movies.stephenmccray.com/api/v1/auth/google/callback/`). `DATABASE_URL` and `TMDB_API_KEY` must be set manually.
-
-**Warning:** because the CDK stack declares these placeholders, running `cdk deploy` resets the Lambda environment to the placeholder values (dropping `GOOGLE_*` and the real `DATABASE_URL`/`TMDB_API_KEY`). After any manual CDK deploy that touches the function, re-run the GitHub Actions deploy (for `SECRET_KEY`/`GOOGLE_*`) and re-set `DATABASE_URL` and `TMDB_API_KEY`.
+The CDK stack defines no secret environment variables; see [Secrets](#secrets). `cdk deploy` does not reset application configuration. Until the workflow's env-merge step is removed (TASK-0031), a deploy workflow run still re-adds `SECRET_KEY` and `GOOGLE_*` to the environment, where they win over SSM.
 
 ### 3. CORS Handling
 
@@ -448,7 +440,7 @@ aws cloudformation describe-stacks \
 ### Checklist
 
 - [ ] Review existing patterns in `lib/movie-ranking-stack.ts`
-- [ ] Run `npm run diff` to preview changes before deploying (remember `cdk deploy` resets Lambda env vars to placeholders)
+- [ ] Run `npm run diff` to preview changes before deploying
 - [ ] Test changes in a separate stack if making significant modifications
 - [ ] Update this documentation if adding new resources or patterns
 - [ ] Ensure GitHub Actions workflow is updated if new secrets are required
@@ -468,22 +460,10 @@ aws cloudformation describe-stacks \
 }
 ```
 
-### Adding Lambda Environment Variables
+### Adding Lambda Configuration
 
-1. Add to CDK stack (for documentation/default value):
-   ```typescript
-   environment: {
-     NEW_VAR: "placeholder",
-   }
-   ```
-
-2. Add to GitHub Actions workflow if it's a secret:
-   ```yaml
-   --arg new_var "${{ secrets.NEW_VAR }}" \
-   '. + { "NEW_VAR": $new_var }'
-   ```
-
-3. Add the secret in GitHub repository settings
+- Non-secret value: add it to the `environment` block in the CDK stack.
+- Secret value: add a SecureString parameter under `/movie-ranking/prod/` with `aws ssm put-parameter` (see [Secrets](#secrets)); never put it in the stack or the workflow.
 
 ### Updating Lambda Permissions
 
