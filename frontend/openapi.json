@@ -1696,7 +1696,7 @@
     },
     "/api/v1/auth/google/callback/": {
       "get": {
-        "description": "Handle the OAuth callback from Google.\n\nValidates the state token, exchanges the authorization code for tokens,\nverifies the ID token, and creates or finds the user account.\n\nArgs:\n    db: Async database session.\n    code: Authorization code from Google.\n    state: State token for CSRF validation.\n    error: Error code if the user denied access.\n\nReturns:\n    Token containing the JWT access token for the user.\n\nRaises:\n    HTTPException: Various errors for invalid state, cancelled auth, etc.",
+        "description": "Handle the OAuth callback from Google.\n\nValidates the state token, exchanges the authorization code for tokens,\nverifies the ID token, and creates or finds the user account.\n\nArgs:\n    db: Async database session.\n    response: Response used to attach the session cookies to JSON replies.\n    code: Authorization code from Google.\n    state: State token for CSRF validation.\n    error: Error code if the user denied access.\n\nReturns:\n    A 302 to the stored redirect_uri, or the Token JSON when none was\n    stored. Both set the httpOnly session cookie and the CSRF cookie. The\n    redirect carries ``?token=<jwt>`` only while\n    ``GOOGLE_LEGACY_TOKEN_IN_URL`` is true (removed by TASK-0047).\n\nRaises:\n    HTTPException: Various errors for invalid state, cancelled auth, etc.",
         "operationId": "google_callback_api_v1_auth_google_callback__get",
         "parameters": [
           {
@@ -2486,7 +2486,7 @@
     },
     "/api/v1/movies/": {
       "post": {
-        "description": "Add a new movie to the database.\n\nRequires authentication. Any authenticated user can add movies.\n\nArgs:\n    movie_data: Movie data containing title, year, tmdb_id, poster_url,\n        and additional metadata fields (genre_ids, vote_average, etc.).\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nReturns:\n    The created movie with all fields and timestamps.\n\nRaises:\n    HTTPException: 401 Unauthorized if not authenticated.",
+        "description": "Add a movie to the database (get-or-create by TMDB id).\n\nRequires authentication. Any authenticated user can add movies. When\n``tmdb_id`` is set and a movie with that id exists, it is returned with\nHTTP 200 (NULL metadata fields are back-filled); otherwise a new movie is\ncreated with HTTP 201. Movies without ``tmdb_id`` are always created.\n\nArgs:\n    movie_data: Movie data containing title, year, tmdb_id, poster_url,\n        and additional metadata fields (genre_ids, vote_average, etc.).\n    response: Used to set the 200 status for an existing movie.\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nReturns:\n    The created or existing movie with all fields and timestamps.\n\nRaises:\n    HTTPException: 401 Unauthorized if not authenticated.",
         "operationId": "create_movie_api_v1_movies__post",
         "requestBody": {
           "content": {
@@ -2499,6 +2499,9 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "Movie with this TMDB id already exists; returned"
+          },
           "201": {
             "content": {
               "application/json": {

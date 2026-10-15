@@ -164,12 +164,16 @@ export interface paths {
          *
          *     Args:
          *         db: Async database session.
+         *         response: Response used to attach the session cookies to JSON replies.
          *         code: Authorization code from Google.
          *         state: State token for CSRF validation.
          *         error: Error code if the user denied access.
          *
          *     Returns:
-         *         Token containing the JWT access token for the user.
+         *         A 302 to the stored redirect_uri, or the Token JSON when none was
+         *         stored. Both set the httpOnly session cookie and the CSRF cookie. The
+         *         redirect carries ``?token=<jwt>`` only while
+         *         ``GOOGLE_LEGACY_TOKEN_IN_URL`` is true (removed by TASK-0047).
          *
          *     Raises:
          *         HTTPException: Various errors for invalid state, cancelled auth, etc.
@@ -585,18 +589,22 @@ export interface paths {
         put?: never;
         /**
          * Add a new movie
-         * @description Add a new movie to the database.
+         * @description Add a movie to the database (get-or-create by TMDB id).
          *
-         *     Requires authentication. Any authenticated user can add movies.
+         *     Requires authentication. Any authenticated user can add movies. When
+         *     ``tmdb_id`` is set and a movie with that id exists, it is returned with
+         *     HTTP 200 (NULL metadata fields are back-filled); otherwise a new movie is
+         *     created with HTTP 201. Movies without ``tmdb_id`` are always created.
          *
          *     Args:
          *         movie_data: Movie data containing title, year, tmdb_id, poster_url,
          *             and additional metadata fields (genre_ids, vote_average, etc.).
+         *         response: Used to set the 200 status for an existing movie.
          *         current_user: The authenticated user (from JWT token).
          *         db: Async database session.
          *
          *     Returns:
-         *         The created movie with all fields and timestamps.
+         *         The created or existing movie with all fields and timestamps.
          *
          *     Raises:
          *         HTTPException: 401 Unauthorized if not authenticated.
@@ -2500,6 +2508,13 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Movie with this TMDB id already exists; returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Movie created successfully */
             201: {
                 headers: {
