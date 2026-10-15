@@ -3,7 +3,7 @@
 import logging
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
@@ -13,6 +13,7 @@ from app.models.user import User
 from app.routers.google_auth import link, oauth, redirects
 from app.schemas.oauth import GoogleAuthUrlResponse
 from app.schemas.token import Token
+from app.utils.cookies import set_session_cookies
 from app.utils.security import create_access_token
 
 logger = logging.getLogger(__name__)
@@ -91,6 +92,7 @@ async def google_login(
 )
 async def google_callback(
     db: DbSession,
+    response: Response,
     code: str | None = Query(None, description="Authorization code from Google"),
     state: str | None = Query(None, description="State token for CSRF validation"),
     error: str | None = Query(None, description="Error code if user denied access"),
@@ -102,12 +104,16 @@ async def google_callback(
 
     Args:
         db: Async database session.
+        response: Response used to attach the session cookies to JSON replies.
         code: Authorization code from Google.
         state: State token for CSRF validation.
         error: Error code if the user denied access.
 
     Returns:
-        Token containing the JWT access token for the user.
+        A 302 to the stored redirect_uri, or the Token JSON when none was
+        stored. Both set the httpOnly session cookie and the CSRF cookie. The
+        redirect carries ``?token=<jwt>`` only while
+        ``GOOGLE_LEGACY_TOKEN_IN_URL`` is true (removed by TASK-0047).
 
     Raises:
         HTTPException: Various errors for invalid state, cancelled auth, etc.
@@ -217,9 +223,15 @@ async def google_callback(
     # Generate JWT token
     access_token = create_access_token(data={"sub": str(user.id)})
 
-    # If custom redirect URI was specified, redirect with token
     if custom_redirect_uri:
-        redirect_url = f"{custom_redirect_uri}?token={access_token}"
-        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+        # Legacy: the deployed frontend still reads the JWT from the URL.
+        if settings.GOOGLE_LEGACY_TOKEN_IN_URL:
+            redirect_url = f"{custom_redirect_uri}?token={access_token}"
+        else:
+            redirect_url = custom_redirect_uri
+        redirect = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+        set_session_cookies(redirect, access_token)
+        return redirect
 
+    set_session_cookies(response, access_token)
     return Token(access_token=access_token)
