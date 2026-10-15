@@ -1,0 +1,2901 @@
+{
+  "components": {
+    "schemas": {
+      "ActivityDay": {
+        "description": "Schema for a single day's activity.\n\nAttributes:\n    date: The date of the activity.\n    count: Number of movies rated on this day.",
+        "properties": {
+          "count": {
+            "description": "Number of movies rated",
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "date": {
+            "description": "Date of activity",
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "count"
+        ],
+        "title": "ActivityDay",
+        "type": "object"
+      },
+      "ActivityResponse": {
+        "description": "Schema for activity chart response.\n\nRESPONSE SHAPE: { activity: [...], start_date: \"...\", end_date: \"...\" }\n\nAttributes:\n    activity: List of days with activity (days with 0 activity are omitted).\n    start_date: Start of the date range.\n    end_date: End of the date range.",
+        "properties": {
+          "activity": {
+            "description": "List of days with activity",
+            "items": {
+              "$ref": "#/components/schemas/ActivityDay"
+            },
+            "title": "Activity",
+            "type": "array"
+          },
+          "end_date": {
+            "description": "End of date range",
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "start_date": {
+            "description": "Start of date range",
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity",
+          "start_date",
+          "end_date"
+        ],
+        "title": "ActivityResponse",
+        "type": "object"
+      },
+      "Body_login_api_v1_auth_login_post": {
+        "properties": {
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          },
+          "grant_type": {
+            "anyOf": [
+              {
+                "pattern": "^password$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "password": {
+            "format": "password",
+            "title": "Password",
+            "type": "string"
+          },
+          "scope": {
+            "default": "",
+            "title": "Scope",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_login_api_v1_auth_login_post",
+        "type": "object"
+      },
+      "Body_upload_amazon_prime_csv_api_v1_import_amazon_prime_upload__post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_amazon_prime_csv_api_v1_import_amazon_prime_upload__post",
+        "type": "object"
+      },
+      "GenreResponse": {
+        "description": "Schema for genre distribution response.\n\nRESPONSE SHAPE: { genres: [...], total_movies: N }\n\nAttributes:\n    genres: List of genre statistics, sorted by count descending.\n    total_movies: Total number of rated movies in the period.",
+        "properties": {
+          "genres": {
+            "description": "Genre statistics sorted by count",
+            "items": {
+              "$ref": "#/components/schemas/GenreStats"
+            },
+            "title": "Genres",
+            "type": "array"
+          },
+          "total_movies": {
+            "description": "Total movies rated",
+            "minimum": 0.0,
+            "title": "Total Movies",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "genres",
+          "total_movies"
+        ],
+        "title": "GenreResponse",
+        "type": "object"
+      },
+      "GenreStats": {
+        "description": "Schema for genre statistics.\n\nAttributes:\n    genre_id: TMDB genre ID.\n    genre_name: Human-readable genre name.\n    count: Number of movies rated in this genre.\n    average_rating: Average user rating for movies in this genre.",
+        "properties": {
+          "average_rating": {
+            "description": "Average rating",
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Average Rating",
+            "type": "number"
+          },
+          "count": {
+            "description": "Number of movies rated",
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "genre_id": {
+            "description": "TMDB genre ID",
+            "title": "Genre Id",
+            "type": "integer"
+          },
+          "genre_name": {
+            "description": "Genre name",
+            "title": "Genre Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "genre_id",
+          "genre_name",
+          "count",
+          "average_rating"
+        ],
+        "title": "GenreStats",
+        "type": "object"
+      },
+      "GoogleAuthUrlResponse": {
+        "description": "Schema for Google OAuth authorization URL response.\n\nRESPONSE SHAPE: { authorization_url: \"https://accounts.google.com/...\" }\n\nThis response contains the URL to redirect the user to for Google authentication.\n\nAttributes:\n    authorization_url: Full Google OAuth URL with state parameter.",
+        "properties": {
+          "authorization_url": {
+            "description": "Full Google OAuth authorization URL to redirect user to",
+            "title": "Authorization Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorization_url"
+        ],
+        "title": "GoogleAuthUrlResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ImportMovieAddRequest": {
+        "description": "Request to add a movie from an import session to rankings.\n\nAttributes:\n    rating: Rating value (1-5 stars).\n    rated_at: Optional date to use as rated_at (defaults to watch_date from CSV).",
+        "properties": {
+          "rated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rated At"
+          },
+          "rating": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Rating",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rating"
+        ],
+        "title": "ImportMovieAddRequest",
+        "type": "object"
+      },
+      "ImportMovieMatchRequest": {
+        "description": "Request to update a movie's TMDB match in an import session.\n\nUsed when a user manually selects a different movie from search results.\nSets the match with 1.0 confidence (user-selected) and clears alternatives.\n\nAttributes:\n    tmdb_id: The TMDB ID of the selected movie.\n    title: Movie title from TMDB.\n    year: Release year (optional).\n    poster_url: Full URL to poster thumbnail (optional).\n    overview: Movie synopsis/description (optional).\n    genre_ids: List of TMDB genre IDs (optional).\n    vote_average: TMDB user rating 0.0-10.0 (optional).\n    vote_count: Number of TMDB votes (optional).\n    release_date: Full release date string YYYY-MM-DD (optional).\n    original_language: ISO 639-1 language code (optional).",
+        "properties": {
+          "genre_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "List of TMDB genre IDs",
+            "title": "Genre Ids"
+          },
+          "original_language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 639-1 language code",
+            "title": "Original Language"
+          },
+          "overview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Movie synopsis/description",
+            "title": "Overview"
+          },
+          "poster_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Full URL to poster thumbnail",
+            "title": "Poster Url"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Full release date YYYY-MM-DD",
+            "title": "Release Date"
+          },
+          "title": {
+            "description": "Movie title from TMDB",
+            "title": "Title",
+            "type": "string"
+          },
+          "tmdb_id": {
+            "description": "The TMDB ID of the selected movie",
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "vote_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "TMDB user rating 0.0-10.0",
+            "title": "Vote Average"
+          },
+          "vote_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Number of TMDB votes",
+            "title": "Vote Count"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Release year",
+            "title": "Year"
+          }
+        },
+        "required": [
+          "tmdb_id",
+          "title"
+        ],
+        "title": "ImportMovieMatchRequest",
+        "type": "object"
+      },
+      "ImportSessionDetailResponse": {
+        "description": "Current state of an import session.\n\nRESPONSE SHAPE: {\n    session_id: \"...\",\n    current_index: N,\n    total_movies: N,\n    added_count: N,\n    skipped_count: N,\n    remaining_count: N,\n    movies: [...]\n}\n\nUsed to resume an import session or check progress.\n\nAttributes:\n    session_id: Unique identifier for this import session.\n    current_index: Current position in the review queue.\n    total_movies: Total number of movies in the session.\n    added_count: Number of movies added to rankings so far.\n    skipped_count: Number of movies skipped so far.\n    remaining_count: Number of movies still pending review.\n    movies: List of all movies with their current statuses.",
+        "properties": {
+          "added_count": {
+            "title": "Added Count",
+            "type": "integer"
+          },
+          "current_index": {
+            "title": "Current Index",
+            "type": "integer"
+          },
+          "movies": {
+            "items": {
+              "$ref": "#/components/schemas/MatchedMovieItem"
+            },
+            "title": "Movies",
+            "type": "array"
+          },
+          "remaining_count": {
+            "title": "Remaining Count",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "skipped_count": {
+            "title": "Skipped Count",
+            "type": "integer"
+          },
+          "total_movies": {
+            "title": "Total Movies",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "current_index",
+          "total_movies",
+          "added_count",
+          "skipped_count",
+          "remaining_count",
+          "movies"
+        ],
+        "title": "ImportSessionDetailResponse",
+        "type": "object"
+      },
+      "ImportSessionResponse": {
+        "description": "Response after uploading a CSV file for import.\n\nRESPONSE SHAPE: {\n    session_id: \"...\",\n    total_entries: N,\n    movies_found: N,\n    tv_shows_filtered: N,\n    already_ranked: N,\n    ready_for_review: N,\n    movies: [...]\n}\n\nProvides a summary of the CSV parsing results and the list of\nmatched movies ready for review.\n\nAttributes:\n    session_id: Unique identifier for this import session.\n    total_entries: Total rows parsed from the CSV.\n    movies_found: Number of entries identified as movies.\n    tv_shows_filtered: Number of TV series entries filtered out.\n    already_ranked: Number of movies the user has already ranked.\n    ready_for_review: Number of movies ready for user review.\n    movies: List of matched movies for the review flow.",
+        "properties": {
+          "already_ranked": {
+            "title": "Already Ranked",
+            "type": "integer"
+          },
+          "movies": {
+            "items": {
+              "$ref": "#/components/schemas/MatchedMovieItem"
+            },
+            "title": "Movies",
+            "type": "array"
+          },
+          "movies_found": {
+            "title": "Movies Found",
+            "type": "integer"
+          },
+          "ready_for_review": {
+            "title": "Ready For Review",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "total_entries": {
+            "title": "Total Entries",
+            "type": "integer"
+          },
+          "tv_shows_filtered": {
+            "title": "Tv Shows Filtered",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "total_entries",
+          "movies_found",
+          "tv_shows_filtered",
+          "already_ranked",
+          "ready_for_review",
+          "movies"
+        ],
+        "title": "ImportSessionResponse",
+        "type": "object"
+      },
+      "MatchedMovieItem": {
+        "description": "A parsed movie with TMDB match results.\n\nCombines the original parsed data with TMDB matching results,\nincluding confidence score and alternative matches.\n\nAttributes:\n    parsed: Original movie data from CSV.\n    tmdb_match: Best TMDB match (optional, null if no match found).\n    confidence: Match confidence score from 0.0 (no match) to 1.0 (exact match).\n    alternatives: Up to 2 alternative TMDB matches for user selection.\n    status: Current status in the import workflow.",
+        "properties": {
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/TMDBMatchResult"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "parsed": {
+            "$ref": "#/components/schemas/ParsedMovieItem"
+          },
+          "status": {
+            "default": "pending",
+            "enum": [
+              "pending",
+              "added",
+              "skipped"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tmdb_match": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TMDBMatchResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "parsed"
+        ],
+        "title": "MatchedMovieItem",
+        "type": "object"
+      },
+      "MovieBrief": {
+        "description": "Abbreviated movie schema for embedding in ranking responses.\n\nAttributes:\n    id: Unique movie identifier.\n    title: Movie title.\n    year: Release year (optional).\n    poster_url: URL to movie poster image (optional).\n    genre_ids: List of TMDB genre IDs (optional).",
+        "properties": {
+          "genre_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre Ids"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "poster_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Url"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "year",
+          "poster_url",
+          "genre_ids"
+        ],
+        "title": "MovieBrief",
+        "type": "object"
+      },
+      "MovieCreate": {
+        "description": "Schema for creating a new movie.\n\nAttributes:\n    title: Movie title (1-500 characters).\n    year: Release year (optional, 1888-2031).\n    tmdb_id: TMDB movie ID (optional).\n    poster_url: URL to movie poster image (optional).\n    genre_ids: List of TMDB genre IDs (optional).\n    vote_average: TMDB user rating 0.0-10.0 (optional).\n    vote_count: Number of TMDB votes (optional).\n    release_date: Full release date (optional).\n    original_language: ISO 639-1 language code (optional).\n    runtime: Movie length in minutes (optional).",
+        "properties": {
+          "genre_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "List of TMDB genre IDs",
+            "title": "Genre Ids"
+          },
+          "original_language": {
+            "anyOf": [
+              {
+                "maxLength": 10,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 639-1 language code",
+            "title": "Original Language"
+          },
+          "poster_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "URL to movie poster image",
+            "title": "Poster Url"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Full release date",
+            "title": "Release Date"
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Movie length in minutes",
+            "title": "Runtime"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "tmdb_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "TMDB movie ID",
+            "title": "Tmdb Id"
+          },
+          "vote_average": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "TMDB user rating",
+            "title": "Vote Average"
+          },
+          "vote_count": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Number of TMDB votes",
+            "title": "Vote Count"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "maximum": 2031.0,
+                "minimum": 1888.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "MovieCreate",
+        "type": "object"
+      },
+      "MovieResponse": {
+        "description": "Schema for movie response with full details.\n\nAttributes:\n    id: Unique movie identifier.\n    title: Movie title.\n    year: Release year (optional).\n    tmdb_id: TMDB movie ID (optional).\n    poster_url: URL to movie poster image (optional).\n    genre_ids: List of TMDB genre IDs (optional).\n    vote_average: TMDB user rating 0.0-10.0 (optional).\n    vote_count: Number of TMDB votes (optional).\n    release_date: Full release date (optional).\n    original_language: ISO 639-1 language code (optional).\n    runtime: Movie length in minutes (optional).\n    created_at: Record creation timestamp.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "genre_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre Ids"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "original_language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Language"
+          },
+          "poster_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Url"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tmdb_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tmdb Id"
+          },
+          "vote_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vote Average"
+          },
+          "vote_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vote Count"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "year",
+          "tmdb_id",
+          "poster_url",
+          "genre_ids",
+          "vote_average",
+          "vote_count",
+          "release_date",
+          "original_language",
+          "runtime",
+          "created_at"
+        ],
+        "title": "MovieResponse",
+        "type": "object"
+      },
+      "ParsedMovieItem": {
+        "description": "A movie parsed from the Amazon Prime CSV file.\n\nRepresents the raw data extracted from a single row in the CSV,\nfiltered to only include movies (not TV series).\n\nAttributes:\n    title: Movie title from the CSV.\n    watch_date: Date the movie was watched (optional, may be null if unparseable).\n    prime_image_url: Amazon Prime poster/thumbnail URL (optional fallback if TMDB fails).",
+        "properties": {
+          "prime_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prime Image Url"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "watch_date": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watch Date"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "ParsedMovieItem",
+        "type": "object"
+      },
+      "RankingCreate": {
+        "description": "Schema for creating or updating a ranking.\n\nAttributes:\n    movie_id: UUID of the movie to rank.\n    rating: Rating value (1-5).\n    rated_at: Optional date when the movie was rated (defaults to now).",
+        "properties": {
+          "movie_id": {
+            "format": "uuid",
+            "title": "Movie Id",
+            "type": "string"
+          },
+          "rated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rated At"
+          },
+          "rating": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Rating",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "movie_id",
+          "rating"
+        ],
+        "title": "RankingCreate",
+        "type": "object"
+      },
+      "RankingListResponse": {
+        "description": "Schema for paginated ranking list response.\n\nAttributes:\n    items: List of rankings with movie details.\n    total: Total number of rankings for this user.\n    limit: Number of results requested.\n    offset: Number of results skipped.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RankingWithMovie"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "RankingListResponse",
+        "type": "object"
+      },
+      "RankingResponse": {
+        "description": "Schema for ranking response with full details.\n\nAttributes:\n    id: Unique ranking identifier.\n    movie_id: UUID of the ranked movie.\n    rating: Rating value (1-5).\n    rated_at: When the movie was rated.\n    created_at: Initial ranking timestamp.\n    updated_at: Last update timestamp.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "movie_id": {
+            "format": "uuid",
+            "title": "Movie Id",
+            "type": "string"
+          },
+          "rated_at": {
+            "format": "date-time",
+            "title": "Rated At",
+            "type": "string"
+          },
+          "rating": {
+            "title": "Rating",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "movie_id",
+          "rating",
+          "rated_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RankingResponse",
+        "type": "object"
+      },
+      "RankingWithMovie": {
+        "description": "Schema for ranking with embedded movie details.\n\nUsed in list endpoint to include movie information.\n\nAttributes:\n    id: Unique ranking identifier.\n    rating: Rating value (1-5).\n    rated_at: When the movie was rated.\n    created_at: Initial ranking timestamp.\n    updated_at: Last update timestamp.\n    movie: Embedded movie details.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "movie": {
+            "$ref": "#/components/schemas/MovieBrief"
+          },
+          "rated_at": {
+            "format": "date-time",
+            "title": "Rated At",
+            "type": "string"
+          },
+          "rating": {
+            "title": "Rating",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rating",
+          "rated_at",
+          "created_at",
+          "updated_at",
+          "movie"
+        ],
+        "title": "RankingWithMovie",
+        "type": "object"
+      },
+      "RatingCount": {
+        "description": "Schema for a single rating value count.\n\nAttributes:\n    rating: Rating value (1-5).\n    count: Number of movies with this rating.",
+        "properties": {
+          "count": {
+            "description": "Number of movies with this rating",
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "rating": {
+            "description": "Rating value (1-5)",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Rating",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rating",
+          "count"
+        ],
+        "title": "RatingCount",
+        "type": "object"
+      },
+      "RatingDistributionResponse": {
+        "description": "Schema for rating distribution response.\n\nRESPONSE SHAPE: { distribution: [...], total: N }\n\nReturns the count of movies for each rating value (1-5).\nAll five rating values are always included, even if count is 0.\n\nAttributes:\n    distribution: List of counts for each rating value (1-5).\n    total: Total number of rated movies.",
+        "properties": {
+          "distribution": {
+            "description": "Counts for each rating value 1-5",
+            "items": {
+              "$ref": "#/components/schemas/RatingCount"
+            },
+            "title": "Distribution",
+            "type": "array"
+          },
+          "total": {
+            "description": "Total rated movies",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "distribution",
+          "total"
+        ],
+        "title": "RatingDistributionResponse",
+        "type": "object"
+      },
+      "StatsResponse": {
+        "description": "Schema for user stats summary response.\n\nRESPONSE SHAPE: { total_movies: N, total_watch_time_minutes: N, average_rating: N, current_streak: N, longest_streak: N, top_genre: \"...\" }\n\nAttributes:\n    total_movies: Total number of movies rated by the user.\n    total_watch_time_minutes: Total runtime of all rated movies in minutes.\n    average_rating: Average rating across all movies (0-5).\n    current_streak: Current consecutive days with ratings.\n    longest_streak: Longest streak of consecutive days ever.\n    top_genre: The user's most-rated genre name, or None if no ratings.",
+        "properties": {
+          "average_rating": {
+            "description": "Average rating (0-5)",
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Average Rating",
+            "type": "number"
+          },
+          "current_streak": {
+            "description": "Current consecutive days with ratings",
+            "minimum": 0.0,
+            "title": "Current Streak",
+            "type": "integer"
+          },
+          "longest_streak": {
+            "description": "Longest streak of consecutive days ever",
+            "minimum": 0.0,
+            "title": "Longest Streak",
+            "type": "integer"
+          },
+          "top_genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "User's most-rated genre name, or None if no ratings",
+            "title": "Top Genre"
+          },
+          "total_movies": {
+            "description": "Total movies rated by user",
+            "minimum": 0.0,
+            "title": "Total Movies",
+            "type": "integer"
+          },
+          "total_watch_time_minutes": {
+            "description": "Total runtime of all rated movies in minutes",
+            "minimum": 0.0,
+            "title": "Total Watch Time Minutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_movies",
+          "total_watch_time_minutes",
+          "average_rating",
+          "current_streak",
+          "longest_streak"
+        ],
+        "title": "StatsResponse",
+        "type": "object"
+      },
+      "TMDBMatchResult": {
+        "description": "TMDB search result for matching against parsed movies.\n\nContains the essential fields from TMDB needed to display\nmovie information during the import review flow.\n\nAttributes:\n    tmdb_id: The movie's ID in TMDB.\n    title: Movie title from TMDB.\n    year: Release year (optional).\n    poster_url: Full URL to poster thumbnail (optional).\n    overview: Movie synopsis/description (optional).\n    genre_ids: List of TMDB genre IDs (optional).\n    vote_average: TMDB user rating 0.0-10.0 (optional).\n    vote_count: Number of TMDB votes (optional).\n    release_date: Full release date string YYYY-MM-DD (optional).\n    original_language: ISO 639-1 language code (optional).",
+        "properties": {
+          "genre_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre Ids"
+          },
+          "original_language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Language"
+          },
+          "overview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overview"
+          },
+          "poster_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Url"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "vote_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vote Average"
+          },
+          "vote_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vote Count"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "tmdb_id",
+          "title"
+        ],
+        "title": "TMDBMatchResult",
+        "type": "object"
+      },
+      "TMDBSearchResponse": {
+        "description": "Schema for TMDB search response with list of results.\n\nAttributes:\n    results: List of movies matching the search query.\n    query: The original search query.\n    year: The year filter used (if any).",
+        "properties": {
+          "query": {
+            "description": "The search query",
+            "title": "Query",
+            "type": "string"
+          },
+          "results": {
+            "description": "List of matching movies",
+            "items": {
+              "$ref": "#/components/schemas/TMDBSearchResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Year filter used",
+            "title": "Year"
+          }
+        },
+        "required": [
+          "results",
+          "query"
+        ],
+        "title": "TMDBSearchResponse",
+        "type": "object"
+      },
+      "TMDBSearchResult": {
+        "description": "Schema for a single TMDB movie search result.\n\nAttributes:\n    tmdb_id: TMDB movie ID.\n    title: Movie title.\n    year: Release year extracted from release_date (optional).\n    poster_url: Full URL to movie poster thumbnail (optional).\n    overview: Movie synopsis/description (optional).\n    genre_ids: List of TMDB genre IDs (optional).\n    vote_average: TMDB user rating 0.0-10.0 (optional).\n    vote_count: Number of TMDB votes (optional).\n    release_date: Full release date string (optional).\n    original_language: ISO 639-1 language code (optional).",
+        "properties": {
+          "genre_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "List of TMDB genre IDs",
+            "title": "Genre Ids"
+          },
+          "original_language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 639-1 language code",
+            "title": "Original Language"
+          },
+          "overview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Movie synopsis",
+            "title": "Overview"
+          },
+          "poster_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "URL to movie poster",
+            "title": "Poster Url"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Full release date (YYYY-MM-DD)",
+            "title": "Release Date"
+          },
+          "title": {
+            "description": "Movie title",
+            "title": "Title",
+            "type": "string"
+          },
+          "tmdb_id": {
+            "description": "TMDB movie ID",
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "vote_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "TMDB user rating",
+            "title": "Vote Average"
+          },
+          "vote_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Number of TMDB votes",
+            "title": "Vote Count"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Release year",
+            "title": "Year"
+          }
+        },
+        "required": [
+          "tmdb_id",
+          "title"
+        ],
+        "title": "TMDBSearchResult",
+        "type": "object"
+      },
+      "Token": {
+        "description": "OAuth2 token response schema.\n\nAttributes:\n    access_token: The JWT access token string.\n    token_type: The token type (always \"bearer\").",
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "token_type": {
+            "default": "bearer",
+            "title": "Token Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token"
+        ],
+        "title": "Token",
+        "type": "object"
+      },
+      "UserCreate": {
+        "description": "Schema for user registration requests.\n\nAttributes:\n    email: Valid email address for the user account.\n    password: Password with minimum 8 characters.",
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserCreate",
+        "type": "object"
+      },
+      "UserProfileResponse": {
+        "description": "Schema for user profile response with authentication details.\n\nRESPONSE SHAPE: { id: \"uuid\", email: \"...\", auth_provider: \"...\", ... }\n\nThis response includes the user's authentication provider information\nto allow the frontend to display link status.\n\nAttributes:\n    id: Unique identifier for the user.\n    email: User's email address.\n    auth_provider: Authentication method ('local', 'google', or 'linked').\n    has_google_linked: Whether the user has a Google account linked.\n    has_password: Whether the user has a password set (can use email/password login).\n    created_at: Timestamp when the account was created.",
+        "properties": {
+          "auth_provider": {
+            "enum": [
+              "local",
+              "google",
+              "linked"
+            ],
+            "title": "Auth Provider",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "has_google_linked": {
+            "description": "True if user has a Google account linked",
+            "title": "Has Google Linked",
+            "type": "boolean"
+          },
+          "has_password": {
+            "description": "True if user has a password set for email/password login",
+            "title": "Has Password",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "auth_provider",
+          "has_google_linked",
+          "has_password",
+          "created_at"
+        ],
+        "title": "UserProfileResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/login"
+          }
+        },
+        "type": "oauth2"
+      }
+    }
+  },
+  "info": {
+    "description": "A RESTful API for ranking and managing your favorite movies. Features include user authentication, movie management, and personal rankings.",
+    "title": "Movie Ranking API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/": {
+      "get": {
+        "description": "Root endpoint with API information.\n\nReturns:\n    A dictionary with a welcome message and documentation link.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Root  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Root endpoint",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/analytics/activity/": {
+      "get": {
+        "description": "Get daily activity counts for the rolling year.\n\nReturns the number of movies rated per day for the past year\nthrough the end of the current month, suitable for rendering\na GitHub-style activity chart.\n\nArgs:\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nReturns:\n    ActivityResponse with list of days that have activity.",
+        "operationId": "get_activity_api_v1_analytics_activity__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityResponse"
+                }
+              }
+            },
+            "description": "Activity data retrieved successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get user activity",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/analytics/genres/": {
+      "get": {
+        "description": "Get genre distribution statistics for the rolling year.\n\nReturns the count and average rating for each genre\nfor the past year, suitable for rendering a genre distribution chart.\n\nArgs:\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nReturns:\n    GenreResponse with genre statistics sorted by count.",
+        "operationId": "get_genres_api_v1_analytics_genres__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenreResponse"
+                }
+              }
+            },
+            "description": "Genre data retrieved successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get genre distribution",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/analytics/rating-distribution/": {
+      "get": {
+        "description": "Get rating distribution for the authenticated user.\n\nReturns the count of movies for each rating value (1-5).\nAll five rating values are always included, even if count is 0.\n\nArgs:\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nReturns:\n    RatingDistributionResponse with distribution counts and total.",
+        "operationId": "get_rating_distribution_api_v1_analytics_rating_distribution__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RatingDistributionResponse"
+                }
+              }
+            },
+            "description": "Rating distribution retrieved successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get rating distribution",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/analytics/stats/": {
+      "get": {
+        "description": "Get summary statistics for the authenticated user.\n\nReturns aggregate statistics including total movies rated, total watch time,\naverage rating, rating streaks, and top genre.\n\nArgs:\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nReturns:\n    StatsResponse with user statistics. Returns zeros for users with no ratings.",
+        "operationId": "get_stats_api_v1_analytics_stats__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponse"
+                }
+              }
+            },
+            "description": "Stats data retrieved successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get user stats summary",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/auth/google/callback/": {
+      "get": {
+        "description": "Handle the OAuth callback from Google.\n\nValidates the state token, exchanges the authorization code for tokens,\nverifies the ID token, and creates or finds the user account.\n\nArgs:\n    db: Async database session.\n    response: Response used to attach the session cookies to JSON replies.\n    code: Authorization code from Google.\n    state: State token for CSRF validation.\n    error: Error code if the user denied access.\n\nReturns:\n    A 302 to the stored redirect_uri, or the Token JSON when none was\n    stored. Both set the httpOnly session cookie and the CSRF cookie. The\n    redirect carries ``?token=<jwt>`` only while\n    ``GOOGLE_LEGACY_TOKEN_IN_URL`` is true (removed by TASK-0047).\n\nRaises:\n    HTTPException: Various errors for invalid state, cancelled auth, etc.",
+        "operationId": "google_callback_api_v1_auth_google_callback__get",
+        "parameters": [
+          {
+            "description": "Authorization code from Google",
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorization code from Google",
+              "title": "Code"
+            }
+          },
+          {
+            "description": "State token for CSRF validation",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "State token for CSRF validation",
+              "title": "State"
+            }
+          },
+          {
+            "description": "Error code if user denied access",
+            "in": "query",
+            "name": "error",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Error code if user denied access",
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            },
+            "description": "Authentication successful, returns JWT token"
+          },
+          "400": {
+            "description": "Invalid state, code, or authentication cancelled"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Handle Google OAuth callback",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/google/link/": {
+      "get": {
+        "description": "Initiate Google OAuth flow for account linking.\n\nThis endpoint is for authenticated users who want to link their\nexisting account with Google for alternative sign-in.\n\nArgs:\n    db: Async database session.\n    current_user: The authenticated user requesting the link.\n    redirect_uri: Optional custom redirect URI after linking completes.\n\nReturns:\n    GoogleAuthUrlResponse containing the full authorization URL.\n\nRaises:\n    HTTPException: 409 if user already has Google linked.\n    HTTPException: 500 if Google OAuth is not configured.",
+        "operationId": "google_link_api_v1_auth_google_link__get",
+        "parameters": [
+          {
+            "description": "URI to redirect to after linking completes",
+            "in": "query",
+            "name": "redirect_uri",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "URI to redirect to after linking completes",
+              "title": "Redirect Uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleAuthUrlResponse"
+                }
+              }
+            },
+            "description": "Returns Google authorization URL for linking"
+          },
+          "400": {
+            "description": "Invalid redirect_uri"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "409": {
+            "description": "User already has Google account linked"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "description": "Google OAuth not configured"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Initiate Google account linking",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/google/link/callback/": {
+      "get": {
+        "description": "Handle the OAuth callback for Google account linking.\n\nValidates the state token, exchanges the authorization code for tokens,\nverifies the ID token, and links the Google account to the user.\n\nArgs:\n    db: Async database session.\n    code: Authorization code from Google.\n    state: State token for CSRF validation.\n    error: Error code if the user denied access.\n\nReturns:\n    RedirectResponse to the frontend settings page with result.",
+        "operationId": "google_link_callback_api_v1_auth_google_link_callback__get",
+        "parameters": [
+          {
+            "description": "Authorization code from Google",
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Authorization code from Google",
+              "title": "Code"
+            }
+          },
+          {
+            "description": "State token for CSRF validation",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "State token for CSRF validation",
+              "title": "State"
+            }
+          },
+          {
+            "description": "Error code if user denied access",
+            "in": "query",
+            "name": "error",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Error code if user denied access",
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to frontend with success or error"
+          },
+          "400": {
+            "description": "Invalid state, code, or linking cancelled"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Handle Google account linking callback",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/google/login/": {
+      "get": {
+        "description": "Initiate Google OAuth flow by returning the authorization URL.\n\nGenerates a cryptographically secure state token for CSRF protection\nand constructs the Google OAuth authorization URL.\n\nArgs:\n    db: Async database session.\n    redirect_uri: Optional custom redirect URI after OAuth completes.\n\nReturns:\n    GoogleAuthUrlResponse containing the full authorization URL.\n\nRaises:\n    HTTPException: 500 if Google OAuth is not configured.",
+        "operationId": "google_login_api_v1_auth_google_login__get",
+        "parameters": [
+          {
+            "description": "Optional URI to redirect to after successful authentication",
+            "in": "query",
+            "name": "redirect_uri",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional URI to redirect to after successful authentication",
+              "title": "Redirect Uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleAuthUrlResponse"
+                }
+              }
+            },
+            "description": "Returns Google authorization URL"
+          },
+          "400": {
+            "description": "Invalid redirect_uri"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "description": "Google OAuth not configured"
+          }
+        },
+        "summary": "Initiate Google OAuth login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "Authenticate user and return an access token.\n\nUses OAuth2 password flow format where the username field contains the email.\n\nArgs:\n    form_data: OAuth2 form containing username (email) and password.\n    db: Async database session.\n\nReturns:\n    Token containing the JWT access token.\n\nRaises:\n    HTTPException: 401 Unauthorized if credentials are invalid.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_login_api_v1_auth_login_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            },
+            "description": "Login successful"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Authenticate and get token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout/": {
+      "post": {
+        "description": "Clear the session and CSRF cookies.\n\nNo authentication or CSRF token is required: the endpoint only clears state.",
+        "operationId": "logout_api_v1_auth_logout__post",
+        "responses": {
+          "204": {
+            "description": "Session cookies cleared"
+          }
+        },
+        "summary": "Log out and clear session cookies",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me/": {
+      "get": {
+        "description": "Get the authenticated user's profile information.\n\nReturns:\n    UserProfileResponse: User profile including authentication provider info.\n        - id: User's unique identifier\n        - email: User's email address\n        - auth_provider: 'local', 'google', or 'linked'\n        - has_google_linked: True if Google account is linked\n        - has_password: True if user can use email/password login\n        - created_at: Account creation timestamp",
+        "operationId": "get_current_user_profile_api_v1_auth_me__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                }
+              }
+            },
+            "description": "User profile retrieved successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get current user profile",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "description": "Create a new user account and return an access token.\n\nArgs:\n    user_data: User registration data containing email and password.\n    db: Async database session.\n\nReturns:\n    Token containing the JWT access token.\n\nRaises:\n    HTTPException: 409 Conflict if email is already registered.",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            },
+            "description": "Account created successfully"
+          },
+          "409": {
+            "description": "Email already registered"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "summary": "Register a new user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/import/amazon-prime/session/{session_id}/": {
+      "delete": {
+        "description": "Cancel and delete an import session.\n\nArgs:\n    session_id: The unique import session ID.\n    current_user: The authenticated user (from JWT token).\n\nRaises:\n    HTTPException: 404 if session not found.",
+        "operationId": "cancel_import_session_api_v1_import_amazon_prime_session__session_id___delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Session cancelled"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Cancel import session",
+        "tags": [
+          "import"
+        ]
+      },
+      "get": {
+        "description": "Get the current state of an import session.\n\nArgs:\n    session_id: The unique import session ID.\n    current_user: The authenticated user (from JWT token).\n\nReturns:\n    ImportSessionDetailResponse with session state and movies.\n\nRaises:\n    HTTPException: 404 if session not found or expired.",
+        "operationId": "get_import_session_api_v1_import_amazon_prime_session__session_id___get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportSessionDetailResponse"
+                }
+              }
+            },
+            "description": "Session retrieved successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Session not found or expired"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get import session details",
+        "tags": [
+          "import"
+        ]
+      }
+    },
+    "/api/v1/import/amazon-prime/session/{session_id}/movie/{index}/add/": {
+      "post": {
+        "description": "Add a movie from the import session to user's rankings.\n\nCreates the movie in the database if it doesn't exist, then creates\na ranking for the user.\n\nArgs:\n    session_id: The unique import session ID.\n    index: Index of the movie in the session (0-based).\n    request: Rating data (rating 1-5, optional rated_at).\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nReturns:\n    The created ranking.\n\nRaises:\n    HTTPException: 400 if movie has no TMDB match or already processed.\n    HTTPException: 404 if session or movie index not found.",
+        "operationId": "add_import_movie_api_v1_import_amazon_prime_session__session_id__movie__index__add__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": {
+              "title": "Index",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMovieAddRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingResponse"
+                }
+              }
+            },
+            "description": "Movie added to rankings"
+          },
+          "400": {
+            "description": "Movie has no TMDB match or already processed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Session or movie not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Add movie from import session",
+        "tags": [
+          "import"
+        ]
+      }
+    },
+    "/api/v1/import/amazon-prime/session/{session_id}/movie/{index}/match/": {
+      "patch": {
+        "description": "Update the TMDB match for a movie in the import session.\n\nUsed when a user manually searches and selects a different movie match.\nSets confidence to 1.0 (user-selected) and clears alternatives.\nStatus remains 'pending' so user can still add or skip.\n\nArgs:\n    session_id: The unique import session ID.\n    index: Index of the movie in the session (0-based).\n    request: New TMDB match data (tmdb_id, title, year, poster_url, overview).\n    current_user: The authenticated user (from JWT token).\n\nReturns:\n    The updated MatchedMovieItem with the new match.\n\nRaises:\n    HTTPException: 404 if session or movie index not found.",
+        "operationId": "update_import_movie_match_api_v1_import_amazon_prime_session__session_id__movie__index__match__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": {
+              "title": "Index",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMovieMatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchedMovieItem"
+                }
+              }
+            },
+            "description": "Movie match updated successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Session or movie not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update movie match in import session",
+        "tags": [
+          "import"
+        ]
+      }
+    },
+    "/api/v1/import/amazon-prime/session/{session_id}/movie/{index}/skip/": {
+      "post": {
+        "description": "Skip a movie in the import session.\n\nArgs:\n    session_id: The unique import session ID.\n    index: Index of the movie in the session (0-based).\n    current_user: The authenticated user (from JWT token).\n\nRaises:\n    HTTPException: 400 if movie already processed.\n    HTTPException: 404 if session or movie index not found.",
+        "operationId": "skip_import_movie_api_v1_import_amazon_prime_session__session_id__movie__index__skip__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": {
+              "title": "Index",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Movie skipped"
+          },
+          "400": {
+            "description": "Movie already processed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Session or movie not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Skip movie in import session",
+        "tags": [
+          "import"
+        ]
+      }
+    },
+    "/api/v1/import/amazon-prime/upload/": {
+      "post": {
+        "description": "Upload and parse an Amazon Prime Video watch history CSV file.\n\nParses the CSV, matches movies against TMDB, and creates an import session\nfor the user to review and add movies to their rankings.\n\nArgs:\n    file: The uploaded CSV file.\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nReturns:\n    ImportSessionResponse with session ID and matched movies.\n\nRaises:\n    HTTPException: 400 if file is not a CSV or parsing fails.\n    HTTPException: 401 if not authenticated.",
+        "operationId": "upload_amazon_prime_csv_api_v1_import_amazon_prime_upload__post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_amazon_prime_csv_api_v1_import_amazon_prime_upload__post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportSessionResponse"
+                }
+              }
+            },
+            "description": "Import session created successfully"
+          },
+          "400": {
+            "description": "Invalid CSV file"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Upload Amazon Prime CSV file",
+        "tags": [
+          "import"
+        ]
+      }
+    },
+    "/api/v1/movies/": {
+      "post": {
+        "description": "Add a movie to the database (get-or-create by TMDB id).\n\nRequires authentication. Any authenticated user can add movies. When\n``tmdb_id`` is set and a movie with that id exists, it is returned with\nHTTP 200 (NULL metadata fields are back-filled); otherwise a new movie is\ncreated with HTTP 201. Movies without ``tmdb_id`` are always created.\n\nArgs:\n    movie_data: Movie data containing title, year, tmdb_id, poster_url,\n        and additional metadata fields (genre_ids, vote_average, etc.).\n    response: Used to set the 200 status for an existing movie.\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nReturns:\n    The created or existing movie with all fields and timestamps.\n\nRaises:\n    HTTPException: 401 Unauthorized if not authenticated.",
+        "operationId": "create_movie_api_v1_movies__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovieCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Movie with this TMDB id already exists; returned"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieResponse"
+                }
+              }
+            },
+            "description": "Movie created successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Add a new movie",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
+    "/api/v1/movies/search/": {
+      "get": {
+        "description": "Search for movies on The Movie Database (TMDB).\n\nRequires authentication. Searches TMDB for movies matching the query.\n\nArgs:\n    current_user: The authenticated user (from JWT token).\n    q: Search query string (movie title).\n    year: Optional year filter to narrow results.\n\nReturns:\n    TMDBSearchResponse with list of matching movies.\n\nRaises:\n    HTTPException: 401 Unauthorized if not authenticated.\n    HTTPException: 503 Service Unavailable if TMDB rate limit exceeded.\n    HTTPException: 500 Internal Server Error for other TMDB errors.",
+        "operationId": "search_tmdb_movies_api_v1_movies_search__get",
+        "parameters": [
+          {
+            "description": "Search query",
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "description": "Search query",
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by year",
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2031,
+                  "minimum": 1888,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by year",
+              "title": "Year"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TMDBSearchResponse"
+                }
+              }
+            },
+            "description": "Search results returned successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "422": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "TMDB service error"
+          },
+          "503": {
+            "description": "TMDB rate limit exceeded"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Search movies on TMDB",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
+    "/api/v1/rankings/": {
+      "get": {
+        "description": "List all movies the authenticated user has ranked.\n\nReturns paginated results with configurable sorting.\n\nArgs:\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n    limit: Number of results to return (1-100, default 20).\n    offset: Number of results to skip (default 0).\n    sort_by: Field to sort by (rated_at, rating, title, year).\n    sort_order: Sort order (asc or desc).\n\nReturns:\n    Paginated list of rankings with embedded movie details.\n\nRaises:\n    HTTPException: 401 Unauthorized if not authenticated.",
+        "operationId": "list_rankings_api_v1_rankings__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Field to sort by",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "default": "rated_at",
+              "description": "Field to sort by",
+              "enum": [
+                "rated_at",
+                "rating",
+                "title",
+                "year"
+              ],
+              "title": "Sort By",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort order (asc or desc)",
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "description": "Sort order (asc or desc)",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Sort Order",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingListResponse"
+                }
+              }
+            },
+            "description": "Rankings retrieved successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List user's rankings",
+        "tags": [
+          "rankings"
+        ]
+      },
+      "post": {
+        "description": "Create or update a ranking for a movie.\n\nIf the user has already ranked this movie, the rating is updated.\nOtherwise, a new ranking is created.\n\nArgs:\n    ranking_data: Ranking data containing movie_id and rating.\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n    response: FastAPI response object for setting status code.\n\nReturns:\n    The created or updated ranking.\n\nRaises:\n    HTTPException: 401 Unauthorized if not authenticated.\n    HTTPException: 404 Not Found if movie does not exist.",
+        "operationId": "create_or_update_ranking_api_v1_rankings__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RankingCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingResponse"
+                }
+              }
+            },
+            "description": "Ranking updated successfully"
+          },
+          "201": {
+            "description": "Ranking created successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Movie not found"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create or update a ranking",
+        "tags": [
+          "rankings"
+        ]
+      }
+    },
+    "/api/v1/rankings/all/": {
+      "delete": {
+        "description": "Delete all rankings for the current user.\n\nThis is a destructive operation that removes all of the user's\nmovie rankings. Use with caution.\n\nArgs:\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nRaises:\n    HTTPException: 401 if not authenticated.",
+        "operationId": "delete_all_rankings_api_v1_rankings_all__delete",
+        "responses": {
+          "204": {
+            "description": "All rankings deleted successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete all rankings",
+        "tags": [
+          "rankings"
+        ]
+      }
+    },
+    "/api/v1/rankings/{ranking_id}/": {
+      "delete": {
+        "description": "Delete a ranking by ID.\n\nUsers can only delete their own rankings.\n\nArgs:\n    ranking_id: UUID of the ranking to delete.\n    current_user: The authenticated user (from JWT token).\n    db: Async database session.\n\nRaises:\n    HTTPException: 401 if not authenticated.\n    HTTPException: 403 if ranking belongs to another user.\n    HTTPException: 404 if ranking not found.",
+        "operationId": "delete_ranking_api_v1_rankings__ranking_id___delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ranking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Ranking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Ranking deleted successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not authorized to delete this ranking"
+          },
+          "404": {
+            "description": "Ranking not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete a ranking",
+        "tags": [
+          "rankings"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Check the health status of the API.\n\nBy default this is a liveness check that never touches the database.\nWith ``deep=true`` it also runs ``SELECT 1`` (2 second timeout) and\nreturns 503 when the database is unreachable.",
+        "operationId": "health_check_health_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "deep",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Deep",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "deep": {
+                    "summary": "Readiness (?deep=true)",
+                    "value": {
+                      "database": "ok",
+                      "status": "healthy"
+                    }
+                  },
+                  "liveness": {
+                    "summary": "Liveness (default, no database)",
+                    "value": {
+                      "status": "healthy",
+                      "version": "1.0.0"
+                    }
+                  }
+                },
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health Check Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Service is healthy"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "database": "unreachable",
+                  "status": "unhealthy"
+                }
+              }
+            },
+            "description": "Service is unhealthy (deep check only: database unreachable)"
+          }
+        },
+        "summary": "Health check endpoint",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}

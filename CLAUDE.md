@@ -87,10 +87,17 @@ async searchMovies(): Promise<SearchResult[]> {
 
 ### Verification Checklist
 
-- [ ] Read backend schema (`app/schemas/*.py`) before implementing frontend types
-- [ ] Check `response_model=` in router to see exact response shape
 - [ ] Wrapper responses (`*ListResponse`, `*SearchResponse`) contain data in a field like `items` or `results`
 - [ ] Field names use `snake_case` (matching Python/JSON convention)
+
+### Regenerating API types
+
+`frontend/openapi.json` and `frontend/src/api/.generated/schema.d.ts` are generated from the backend and committed. After changing anything under `app/schemas/` or a router's `response_model`, regenerate both; the `api-contract` CI job fails on any diff:
+
+```bash
+venv/bin/python scripts/export_openapi.py
+cd frontend && npm run generate:api
+```
 
 Export the OpenAPI schema offline (no server or database needed; ADR-0012):
 

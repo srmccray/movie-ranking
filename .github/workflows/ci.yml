@@ -197,3 +197,43 @@ jobs:
 
       - name: Build frontend
         run: npx vite build
+
+  # Runs on every PR (no path filter) so it can become a required check.
+  api-contract:
+    name: API Contract Drift Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # keep in sync with NODE_VERSION in deploy.yml
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Export OpenAPI document
+        run: |
+          pip install -r requirements.txt
+          python scripts/export_openapi.py
+
+      - name: Generate API types
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run generate:api
+
+      - name: Fail on API contract drift
+        run: |
+          git diff --exit-code -- frontend/openapi.json frontend/src/api/.generated/schema.d.ts || {
+            echo "::error::API types are out of date. Run 'python scripts/export_openapi.py' and 'cd frontend && npm run generate:api', then commit the result."
+            exit 1
+          }

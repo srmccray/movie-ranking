@@ -692,6 +692,10 @@ export interface SomeContextType {
 
 > **Note:** See the [root CLAUDE.md](../CLAUDE.md) for the complete API contract verification checklist. This section covers frontend-specific patterns.
 
+### Regenerating API types
+
+`src/api/.generated/schema.d.ts` is generated from the committed `openapi.json` by `openapi-typescript`. After any backend schema change, run `venv/bin/python scripts/export_openapi.py` from the repo root, then `npm run generate:api` in `frontend/`, and commit both files. Never edit them by hand; the `api-contract` CI job fails when they are stale. The directory is hidden so `spec-ops health` skips it, and ESLint ignores it. Nothing imports it yet (TASK-0044).
+
 ### Type Mapping Process
 
 1. **Find the backend schema:**
