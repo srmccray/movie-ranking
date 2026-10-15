@@ -10,7 +10,7 @@ from sqlalchemy import select
 from app.config import settings
 from app.database import DbSession
 from app.models.user import User
-from app.routers.google_auth import link, oauth
+from app.routers.google_auth import link, oauth, redirects
 from app.schemas.oauth import GoogleAuthUrlResponse
 from app.schemas.token import Token
 from app.utils.security import create_access_token
@@ -26,6 +26,7 @@ router = APIRouter()
     summary="Initiate Google OAuth login",
     responses={
         200: {"description": "Returns Google authorization URL"},
+        400: {"description": "Invalid redirect_uri"},
         500: {"description": "Google OAuth not configured"},
     },
 )
@@ -57,6 +58,8 @@ async def google_login(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Google OAuth not configured",
         )
+
+    redirects.validate_redirect_uri(redirect_uri)
 
     # Create state token for CSRF protection
     state = await oauth._create_state_token(db, redirect_uri)
@@ -132,8 +135,11 @@ async def google_callback(
             detail="Invalid or expired authentication state",
         )
 
-    # Store state info before deleting
+    # Store state info before deleting (re-validate stored value, defense in depth)
     custom_redirect_uri = oauth_state.redirect_uri
+    if not redirects.is_valid_redirect_uri(custom_redirect_uri):
+        logger.warning("Discarding invalid stored redirect_uri")
+        custom_redirect_uri = None
     flow_type = oauth_state.flow_type
     linking_user_id = oauth_state.user_id
 

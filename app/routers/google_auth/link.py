@@ -12,7 +12,7 @@ from app.config import settings
 from app.database import DbSession
 from app.dependencies import CurrentUser
 from app.models.user import User
-from app.routers.google_auth import oauth
+from app.routers.google_auth import oauth, redirects
 from app.schemas.oauth import GoogleAuthUrlResponse
 
 logger = logging.getLogger(__name__)
@@ -37,8 +37,8 @@ async def _handle_link_callback(
     Returns:
         RedirectResponse to the redirect_uri with success/error params.
     """
-    # Default redirect if none specified
-    if not redirect_uri:
+    # Default redirect if none specified or the stored value is not allowed
+    if not redirect_uri or not redirects.is_valid_redirect_uri(redirect_uri):
         redirect_uri = "/"
 
     # Exchange code for tokens
@@ -126,6 +126,7 @@ async def _handle_link_callback(
     summary="Initiate Google account linking",
     responses={
         200: {"description": "Returns Google authorization URL for linking"},
+        400: {"description": "Invalid redirect_uri"},
         401: {"description": "Not authenticated"},
         409: {"description": "User already has Google account linked"},
         500: {"description": "Google OAuth not configured"},
@@ -162,6 +163,8 @@ async def google_link(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Google OAuth not configured",
         )
+
+    redirects.validate_redirect_uri(redirect_uri)
 
     # Check if user already has Google account linked
     if current_user.google_id is not None:
