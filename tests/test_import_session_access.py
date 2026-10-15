@@ -1,7 +1,8 @@
 """Tests for ImportSessionStore get, update, delete and cleanup."""
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
+from app.utils.time import utc_now_naive
 from app.services.import_session import (
     ImportSessionStore,
 )
@@ -70,7 +71,7 @@ class TestImportSessionStoreGet:
 
         # Manually set created_at to 31 minutes ago (past TTL)
         session = store._sessions[session_id]
-        session.created_at = datetime.utcnow() - timedelta(minutes=31)
+        session.created_at = utc_now_naive() - timedelta(minutes=31)
 
         # Should return None due to expiry
         result = store.get_session(session_id, "user-1")
@@ -94,7 +95,7 @@ class TestImportSessionStoreGet:
         )
 
         # Expire the session
-        store._sessions[session_id].created_at = datetime.utcnow() - timedelta(minutes=31)
+        store._sessions[session_id].created_at = utc_now_naive() - timedelta(minutes=31)
 
         # Access triggers deletion
         store.get_session(session_id, "user-1")
@@ -118,7 +119,7 @@ class TestImportSessionStoreGet:
         )
 
         # Set to exactly 29 minutes ago (just under TTL)
-        store._sessions[session_id].created_at = datetime.utcnow() - timedelta(minutes=29)
+        store._sessions[session_id].created_at = utc_now_naive() - timedelta(minutes=29)
 
         # Should still return session
         result = store.get_session(session_id, "user-1")
@@ -320,8 +321,8 @@ class TestImportSessionStoreCleanup:
         )
 
         # Expire sessions 1 and 2
-        store._sessions[session_id_1].created_at = datetime.utcnow() - timedelta(minutes=31)
-        store._sessions[session_id_2].created_at = datetime.utcnow() - timedelta(minutes=60)
+        store._sessions[session_id_1].created_at = utc_now_naive() - timedelta(minutes=31)
+        store._sessions[session_id_2].created_at = utc_now_naive() - timedelta(minutes=60)
         # Session 3 remains fresh
 
         count = store.cleanup_expired()
@@ -346,7 +347,7 @@ class TestImportSessionStoreCleanup:
                 already_ranked=0,
             )
             # Expire all sessions
-            store._sessions[session_id].created_at = datetime.utcnow() - timedelta(minutes=31)
+            store._sessions[session_id].created_at = utc_now_naive() - timedelta(minutes=31)
 
         count = store.cleanup_expired()
         assert count == 5

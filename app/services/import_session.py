@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
+from app.utils.time import utc_now_naive
+
 
 @dataclass
 class ImportSession:
@@ -130,7 +132,7 @@ class ImportSessionStore:
         self._sessions[session_id] = ImportSession(
             user_id=user_id,
             movies=truncated_movies,
-            created_at=datetime.utcnow(),
+            created_at=utc_now_naive(),
             total_entries=total_entries,
             movies_found=movies_found,
             tv_shows_filtered=tv_shows_filtered,
@@ -166,7 +168,7 @@ class ImportSessionStore:
             return None
 
         # Check expiry
-        now = datetime.utcnow()
+        now = utc_now_naive()
         if now - session.created_at > timedelta(minutes=self.SESSION_TTL_MINUTES):
             self.delete_session(session_id)
             return None
@@ -234,7 +236,7 @@ class ImportSessionStore:
             This can be called periodically to prevent memory buildup.
             Each get_session() call also cleans up individual expired sessions.
         """
-        now = datetime.utcnow()
+        now = utc_now_naive()
         expired = [
             sid
             for sid, session in self._sessions.items()

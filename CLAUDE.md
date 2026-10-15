@@ -46,13 +46,10 @@ await fetch(`/api/v1/rankings/${id}`, { method: 'DELETE' });
 | Database stores | `TIMESTAMP WITHOUT TIME ZONE` |
 
 ```python
-# Backend conversion (app/routers/*.py)
-def to_naive_utc(dt: datetime | None) -> datetime | None:
-    if dt is None:
-        return None
-    if dt.tzinfo is not None:
-        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-    return dt
+# Backend conversion: app/utils/time.py (single shared module, ADR-0010)
+from app.utils.time import to_naive_utc, utc_now_naive
+
+rated_at = to_naive_utc(payload.rated_at) or utc_now_naive()
 ```
 
 ### HTTP Status Codes

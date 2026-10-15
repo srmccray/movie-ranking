@@ -6,7 +6,7 @@
 """
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import date
 
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
@@ -23,22 +23,11 @@ from app.schemas.import_amazon import (
 from app.schemas.ranking import RankingResponse
 from app.services.import_session import import_session_store
 from app.services.tmdb import get_movie_details
+from app.utils.time import to_naive_utc, utc_now_naive
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-def to_naive_utc(dt: datetime | None) -> datetime | None:
-    """Convert a datetime to naive UTC datetime for database storage.
-
-    See root CLAUDE.md for datetime handling strategy.
-    """
-    if dt is None:
-        return None
-    if dt.tzinfo is not None:
-        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-    return dt
 
 
 def parse_release_date(release_date_str: str | None) -> date | None:
@@ -190,7 +179,7 @@ async def add_import_movie(
     if rated_at is None and movie_data.parsed.watch_date:
         rated_at = to_naive_utc(movie_data.parsed.watch_date)
     if rated_at is None:
-        rated_at = datetime.utcnow()
+        rated_at = utc_now_naive()
 
     # Check if user already has a ranking for this movie (upsert pattern)
     existing_result = await db.execute(
