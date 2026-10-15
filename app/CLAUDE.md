@@ -32,7 +32,7 @@ app/
   routers/
     __init__.py
     auth.py            # /register, /login, /me/ (mounted at /api/v1/auth)
-    google_auth.py     # /google/login/, /google/callback/, /google/link/, /google/link/callback/ (also /api/v1/auth)
+    google_auth/       # package: oauth.py (state + Google token helpers), login.py, link.py; routes /google/login/, /google/callback/, /google/link/, /google/link/callback/ (also /api/v1/auth)
     movies.py          # GET /search/ (TMDB search), POST / (create movie) -- no list/get/update/delete
     rankings.py        # Ranking upsert, paginated list, delete one, delete all
     analytics.py       # /activity/, /genres/, /stats/, /rating-distribution/
@@ -760,7 +760,7 @@ All routes are mounted in `app/main.py` under `/api/v1/...` (plus `GET /health` 
 | `/analytics` | `GET /activity/`, `/genres/`, `/stats/`, `/rating-distribution/` | `ActivityResponse`, `GenreResponse`, `StatsResponse`, `RatingDistributionResponse` |
 | `/import` | `POST /amazon-prime/upload/` and session routes | See "Amazon Prime Import" below |
 
-### Google OAuth (`routers/google_auth.py`)
+### Google OAuth (`routers/google_auth/`)
 
 - Requires `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (default empty); login/link return 500 "Google OAuth not configured" when unset. `GOOGLE_REDIRECT_URI` defaults to `http://localhost:8000/api/v1/auth/google/callback/`.
 - `GET /google/login/` creates an `OAuthState` row (random `state`, optional `redirect_uri` query param, `flow_type="login"`, 5-minute expiry) and returns the Google authorization URL. Expired states are cleaned up when new ones are created.
