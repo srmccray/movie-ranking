@@ -8,6 +8,7 @@ from sqlalchemy import Index, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.utils.time import utc_now_naive
 
 if TYPE_CHECKING:
     from app.models.ranking import Ranking
@@ -60,7 +61,7 @@ class User(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         server_default=text("CURRENT_TIMESTAMP"),
-        onupdate=datetime.utcnow,
+        onupdate=utc_now_naive,
     )
 
     # Relationships

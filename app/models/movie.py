@@ -8,6 +8,7 @@ from sqlalchemy import CheckConstraint, Date, Float, Index, Integer, JSON, Strin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.utils.time import utc_now_naive
 
 if TYPE_CHECKING:
     from app.models.ranking import Ranking
@@ -84,7 +85,7 @@ class Movie(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         server_default=text("CURRENT_TIMESTAMP"),
-        onupdate=datetime.utcnow,
+        onupdate=utc_now_naive,
     )
 
     # Relationships

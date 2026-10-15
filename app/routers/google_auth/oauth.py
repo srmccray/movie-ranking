@@ -2,7 +2,7 @@
 
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import timedelta
 from uuid import UUID
 
 import httpx
@@ -14,6 +14,7 @@ from sqlalchemy import delete, select
 from app.config import settings
 from app.database import DbSession
 from app.models.oauth_state import OAuthState
+from app.utils.time import utc_now_naive
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ async def _cleanup_expired_states(db: DbSession) -> None:
     Args:
         db: Async database session.
     """
-    now = datetime.utcnow()
+    now = utc_now_naive()
     await db.execute(delete(OAuthState).where(OAuthState.expires_at < now))
 
 
@@ -60,7 +61,7 @@ async def _create_state_token(
     state = secrets.token_urlsafe(32)
 
     # Calculate expiration time (naive UTC per project convention)
-    expires_at = datetime.utcnow() + timedelta(minutes=STATE_EXPIRATION_MINUTES)
+    expires_at = utc_now_naive() + timedelta(minutes=STATE_EXPIRATION_MINUTES)
 
     # Store state in database
     oauth_state = OAuthState(
@@ -93,7 +94,7 @@ async def _validate_state_token(db: DbSession, state: str) -> OAuthState | None:
         return None
 
     # Check if expired (using naive UTC)
-    now = datetime.utcnow()
+    now = utc_now_naive()
     # Ensure expires_at is naive for comparison (asyncpg may return tz-aware)
     expires_at = oauth_state.expires_at
     if expires_at.tzinfo is not None:

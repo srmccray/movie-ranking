@@ -127,7 +127,7 @@ class Entity(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         server_default=text("CURRENT_TIMESTAMP"),
-        onupdate=datetime.utcnow,
+        onupdate=utc_now_naive,  # from app.utils.time
     )
 
     # Relationships
@@ -460,18 +460,6 @@ from app.schemas.entity import (
 )
 
 router = APIRouter(tags=["entities"])
-
-
-def to_naive_utc(dt: datetime | None) -> datetime | None:
-    """Convert a datetime to naive UTC datetime for database storage.
-
-    See root CLAUDE.md for datetime handling strategy.
-    """
-    if dt is None:
-        return None
-    if dt.tzinfo is not None:
-        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-    return dt
 
 
 @router.post(
@@ -1238,20 +1226,11 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 The database stores naive UTC datetimes. Always convert timezone-aware input:
 
 ```python
-from datetime import datetime, timezone
-
-# Defined locally in app/routers/rankings.py and app/routers/import_amazon/review.py
-# (there is no shared helper module yet)
-def to_naive_utc(dt: datetime | None) -> datetime | None:
-    """Convert a datetime to naive UTC datetime for database storage."""
-    if dt is None:
-        return None
-    if dt.tzinfo is not None:
-        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-    return dt
+# Shared helpers live in app/utils/time.py (ADR-0010); never define them per router
+from app.utils.time import to_naive_utc, utc_now_naive
 
 # Usage in router (as in rankings.py)
-rated_at = to_naive_utc(ranking_data.rated_at) or datetime.utcnow()
+rated_at = to_naive_utc(ranking_data.rated_at) or utc_now_naive()
 ```
 
 ### Database Operations Pattern

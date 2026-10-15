@@ -1,6 +1,5 @@
 """Rankings router for creating and listing user movie rankings."""
 
-from datetime import datetime, timezone
 from enum import Enum
 from typing import Literal
 from uuid import UUID
@@ -19,18 +18,9 @@ from app.schemas.ranking import (
     RankingResponse,
     RankingWithMovie,
 )
+from app.utils.time import to_naive_utc, utc_now_naive
 
 router = APIRouter(tags=["rankings"])
-
-
-def to_naive_utc(dt: datetime | None) -> datetime | None:
-    """Convert a datetime to naive UTC datetime for database storage."""
-    if dt is None:
-        return None
-    # If timezone-aware, convert to UTC and remove tzinfo
-    if dt.tzinfo is not None:
-        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-    return dt
 
 
 @router.post(
@@ -106,7 +96,7 @@ async def create_or_update_ranking(
             user_id=current_user.id,
             movie_id=ranking_data.movie_id,
             rating=ranking_data.rating,
-            rated_at=to_naive_utc(ranking_data.rated_at) or datetime.utcnow(),
+            rated_at=to_naive_utc(ranking_data.rated_at) or utc_now_naive(),
         )
         db.add(new_ranking)
         await db.flush()

@@ -1,7 +1,6 @@
 """Tests for ImportSession, store creation, session count and the global store."""
 
-from datetime import datetime
-
+from app.utils.time import utc_now_naive
 from app.services.import_session import (
     ImportSession,
     ImportSessionStore,
@@ -18,7 +17,7 @@ class TestImportSession:
         session = ImportSession(
             user_id="user-123",
             movies=movies,
-            created_at=datetime.utcnow(),
+            created_at=utc_now_naive(),
         )
 
         assert session.user_id == "user-123"
@@ -34,7 +33,7 @@ class TestImportSession:
     def test_session_creation_with_all_fields(self):
         """Test creating a session with all fields specified."""
         movies = [{"title": "The Matrix"}]
-        created_at = datetime.utcnow()
+        created_at = utc_now_naive()
         session = ImportSession(
             user_id="user-456",
             movies=movies,
@@ -196,7 +195,7 @@ class TestImportSessionStoreCreate:
     def test_create_session_sets_created_at(self):
         """Test that created session has a created_at timestamp."""
         store = ImportSessionStore()
-        before = datetime.utcnow()
+        before = utc_now_naive()
 
         session_id = store.create_session(
             user_id="user-1",
@@ -207,7 +206,7 @@ class TestImportSessionStoreCreate:
             already_ranked=0,
         )
 
-        after = datetime.utcnow()
+        after = utc_now_naive()
         session = store.get_session(session_id, "user-1")
         assert session is not None
         assert before <= session.created_at <= after
