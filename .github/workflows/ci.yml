@@ -84,8 +84,7 @@ jobs:
           pip install pytest pytest-asyncio httpx aiosqlite boto3
           pytest
 
-  # Deliberately NOT run here: eslint (9 pre-existing problems), `tsc -b` / `npm run build`
-  # (70 pre-existing type errors in test files) and Playwright e2e (needs a backend + browsers).
+  # Deliberately NOT run here: Playwright e2e (needs a backend + browsers).
   # Runs on every PR (no path filter) so the check always reports and can be made required.
   frontend-tests:
     name: Frontend Tests & Build
@@ -108,6 +107,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npx tsc -b
 
       - name: Run tests
         run: npm run test:run
