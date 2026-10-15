@@ -199,6 +199,9 @@ async def google_link(
 
 @router.get(
     "/google/link/callback/",
+    response_class=RedirectResponse,
+    response_model=None,
+    status_code=status.HTTP_302_FOUND,
     summary="Handle Google account linking callback",
     responses={
         302: {"description": "Redirect to frontend with success or error"},
