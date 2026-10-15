@@ -4,15 +4,17 @@
  * These handlers simulate the backend API behavior for:
  * - Authentication (login, register)
  * - Movies (create, search)
- * - Rankings (list, create)
+ * - Rankings (list, create, delete)
+ * - Analytics (stats, distribution, activity, genres)
  *
  * Split by domain: state.ts (mock data and helpers), auth.ts, movies.ts, import.ts.
  */
 
 import { authHandlers } from './auth';
 import { movieHandlers } from './movies';
+import { analyticsHandlers } from './analytics';
 
-export const handlers = [...authHandlers, ...movieHandlers];
+export const handlers = [...authHandlers, ...movieHandlers, ...analyticsHandlers];
 
 export { importHandlers, resetImportSessions, createMockImportSession, MOCK_IMPORT_SESSION } from './import';
 export {
