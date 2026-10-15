@@ -1,7 +1,8 @@
 ---
 id: '0037'
-title: 'app/main.py: JSON logs with request ids, access logging and an unhandled-exception handler'
-status: Proposed
+title: 'app/main.py: JSON logs with request ids, access logging and an unhandled-exception
+  handler'
+status: Refined
 governing_adrs:
 - ADR-0003
 - ADR-0002
@@ -9,9 +10,7 @@ governing_prds:
 - PRD-0007
 governing_stories:
 - US-0009
-dependencies: []
 target_bc: backend
-priority: P1
 ---
 
 # TASK-0037: app/main.py: JSON logs with request ids, access logging and an unhandled-exception handler

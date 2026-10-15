@@ -1,7 +1,8 @@
 ---
-id: '0029'
-title: 'app/config.py: load secrets from SSM Parameter Store at cold start when SSM_PARAMETER_PREFIX is set'
-status: Proposed
+id: 0029
+title: 'app/config.py: load secrets from SSM Parameter Store at cold start when SSM_PARAMETER_PREFIX
+  is set'
+status: Refined
 governing_adrs:
 - ADR-0008
 - ADR-0003
@@ -9,9 +10,7 @@ governing_prds:
 - PRD-0007
 governing_stories:
 - US-0009
-dependencies: []
 target_bc: backend
-priority: P1
 ---
 
 # TASK-0029: app/config.py: load secrets from SSM Parameter Store at cold start when SSM_PARAMETER_PREFIX is set

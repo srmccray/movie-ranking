@@ -1,7 +1,8 @@
 ---
 id: '0011'
-title: 'app/models + alembic: remove the unused Genre model and genres table, and the unused ImportCompletionResponse schema'
-status: Proposed
+title: 'app/models + alembic: remove the unused Genre model and genres table, and
+  the unused ImportCompletionResponse schema'
+status: Refined
 governing_adrs:
 - ADR-0002
 - ADR-0003
@@ -9,9 +10,7 @@ governing_prds:
 - PRD-0006
 governing_stories:
 - US-0007
-dependencies: []
 target_bc: backend
-priority: P2
 ---
 
 # TASK-0011: app/models + alembic: remove the unused Genre model and genres table, and the unused ImportCompletionResponse schema
