@@ -6,6 +6,7 @@
 """
 
 import logging
+from dataclasses import replace
 from datetime import date
 
 from fastapi import APIRouter, HTTPException, status
@@ -13,7 +14,6 @@ from sqlalchemy import select
 
 from app.database import DbSession
 from app.dependencies import CurrentUser
-from app.models.movie import Movie
 from app.models.ranking import Ranking
 from app.schemas.import_amazon import (
     ImportMovieAddRequest,
@@ -21,6 +21,12 @@ from app.schemas.import_amazon import (
     MatchedMovieItem,
 )
 from app.schemas.ranking import RankingResponse
+from app.services.movies import (
+    MovieData,
+    backfill_missing_metadata,
+    create_movie,
+    find_movie_by_tmdb_id,
+)
 from app.services.tmdb import get_movie_details
 from app.utils.time import to_naive_utc, utc_now_naive
 
@@ -98,64 +104,33 @@ async def add_import_movie(
 
     # Get or create movie in database
     tmdb_id = movie_data.tmdb_match.tmdb_id
-    result = await db.execute(select(Movie).where(Movie.tmdb_id == tmdb_id))
-    movie = result.scalar_one_or_none()
+    match = movie_data.tmdb_match
+    data = MovieData(
+        title=match.title,
+        year=match.year,
+        tmdb_id=tmdb_id,
+        poster_url=match.poster_url,
+        genre_ids=match.genre_ids,
+        vote_average=match.vote_average,
+        vote_count=match.vote_count,
+        release_date=parse_release_date(match.release_date),
+        original_language=match.original_language,
+    )
+    movie = await find_movie_by_tmdb_id(db, tmdb_id)
 
-    if movie is None:
-        # Fetch runtime from TMDB details API
-        runtime = None
+    if movie is None or movie.runtime is None:
+        # Runtime comes from the TMDB details API (external call stays here)
         try:
             details = await get_movie_details(tmdb_id)
-            runtime = details.runtime
+            data = replace(data, runtime=details.runtime or None)
         except Exception as e:
             logger.warning(f"Failed to fetch TMDB details for {tmdb_id}: {e}")
 
-        # Create new movie with full TMDB data
-        movie = Movie(
-            tmdb_id=tmdb_id,
-            title=movie_data.tmdb_match.title,
-            year=movie_data.tmdb_match.year,
-            poster_url=movie_data.tmdb_match.poster_url,
-            genre_ids=movie_data.tmdb_match.genre_ids,
-            vote_average=movie_data.tmdb_match.vote_average,
-            vote_count=movie_data.tmdb_match.vote_count,
-            release_date=parse_release_date(movie_data.tmdb_match.release_date),
-            original_language=movie_data.tmdb_match.original_language,
-            runtime=runtime,
-        )
-        db.add(movie)
+    if movie is None:
+        movie = await create_movie(db, data)
+    elif backfill_missing_metadata(movie, data):
         await db.flush()
         await db.refresh(movie)
-    else:
-        # Update existing movie if it's missing metadata
-        needs_update = False
-        if movie.genre_ids is None and movie_data.tmdb_match.genre_ids:
-            movie.genre_ids = movie_data.tmdb_match.genre_ids
-            needs_update = True
-        if movie.vote_average is None and movie_data.tmdb_match.vote_average is not None:
-            movie.vote_average = movie_data.tmdb_match.vote_average
-            needs_update = True
-        if movie.vote_count is None and movie_data.tmdb_match.vote_count is not None:
-            movie.vote_count = movie_data.tmdb_match.vote_count
-            needs_update = True
-        if movie.release_date is None and movie_data.tmdb_match.release_date:
-            movie.release_date = parse_release_date(movie_data.tmdb_match.release_date)
-            needs_update = True
-        if movie.original_language is None and movie_data.tmdb_match.original_language:
-            movie.original_language = movie_data.tmdb_match.original_language
-            needs_update = True
-        if movie.runtime is None:
-            try:
-                details = await get_movie_details(tmdb_id)
-                if details.runtime:
-                    movie.runtime = details.runtime
-                    needs_update = True
-            except Exception as e:
-                logger.warning(f"Failed to fetch TMDB details for {tmdb_id}: {e}")
-
-        if needs_update:
-            await db.flush()
-            await db.refresh(movie)
 
     # Determine rated_at: use request value, fall back to watch_date, then now
     rated_at = to_naive_utc(request.rated_at)
