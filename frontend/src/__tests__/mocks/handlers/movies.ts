@@ -1,4 +1,4 @@
-/** Movie handlers: TMDB search, movie creation, rankings and analytics. */
+/** Movie handlers: TMDB search, movie creation, and rankings (analytics lives in analytics.ts). */
 
 import { http, HttpResponse } from 'msw';
 import { MOCK_TMDB_RESULTS, movies, rankings, tmdbServiceError } from './state';
@@ -189,8 +189,8 @@ export const movieHandlers = [
     });
   }),
 
-  // GET /api/v1/analytics/stats/
-  http.get('/api/v1/analytics/stats/', ({ request }) => {
+  // DELETE /api/v1/rankings/all/ (must precede the :rankingId route)
+  http.delete('/api/v1/rankings/all/', ({ request }) => {
     const authHeader = request.headers.get('Authorization');
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -200,29 +200,12 @@ export const movieHandlers = [
       );
     }
 
-    // Calculate mock stats from rankings
-    const allRankings = Array.from(rankings.values());
-    const totalMovies = allRankings.length;
-
-    // Calculate average rating
-    const averageRating = totalMovies > 0
-      ? allRankings.reduce((sum, r) => sum + r.rating, 0) / totalMovies
-      : 0;
-
-    // Calculate total watch time (mock: assume 120 min per movie)
-    const totalWatchTimeMinutes = totalMovies * 120;
-
-    return HttpResponse.json({
-      total_movies: totalMovies,
-      total_watch_time_minutes: totalWatchTimeMinutes,
-      average_rating: Math.round(averageRating * 100) / 100,
-      current_streak: 0,
-      longest_streak: 0,
-    });
+    rankings.clear();
+    return new HttpResponse(null, { status: 204 });
   }),
 
-  // GET /api/v1/analytics/rating-distribution/
-  http.get('/api/v1/analytics/rating-distribution/', ({ request }) => {
+  // DELETE /api/v1/rankings/:rankingId/
+  http.delete('/api/v1/rankings/:rankingId/', ({ request, params }) => {
     const authHeader = request.headers.get('Authorization');
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -232,26 +215,12 @@ export const movieHandlers = [
       );
     }
 
-    // Count ratings from rankings
-    const allRankings = Array.from(rankings.values());
-    const ratingCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-
-    for (const ranking of allRankings) {
-      if (ranking.rating >= 1 && ranking.rating <= 5) {
-        ratingCounts[ranking.rating]++;
-      }
+    const id = params.rankingId as string;
+    if (!rankings.has(id)) {
+      return HttpResponse.json({ detail: 'Ranking not found' }, { status: 404 });
     }
 
-    const distribution = [1, 2, 3, 4, 5].map((rating) => ({
-      rating,
-      count: ratingCounts[rating],
-    }));
-
-    const total = allRankings.length;
-
-    return HttpResponse.json({
-      distribution,
-      total,
-    });
+    rankings.delete(id);
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

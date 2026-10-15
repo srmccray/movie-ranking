@@ -92,6 +92,15 @@ async searchMovies(): Promise<SearchResult[]> {
 - [ ] Wrapper responses (`*ListResponse`, `*SearchResponse`) contain data in a field like `items` or `results`
 - [ ] Field names use `snake_case` (matching Python/JSON convention)
 
+Export the OpenAPI schema offline (no server or database needed; ADR-0012):
+
+```bash
+venv/bin/python scripts/export_openapi.py            # writes frontend/openapi.json
+venv/bin/python scripts/export_openapi.py --out /tmp/openapi.json
+```
+
+`tests/test_api_conventions.py` enforces trailing slashes and declared responses on every `/api/v1` route.
+
 For detailed patterns, see:
 - `frontend/CLAUDE.md` - "API Contract Verification" section
 - `app/CLAUDE.md` - "Frontend API Contract Documentation" section

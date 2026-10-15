@@ -1,10 +1,12 @@
 """Movie schemas for request/response validation."""
 
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.schemas.types import UTCDatetime
 
 
 class MovieCreate(BaseModel):
@@ -80,7 +82,7 @@ class MovieResponse(BaseModel):
     release_date: Optional[date]
     original_language: Optional[str]
     runtime: Optional[int]
-    created_at: datetime
+    created_at: UTCDatetime
 
 
 class MovieBrief(BaseModel):

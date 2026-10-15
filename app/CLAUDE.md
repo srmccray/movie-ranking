@@ -330,6 +330,14 @@ __all__ = [
 
 > **Note:** See the [root CLAUDE.md](../CLAUDE.md) for the complete API contract verification requirements. This section covers backend-specific documentation patterns.
 
+### Exporting the OpenAPI Schema
+
+```bash
+venv/bin/python scripts/export_openapi.py [--out frontend/openapi.json]
+```
+
+Runs offline (dummy env, no database). Output is deterministic (sorted keys, trailing newline). `tests/test_api_conventions.py` fails if an `/api/v1` path lacks a trailing slash (only `/auth/register` and `/auth/login` are excepted) or an operation has no declared success response.
+
 ### Schema Documentation Requirements
 
 **All response schemas MUST include clear docstrings that explicitly state the response structure:**

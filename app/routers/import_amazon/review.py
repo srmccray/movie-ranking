@@ -21,9 +21,10 @@ from app.schemas.import_amazon import (
     MatchedMovieItem,
 )
 from app.schemas.ranking import RankingResponse
-from app.services.import_session import import_session_store
 from app.services.tmdb import get_movie_details
 from app.utils.time import to_naive_utc, utc_now_naive
+
+from .deps import check_index, get_pending_movie, get_session_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -85,27 +86,9 @@ async def add_import_movie(
         HTTPException: 400 if movie has no TMDB match or already processed.
         HTTPException: 404 if session or movie index not found.
     """
-    session = import_session_store.get_session(session_id, str(current_user.id))
+    session = get_session_or_404(session_id, current_user)
 
-    if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Import session not found or expired",
-        )
-
-    if index < 0 or index >= len(session.movies):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie index out of range",
-        )
-
-    movie_data = MatchedMovieItem(**session.movies[index])
-
-    if movie_data.status != "pending":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Movie has already been processed",
-        )
+    movie_data = get_pending_movie(session, index)
 
     if movie_data.tmdb_match is None:
         raise HTTPException(
@@ -244,27 +227,9 @@ async def skip_import_movie(
         HTTPException: 400 if movie already processed.
         HTTPException: 404 if session or movie index not found.
     """
-    session = import_session_store.get_session(session_id, str(current_user.id))
+    session = get_session_or_404(session_id, current_user)
 
-    if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Import session not found or expired",
-        )
-
-    if index < 0 or index >= len(session.movies):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie index out of range",
-        )
-
-    movie_data = MatchedMovieItem(**session.movies[index])
-
-    if movie_data.status != "pending":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Movie has already been processed",
-        )
+    movie_data = get_pending_movie(session, index)
 
     # Update session state
     session.movies[index]["status"] = "skipped"
@@ -306,19 +271,9 @@ async def update_import_movie_match(
     Raises:
         HTTPException: 404 if session or movie index not found.
     """
-    session = import_session_store.get_session(session_id, str(current_user.id))
+    session = get_session_or_404(session_id, current_user)
 
-    if session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Import session not found or expired",
-        )
-
-    if index < 0 or index >= len(session.movies):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie index out of range",
-        )
+    check_index(session, index)
 
     # Update the movie's match in the session with full TMDB data
     session.movies[index]["tmdb_match"] = {
