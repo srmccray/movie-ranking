@@ -7,10 +7,12 @@ import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as logs from "aws-cdk-lib/aws-logs";
 import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigatewayv2Integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Construct } from "constructs";
 import * as path from "path";
+import { ApiMonitoring } from "./monitoring";
 
 interface MovieRankingStackProps extends cdk.StackProps {
   domainName: string;
@@ -115,6 +117,11 @@ export class MovieRankingStack extends cdk.Stack {
         GOOGLE_REDIRECT_URI: `https://${domainName}/api/v1/auth/google/callback/`,
       },
       description: "Movie Ranking API - FastAPI backend via Mangum",
+      // 30-day log retention (logRetention also adopts the log group that
+      // Lambda auto-created, which an explicit LogGroup would collide with).
+      logRetention: logs.RetentionDays.ONE_MONTH,
+      // Active X-Ray tracing (CDK adds the X-Ray write permissions)
+      tracing: lambda.Tracing.ACTIVE,
     });
 
     // Read access to application secrets (SecureString, default aws/ssm key).
@@ -160,6 +167,15 @@ export class MovieRankingStack extends cdk.Stack {
       path: "/",
       methods: [apigatewayv2.HttpMethod.ANY],
       integration: lambdaIntegration,
+    });
+
+    // ==========================================================================
+    // Alarms -> SNS email (address from context `alertEmail`, not committed)
+    // ==========================================================================
+    new ApiMonitoring(this, "ApiMonitoring", {
+      lambdaFunction: this.lambdaFunction,
+      httpApi: this.httpApi,
+      alertEmail: this.node.tryGetContext("alertEmail"),
     });
 
     // ==========================================================================

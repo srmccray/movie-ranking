@@ -189,6 +189,29 @@ fields @timestamp, request_id, exception_type, path
 | sort @timestamp desc
 ```
 
+## Log Retention, Tracing, and Alarms
+
+- **Retention:** the Lambda log group `/aws/lambda/movie-ranking-api` keeps logs for 30 days (`logRetention` on `ApiFunction`; it adopts the group Lambda auto-created).
+- **Tracing:** X-Ray active tracing is on (`tracing: lambda.Tracing.ACTIVE`). Find traces in the X-Ray / CloudWatch Traces console.
+- **Alarms** (`lib/monitoring.ts`, `ApiMonitoring`) publish to SNS topic `movie-ranking-alarms`:
+
+| Alarm | Condition (5-minute period) |
+|-------|-----------------------------|
+| `movie-ranking-lambda-errors` | Lambda `Errors` >= 1 |
+| `movie-ranking-lambda-throttles` | Lambda `Throttles` >= 1 |
+| `movie-ranking-lambda-duration-p95` | Lambda `Duration` p95 > 20 s (timeout is 30 s) |
+| `movie-ranking-api-5xx` | HTTP API `5xx` >= 5 |
+
+Thresholds are starting points; adjust after a week of data. Missing data is treated as not breaching.
+
+**Recipient:** the email comes from CDK context, never committed: `npx cdk deploy -c alertEmail=you@example.com` (or `--context`). Without it the topic and alarms exist but have no subscriber.
+
+**Confirm the subscription:** after deploy, AWS sends a "Subscription Confirmation" email; click Confirm. Check with `aws sns list-subscriptions-by-topic --topic-arn <arn>` (status must not be `PendingConfirmation`). Test delivery with `aws cloudwatch set-alarm-state --alarm-name movie-ranking-lambda-errors --state-value ALARM --state-reason test`.
+
+**Silence an alarm:** temporarily `aws cloudwatch disable-alarm-actions --alarm-names <name>` (re-enable with `enable-alarm-actions`); the next `cdk deploy` does not re-enable actions on its own unless the alarm resource changes. To remove permanently, delete it from `lib/monitoring.ts`.
+
+**Find a failing request** (Logs Insights on `/aws/lambda/movie-ranking-api`): see the `request_id` queries in the section above.
+
 ## Commands
 
 Run these from the `infra/` directory:
