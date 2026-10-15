@@ -1,8 +1,8 @@
 ---
 id: REFACTOR-tests-test_import_amazon
-title: "tests/test_import_amazon.py: split into several test modules plus a helper module"
-status: Proposed
-created: 2026-10-13
+title: 'tests/test_import_amazon.py: split into several test modules plus a helper
+  module'
+status: Refined
 governing_adrs:
 - ADR-0002
 governing_prds:
