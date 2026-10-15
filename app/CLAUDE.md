@@ -32,12 +32,13 @@ app/
     __init__.py
     auth.py            # /register, /login, /me/ (mounted at /api/v1/auth)
     google_auth/       # package: oauth.py (state + Google token helpers), login.py, link.py; routes /google/login/, /google/callback/, /google/link/, /google/link/callback/ (also /api/v1/auth)
-    movies.py          # GET /search/ (TMDB search), POST / (create movie) -- no list/get/update/delete
+    movies.py          # GET /search/ (TMDB search), POST / (get-or-create movie) -- no list/get/update/delete
     rankings.py        # Ranking upsert, paginated list, delete one, delete all
     analytics.py       # /activity/, /genres/, /stats/, /rating-distribution/
     import_amazon/     # package: matching.py, session.py, review.py; /amazon-prime/... CSV import (mounted at /api/v1/import)
   services/
     __init__.py
+    movies.py          # find_movie_by_tmdb_id, create_movie, backfill_missing_metadata (shared by movies and import routers)
     tmdb.py            # TMDBService (async httpx client), search_movies, get_movie_details
     csv_parser.py      # parse_amazon_prime_csv
     import_session.py  # In-memory ImportSessionStore (import_session_store singleton)
@@ -746,7 +747,7 @@ All routes are mounted in `app/main.py` under `/api/v1/...` (plus `GET /health` 
 | `/auth` | `GET /google/login/`, `GET /google/link/` | `GoogleAuthUrlResponse` (`/google/link/` needs auth; 409 if already linked) |
 | `/auth` | `GET /google/callback/`, `GET /google/link/callback/` | See "Google OAuth" below |
 | `/movies` | `GET /search/?q=&year=` | `TMDBSearchResponse` (503 on TMDB rate limit, 500 on other TMDB errors) |
-| `/movies` | `POST /` (201) | `MovieResponse` |
+| `/movies` | `POST /` | `MovieResponse`; get-or-create by `tmdb_id`: 201 on create, 200 when a movie with that `tmdb_id` already exists (NULL metadata back-filled); a null `tmdb_id` always creates. Logic lives in `services/movies.py`, shared with the Amazon import |
 | `/rankings` | `POST /` | `RankingResponse`; 201 on create, 200 when updating an existing ranking; 404 if movie missing |
 | `/rankings` | `GET /?limit=&offset=&sort_by=&sort_order=` | `RankingListResponse`; `sort_by` is `rated_at` (default), `rating`, `title` or `year`; `sort_order` `desc` (default) or `asc`; limit 1-100 (default 20) |
 | `/rankings` | `DELETE /{ranking_id}/` (204; 404/403) | none |
@@ -758,7 +759,7 @@ All routes are mounted in `app/main.py` under `/api/v1/...` (plus `GET /health` 
 
 - Requires `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (default empty); login/link return 500 "Google OAuth not configured" when unset. `GOOGLE_REDIRECT_URI` defaults to `http://localhost:8000/api/v1/auth/google/callback/`.
 - `GET /google/login/` creates an `OAuthState` row (random `state`, optional `redirect_uri` query param, `flow_type="login"`, 5-minute expiry) and returns the Google authorization URL. Expired states are cleaned up when new ones are created.
-- `GET /google/callback/` validates and deletes the state, exchanges the code, verifies the Google ID token (email must be present and verified), then: finds the user by `google_id`; else by email and links it (`auth_provider="linked"`); else creates a user with `hashed_password=None` and `auth_provider="google"`. It returns `Token` JSON, or a 302 to `{redirect_uri}?token=<jwt>` if a custom `redirect_uri` was stored. Errors return 400 (cancelled, missing params, invalid/expired state, unverified email).
+- `GET /google/callback/` validates and deletes the state, exchanges the code, verifies the Google ID token (email must be present and verified), then: finds the user by `google_id`; else by email and links it (`auth_provider="linked"`); else creates a user with `hashed_password=None` and `auth_provider="google"`. It sets the `session` (httpOnly) and `csrf_token` cookies on the response, then returns `Token` JSON, or a 302 to the stored `redirect_uri` if one exists. While the temporary `GOOGLE_LEGACY_TOKEN_IN_URL` setting is true (default; removed by TASK-0047) that redirect still appends `?token=<jwt>`; when false the `Location` is the clean URL with no token. Errors return 400 (cancelled, missing params, invalid/expired state, unverified email).
 - Account linking: `GET /google/link/` (authenticated) stores the user id with `flow_type="link"`. The shared `/google/callback/` routes link-flow states to the link handler, and `/google/link/callback/` also exists; both respond with 302 redirects (errors go to `/settings?error=...`) rather than JSON.
 - Users created via Google have no password, so `/login` returns 401 for them (`hashed_password is None`).
 

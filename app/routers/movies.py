@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.database import DbSession
 from app.dependencies import CurrentUser
@@ -12,6 +12,12 @@ from app.schemas.movie import (
     MovieResponse,
     TMDBSearchResponse,
     TMDBSearchResult,
+)
+from app.services.movies import (
+    MovieData,
+    backfill_missing_metadata,
+    create_movie as create_movie_record,
+    find_movie_by_tmdb_id,
 )
 from app.services.tmdb import (
     TMDBAPIError,
@@ -112,6 +118,7 @@ async def search_tmdb_movies(
     status_code=status.HTTP_201_CREATED,
     summary="Add a new movie",
     responses={
+        200: {"description": "Movie with this TMDB id already exists; returned"},
         201: {"description": "Movie created successfully"},
         401: {"description": "Not authenticated"},
         422: {"description": "Validation error"},
@@ -119,40 +126,39 @@ async def search_tmdb_movies(
 )
 async def create_movie(
     movie_data: MovieCreate,
+    response: Response,
     current_user: CurrentUser,
     db: DbSession,
 ) -> Movie:
-    """Add a new movie to the database.
+    """Add a movie to the database (get-or-create by TMDB id).
 
-    Requires authentication. Any authenticated user can add movies.
+    Requires authentication. Any authenticated user can add movies. When
+    ``tmdb_id`` is set and a movie with that id exists, it is returned with
+    HTTP 200 (NULL metadata fields are back-filled); otherwise a new movie is
+    created with HTTP 201. Movies without ``tmdb_id`` are always created.
 
     Args:
         movie_data: Movie data containing title, year, tmdb_id, poster_url,
             and additional metadata fields (genre_ids, vote_average, etc.).
+        response: Used to set the 200 status for an existing movie.
         current_user: The authenticated user (from JWT token).
         db: Async database session.
 
     Returns:
-        The created movie with all fields and timestamps.
+        The created or existing movie with all fields and timestamps.
 
     Raises:
         HTTPException: 401 Unauthorized if not authenticated.
     """
-    new_movie = Movie(
-        title=movie_data.title,
-        year=movie_data.year,
-        tmdb_id=movie_data.tmdb_id,
-        poster_url=movie_data.poster_url,
-        genre_ids=movie_data.genre_ids,
-        vote_average=movie_data.vote_average,
-        vote_count=movie_data.vote_count,
-        release_date=movie_data.release_date,
-        original_language=movie_data.original_language,
-        runtime=movie_data.runtime,
-    )
+    data = MovieData(**movie_data.model_dump())
 
-    db.add(new_movie)
-    await db.flush()
-    await db.refresh(new_movie)
+    if data.tmdb_id is not None:
+        existing = await find_movie_by_tmdb_id(db, data.tmdb_id)
+        if existing is not None:
+            if backfill_missing_metadata(existing, data):
+                await db.flush()
+                await db.refresh(existing)
+            response.status_code = status.HTTP_200_OK
+            return existing
 
-    return new_movie
+    return await create_movie_record(db, data)
