@@ -5,7 +5,7 @@ from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import contains_eager, joinedload
 
 from app.database import DbSession
@@ -219,16 +219,8 @@ async def delete_all_rankings(
     Raises:
         HTTPException: 401 if not authenticated.
     """
-    # Delete all rankings for the current user
-    result = await db.execute(
-        select(Ranking).where(Ranking.user_id == current_user.id)
-    )
-    rankings = result.scalars().all()
-
-    for ranking in rankings:
-        await db.delete(ranking)
-
-    await db.flush()
+    # Single bulk DELETE scoped to the caller (no per-row loads or deletes)
+    await db.execute(delete(Ranking).where(Ranking.user_id == current_user.id))
 
 
 @router.delete(
