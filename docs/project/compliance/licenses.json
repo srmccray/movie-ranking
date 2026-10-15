@@ -1,5 +1,9 @@
 {
   "packages": {
+    "boto3": {
+      "license": "Apache-2.0",
+      "source": "https://pypi.org/project/boto3/"
+    },
     "fastapi": {
       "license": "MIT",
       "source": "installed package metadata (venv)"

@@ -81,7 +81,7 @@ jobs:
         if: steps.filter.outputs.python == 'true'
         run: |
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx aiosqlite
+          pip install pytest pytest-asyncio httpx aiosqlite boto3
           pytest
 
   # Deliberately NOT run here: eslint (9 pre-existing problems), `tsc -b` / `npm run build`
