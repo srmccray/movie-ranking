@@ -1,0 +1,38 @@
+# Dependabot version updates (TASK-0041).
+# pip: requirements*.txt are generated from pyproject.toml (TASK-0040), so
+# Dependabot targets pyproject.toml; the CI compile check flags requirements
+# drift and a maintainer regenerates them on the Dependabot branch.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      pip-minor-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: npm
+    directory: "/frontend"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: npm
+    directory: "/infra"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      infra-minor-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-patch:
+        update-types: [minor, patch]
