@@ -1,7 +1,8 @@
 ---
 id: REFACTOR-frontend-components-ImportReview
-title: "frontend/src/components/ImportReview.tsx: extract search logic and panel to get under 500 lines"
-status: Refined
+title: 'frontend/src/components/ImportReview.tsx: extract search logic and panel to
+  get under 500 lines'
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:

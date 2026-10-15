@@ -3,7 +3,6 @@
   "files": {
     "app/routers/google_auth.py": 706,
     "app/routers/import_amazon.py": 765,
-    "frontend/src/components/ImportReview.tsx": 505,
     "tests/test_import_amazon.py": 1409,
     "tests/test_import_session.py": 625,
     "tests/test_movies.py": 608
