@@ -11,10 +11,11 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.database import engine
+from app.observability import configure_logging, install_observability
 from app.routers import analytics, auth, google_auth, import_amazon, movies, rankings
 
-# Configure logging
-logging.basicConfig(level=logging.INFO if not settings.DEBUG else logging.DEBUG)
+# Configure structured JSON logging
+configure_logging(logging.DEBUG if settings.DEBUG else logging.INFO)
 logger = logging.getLogger(__name__)
 
 # CORS origins configuration
@@ -82,6 +83,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request id, access logging and unhandled-exception handler
+install_observability(app)
 
 # Include routers with API versioning
 app.include_router(auth.router, prefix="/api/v1/auth")

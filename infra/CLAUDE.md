@@ -175,6 +175,20 @@ The role is named `movie-ranking-deploy` and has permissions for:
 
 It has **no CloudFormation/CDK permissions**: the GitHub Actions workflow does not run `cdk deploy`. Infrastructure changes are deployed manually (see below).
 
+## CloudWatch Logs Insights
+
+The API emits JSON logs with a `request_id` (also returned in the `X-Request-ID` response header). Find everything for one failing request, or all unhandled errors:
+
+```
+fields @timestamp, level, logger, message, request_id, exception_type, status, path
+| filter request_id = "<value from X-Request-ID>"
+| sort @timestamp asc
+
+fields @timestamp, request_id, exception_type, path
+| filter message = "unhandled_exception"
+| sort @timestamp desc
+```
+
 ## Commands
 
 Run these from the `infra/` directory:
