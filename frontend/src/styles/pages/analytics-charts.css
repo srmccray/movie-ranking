@@ -1,0 +1,241 @@
+/* Genre Chart */
+.genre-chart {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-neutral-800);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  height: 300px; /* Fixed height to match rating distribution chart */
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.genre-chart-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.genre-chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-neutral-200);
+  margin: 0;
+}
+
+.genre-chart-total {
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+}
+
+/* Radar Chart */
+.genre-radar-container {
+  position: relative;
+  width: 100%;
+  max-width: 195px;
+  margin: var(--space-2) auto;
+  aspect-ratio: 1;
+}
+
+.genre-radar {
+  width: 100%;
+  height: 100%;
+}
+
+.genre-radar-grid {
+  fill: none;
+  stroke: var(--color-neutral-700);
+  stroke-width: 1;
+}
+
+.genre-radar-axis {
+  stroke: var(--color-neutral-700);
+  stroke-width: 1;
+}
+
+.genre-radar-data {
+  fill: rgba(139, 92, 246, 0.3);
+  stroke: var(--color-primary-500);
+  stroke-width: 2;
+}
+
+.genre-radar-point {
+  fill: var(--color-primary-400);
+  stroke: var(--color-bg-primary);
+  stroke-width: 2;
+}
+
+.genre-radar-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.genre-radar-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.genre-radar-label-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-neutral-300);
+  white-space: nowrap;
+}
+
+.genre-radar-label-count {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-primary-400);
+}
+
+.genre-radar-label-empty .genre-radar-label-name {
+  color: var(--color-neutral-600);
+}
+
+.genre-chart-empty {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+}
+
+.genre-chart-empty-text {
+  font-size: 1rem;
+  color: var(--color-neutral-400);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.genre-chart-empty-hint {
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+  margin: 0;
+}
+
+/* Rating Distribution Chart */
+.rating-distribution-chart {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-neutral-800);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  height: 300px; /* Fixed height to match genre chart */
+  box-sizing: border-box;
+}
+
+.rating-distribution-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.rating-distribution-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-neutral-200);
+  margin: 0;
+}
+
+.rating-distribution-total {
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+}
+
+.rating-distribution-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+}
+
+.rating-distribution-loading .spinner {
+  width: 28px;
+  height: 28px;
+  color: var(--color-primary-500);
+}
+
+.rating-distribution-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--color-error);
+  font-size: 0.875rem;
+  min-height: 180px;
+}
+
+.rating-distribution-error-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.rating-distribution-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.rating-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.rating-bar-label {
+  flex-shrink: 0;
+  width: 80px;
+  font-size: 0.875rem;
+  color: var(--color-star-filled);
+  text-align: right;
+  letter-spacing: 1px;
+}
+
+.rating-bar-track {
+  flex: 1;
+  height: 20px;
+  background-color: var(--color-neutral-800);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.rating-bar-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-md);
+  transition: width 0.3s ease-out;
+  min-width: 0;
+}
+
+.rating-bar-count {
+  flex-shrink: 0;
+  width: 40px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-neutral-300);
+  text-align: right;
+}
+
+/* Rating Distribution Responsive */
+@media (max-width: 480px) {
+  .rating-bar-label {
+    width: 60px;
+    font-size: 0.75rem;
+  }
+
+  .rating-bar-track {
+    height: 16px;
+  }
+
+  .rating-bar-count {
+    width: 32px;
+    font-size: 0.75rem;
+  }
+}
