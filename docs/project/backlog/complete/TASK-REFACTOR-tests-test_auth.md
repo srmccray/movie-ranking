@@ -1,7 +1,7 @@
 ---
 id: REFACTOR-tests-test_auth
-title: "tests/test_auth.py: split into two test modules under 500 lines"
-status: Refined
+title: 'tests/test_auth.py: split into two test modules under 500 lines'
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:

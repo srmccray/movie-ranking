@@ -174,9 +174,24 @@ SpecOps is the planning and guardrail layer; Claude Code is the execution layer.
    - `spec-ops health` exits 0
    - `spec-ops trace` if docs or specs changed
 
-   Do not use `git commit --no-verify` to get past the pre-commit hook without the maintainer's approval. Known false positive: the secret scanner can flag npm integrity hashes in `frontend/package-lock.json`.
+   Do not use `git commit --no-verify` to get past the pre-commit hook without the maintainer's approval. Known false positives: the secret scanner can flag npm integrity hashes in `frontend/package-lock.json`, and it re-scans whole files, so moving a test file can resurface an old fixture credential. For a test fixture, add the scanner's inline opt-out `# pragma: allowlist secret` to that one line (never change scanner config); if more than a line or two are flagged, stop and ask.
+   Two identical copies of the debt baseline exist: `.specops/grandfathered_debt.json` and `.spec-ops/debt_baseline.json`. Update both (and `specops.toml`'s `grandfathered` list) when a task retires a grandfathered file.
 4. **PR.** Push the branch and open a PR to `main`. CI (`.github/workflows/ci.yml`: numbering, health, backend tests) must pass before merge. Feature branches must NOT touch `docs/project/backlog/` (ADR-0005).
-5. **Complete.** After the PR merges, from `main` on a short-lived branch (opened as its own small PR), move the task to `docs/project/backlog/complete/` and sync `PRIORITY.md` with `spec-ops queue complete <task-id>`. Then run `spec-ops curate` if the refined buffer dropped. (This step is provisional and will be confirmed after the first real trial.)
+5. **Complete.** After the PR merges, with the task's branch deleted and from `main` (never from a feature branch), run the completion gate, then commit the result on a short-lived branch as its own small PR. `spec-ops queue complete <task-id>` does this for numeric IDs (`TASK-0008`): it moves the task file to `docs/project/backlog/complete/` and syncs `PRIORITY.md`. It rejects `TASK-REFACTOR-*` IDs as "not found" (it uppercases the ID before matching), so for those call the same gate through spec-ops' Python API:
+
+   ```
+   $(head -1 ~/.local/bin/spec-ops | sed 's/^#!//') - <<'EOF'
+   from pathlib import Path
+   from spec_ops.config.loader import load_config
+   from spec_ops.backlog.queue import BacklogQueue
+   from spec_ops.app.task_lifecycle import TaskLifecycleService
+   cfg = load_config(root_dir=Path.cwd())
+   t = next(t for t in BacklogQueue(cfg.backlog_dir).list_all_tasks() if t.canonical_id == "TASK-REFACTOR-<name>")
+   print(TaskLifecycleService(cfg).complete_task_with_gate(t, base_branch="main", repo_root=cfg.root_dir, config=cfg))
+   EOF
+   ```
+
+   Run it on `main` with the task's branch already deleted: if the gate finds a live branch it squash-merges that branch into `main` and commits directly, and if the task has no recorded branch it falls back to the *current* branch. Then run `spec-ops health` and `spec-ops trace`, and `spec-ops curate` if the refined buffer dropped.
 
 ### SpecOps Commands to Avoid
 
