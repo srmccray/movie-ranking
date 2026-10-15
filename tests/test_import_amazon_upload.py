@@ -27,7 +27,7 @@ class TestUploadCSV:
             ]
         )
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             # Mock TMDB responses
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
@@ -136,7 +136,7 @@ class TestUploadCSV:
             ]
         )
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -184,7 +184,7 @@ class TestGetSession:
             ]
         )
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -241,7 +241,7 @@ class TestGetSession:
 
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -293,7 +293,7 @@ class TestCancelSession:
         """Test cancelling a session."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -350,7 +350,7 @@ class TestCancelSession:
 
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None

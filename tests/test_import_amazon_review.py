@@ -25,7 +25,7 @@ class TestAddMovie:
             ]
         )
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -68,7 +68,7 @@ class TestAddMovie:
             ]
         )
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -107,7 +107,7 @@ class TestAddMovie:
         """Test adding movie with invalid rating returns 422."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -139,7 +139,7 @@ class TestAddMovie:
         """Test adding movie with zero rating returns 422."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -171,7 +171,7 @@ class TestAddMovie:
         """Test adding already-processed movie returns 400."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -212,7 +212,7 @@ class TestAddMovie:
         """Test adding movie with invalid index returns 404."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -268,7 +268,7 @@ class TestAddMovie:
         """Test adding a movie without TMDB match returns 400."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Unknown Movie"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -303,7 +303,7 @@ class TestSkipMovie:
         """Test skipping a movie."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -341,7 +341,7 @@ class TestSkipMovie:
         """Test skipping with invalid index returns 404."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -372,7 +372,7 @@ class TestSkipMovie:
         """Test skipping already-processed movie returns 400."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
