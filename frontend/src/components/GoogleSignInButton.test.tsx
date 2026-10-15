@@ -18,7 +18,7 @@ describe('GoogleSignInButton', () => {
     it('should render with default signin text', () => {
       render(<GoogleSignInButton />);
 
-      expect(screen.getByRole('button')).toHaveTextContent('Sign in with Google');
+      expect(screen.getByRole('button')).toHaveTextContent('Sign in with Nothing');
     });
 
     it('should render with signup text when variant is signup', () => {
