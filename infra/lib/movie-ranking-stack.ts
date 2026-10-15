@@ -67,6 +67,10 @@ export class MovieRankingStack extends cdk.Stack {
     // Lambda Function for FastAPI Backend
     // Cost-optimized: 256MB memory, 30s timeout
     // ==========================================================================
+    // Reserved concurrency cap (default 10); `-c reservedConcurrency=none` omits it.
+    const rcCtx = String(this.node.tryGetContext("reservedConcurrency") ?? "10");
+    const reservedConcurrency = rcCtx === "none" ? undefined : Number(rcCtx);
+
     this.lambdaFunction = new lambda.Function(this, "ApiFunction", {
       functionName: "movie-ranking-api",
       runtime: lambda.Runtime.PYTHON_3_12,
@@ -106,6 +110,10 @@ export class MovieRankingStack extends cdk.Stack {
       }),
       memorySize: 256, // Cost-optimized: minimal memory for API workload
       timeout: cdk.Duration.seconds(30),
+      // Caps concurrent DB connections (NullPool = 1 per invocation). Needs
+      // >= 100 unreserved account concurrency; opt out with
+      // `-c reservedConcurrency=none` (see infra/CLAUDE.md).
+      reservedConcurrentExecutions: reservedConcurrency,
       architecture: lambda.Architecture.ARM_64, // Cost savings: ~20% cheaper than x86
       environment: {
         // Non-secret configuration only (ADR-0008). Secrets live in SSM
@@ -161,6 +169,50 @@ export class MovieRankingStack extends cdk.Stack {
       methods: [apigatewayv2.HttpMethod.ANY],
       integration: lambdaIntegration,
     });
+
+    // Explicit auth routes so the stage can throttle them by route key.
+    // login/register have no trailing slash (documented exception) and use
+    // the L2 construct with the shared integration.
+    for (const path of ["/api/v1/auth/login", "/api/v1/auth/register"]) {
+      this.httpApi.addRoutes({
+        path,
+        methods: [apigatewayv2.HttpMethod.POST],
+        integration: lambdaIntegration,
+      });
+    }
+
+    // The L2 HttpRoute rejects paths ending in "/", so the Google routes use
+    // L1 CfnRoute with an equivalent Lambda proxy integration. Invoke
+    // permission is already covered by the /{proxy+} route's wildcard ARN.
+    const googleIntegration = new apigatewayv2.CfnIntegration(this, "GoogleAuthIntegration", {
+      apiId: this.httpApi.httpApiId,
+      integrationType: "AWS_PROXY",
+      integrationUri: this.lambdaFunction.functionArn,
+      payloadFormatVersion: "2.0",
+    });
+    for (const [id, routeKey] of [
+      ["GoogleLoginRoute", "GET /api/v1/auth/google/login/"],
+      ["GoogleCallbackRoute", "GET /api/v1/auth/google/callback/"],
+    ]) {
+      new apigatewayv2.CfnRoute(this, id, {
+        apiId: this.httpApi.httpApiId,
+        routeKey,
+        target: `integrations/${googleIntegration.ref}`,
+      });
+    }
+
+    // Throttling is per route across all clients (no per-IP at HTTP API).
+    // Starting values; tune with measured traffic (see infra/CLAUDE.md).
+    (this.httpApi.defaultStage!.node.defaultChild as apigatewayv2.CfnStage).routeSettings = {
+      "POST /api/v1/auth/login": { ThrottlingRateLimit: 5, ThrottlingBurstLimit: 10 },
+      "POST /api/v1/auth/register": { ThrottlingRateLimit: 2, ThrottlingBurstLimit: 5 },
+      "GET /api/v1/auth/google/login/": { ThrottlingRateLimit: 5, ThrottlingBurstLimit: 10 },
+      "GET /api/v1/auth/google/callback/": { ThrottlingRateLimit: 5, ThrottlingBurstLimit: 10 },
+    };
+    (this.httpApi.defaultStage!.node.defaultChild as apigatewayv2.CfnStage).defaultRouteSettings = {
+      throttlingRateLimit: 100,
+      throttlingBurstLimit: 200,
+    };
 
     // ==========================================================================
     // CloudFront Origin Access Control for S3

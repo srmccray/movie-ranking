@@ -42,7 +42,7 @@ infra/
   bin/
     infra.ts              # CDK app entry point, stack configuration
   lib/
-    movie-ranking-stack.ts # Main stack definition (~370 lines)
+    movie-ranking-stack.ts # Main stack definition (~430 lines)
   cdk.json                # CDK app command, output dir, feature flags
   package.json            # NPM dependencies and scripts
   tsconfig.json           # TypeScript configuration
@@ -96,7 +96,7 @@ All behaviors redirect HTTP to HTTPS. `/api/*` allows all methods. The default (
 | Resource | Details |
 |----------|---------|
 | Lambda (`ApiFunction`) | Name `movie-ranking-api`, Python 3.12, ARM64, 256MB, 30s timeout, handler `lambda_handler.handler` |
-| HTTP API (`HttpApi`) | Name `movie-ranking-api`; proxy routes `/{proxy+}` and `/` (ANY method) to the Lambda |
+| HTTP API (`HttpApi`) | Name `movie-ranking-api`; proxy routes `/{proxy+}` and `/` (ANY method) plus explicit auth routes (throttled, see Rate Limits) to the Lambda |
 | S3 bucket (`FrontendBucket`) | Name `movies-stephenmccray-com-frontend` (domain with dots replaced by dashes + `-frontend`), S3-managed encryption, `RemovalPolicy.DESTROY` with `autoDeleteObjects` |
 
 `lambda_handler.py` (repo root) wraps the FastAPI app with Mangum using `lifespan="off"`, since Lambda does not support ASGI lifespan events. The `lifespan` startup/shutdown handler in `app/main.py` therefore does not run on Lambda.
@@ -324,6 +324,21 @@ new MovieRankingStack(app, "MovieRankingStack", {
   },
 });
 ```
+
+## Rate Limits and Concurrency (TASK-0035)
+
+- **Route throttling** (stage `RouteSettings` in `movie-ranking-stack.ts`, per route across all clients; HTTP API cannot throttle per IP, see TASK-0036). Excess requests get HTTP 429 from API Gateway.
+
+  | Route | Rate/s | Burst |
+  |-------|--------|-------|
+  | `POST /api/v1/auth/login` | 5 | 10 |
+  | `POST /api/v1/auth/register` | 2 | 5 |
+  | `GET /api/v1/auth/google/login/`, `GET /api/v1/auth/google/callback/` | 5 | 10 |
+  | all other routes (default) | 100 | 200 |
+
+  To raise a limit, edit the `routeSettings` / `defaultRouteSettings` values and redeploy. Login and register have no trailing slash (documented exception).
+- **Reserved concurrency**: `ApiFunction` reserves 10 concurrent executions (`NullPool` opens one DB connection per invocation, so this bounds connections). Change with `-c reservedConcurrency=<n>`; omit with `-c reservedConcurrency=none`. AWS requires at least 100 unreserved account concurrency; check `aws lambda get-account-settings` first (new accounts can start at 10, which makes any reservation fail the deploy).
+- **Database `max_connections`**: NOT YET RECORDED. The PostgreSQL is external; look it up (`SHOW max_connections;`) and keep the reservation at or below it minus admin headroom, then record the value here.
 
 ## Important Gotchas
 
