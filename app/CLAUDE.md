@@ -18,7 +18,6 @@ app/
     user.py            # User (local and/or Google auth)
     movie.py           # Movie (TMDB metadata fields)
     ranking.py         # Ranking (user_id + movie_id unique, rating 1-5, rated_at)
-    genre.py           # Genre (TMDB genre id -> name reference table)
     oauth_state.py     # OAuthState (short-lived CSRF state for Google OAuth)
   schemas/
     __init__.py        # Re-exports most schemas (analytics schemas are imported from app.schemas.analytics)
@@ -159,13 +158,12 @@ class Entity(Base):
 """SQLAlchemy models for the Movie Ranking API."""
 
 from app.models.entity import Entity  # Add this
-from app.models.genre import Genre
 from app.models.movie import Movie
 from app.models.oauth_state import OAuthState
 from app.models.ranking import Ranking
 from app.models.user import User
 
-__all__ = ["Entity", "Genre", "Movie", "OAuthState", "Ranking", "User"]  # Add to list
+__all__ = ["Entity", "Movie", "OAuthState", "Ranking", "User"]  # Add to list
 ```
 
 ### Step 3: Add Relationship to Related Models
@@ -789,7 +787,7 @@ Multi-step workflow mounted at `/api/v1/import`; all routes require auth:
 | `PATCH .../movie/{index}/match/` | Body `ImportMovieMatchRequest` (TMDB fields); sets that match with `confidence=1.0` and clears alternatives; returns `MatchedMovieItem` |
 | `DELETE /amazon-prime/session/{session_id}/` | 204; deletes the session |
 
-`index` is the 0-based position in the session's `movies` list. Sessions live in the in-memory `import_session_store` (`services/import_session.py`): one session per user (a new upload replaces the old one), 30-minute TTL, max 500 movies, lost on server restart (and not shared between Lambda instances or workers). Session reads take both `session_id` and `str(user_id)` so users cannot access each other's sessions. `ImportCompletionResponse` exists in the schemas but no endpoint currently returns it.
+`index` is the 0-based position in the session's `movies` list. Sessions live in the in-memory `import_session_store` (`services/import_session.py`): one session per user (a new upload replaces the old one), 30-minute TTL, max 500 movies, lost on server restart (and not shared between Lambda instances or workers). Session reads take both `session_id` and `str(user_id)` so users cannot access each other's sessions.
 
 ---
 

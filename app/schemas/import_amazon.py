@@ -162,26 +162,6 @@ class ImportMovieAddRequest(BaseModel):
     rated_at: datetime | None = None
 
 
-class ImportCompletionResponse(BaseModel):
-    """Summary returned after completing or canceling an import.
-
-    RESPONSE SHAPE: {
-        movies_added: N,
-        movies_skipped: N,
-        unmatched_titles: [...]
-    }
-
-    Attributes:
-        movies_added: Total number of movies added to rankings.
-        movies_skipped: Total number of movies skipped by the user.
-        unmatched_titles: List of movie titles that could not be matched to TMDB.
-    """
-
-    movies_added: int
-    movies_skipped: int
-    unmatched_titles: list[str]
-
-
 class ImportMovieMatchRequest(BaseModel):
     """Request to update a movie's TMDB match in an import session.
 
