@@ -291,6 +291,46 @@ export const importHandlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
+  // PATCH /api/v1/import/amazon-prime/session/{session_id}/movie/{index}/match/
+  http.patch('/api/v1/import/amazon-prime/session/:sessionId/movie/:index/match/', async ({ request, params }) => {
+    const authHeader = request.headers.get('Authorization');
+
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { detail: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    const { sessionId, index } = params;
+    const session = importSessions.get(sessionId as string);
+
+    if (!session) {
+      return HttpResponse.json(
+        { detail: 'Import session not found or expired' },
+        { status: 404 }
+      );
+    }
+
+    const movieIndex = parseInt(index as string);
+    if (movieIndex < 0 || movieIndex >= session.movies.length) {
+      return HttpResponse.json(
+        { detail: 'Movie index out of range' },
+        { status: 404 }
+      );
+    }
+
+    const match = (await request.json()) as NonNullable<MockImportSession['movies'][number]['tmdb_match']>;
+    const movie = session.movies[movieIndex];
+
+    // Mirrors the real backend: user-selected match gets confidence 1.0 and no alternatives
+    movie.tmdb_match = match;
+    movie.confidence = 1.0;
+    movie.alternatives = [];
+
+    return HttpResponse.json(movie);
+  }),
+
   // DELETE /api/v1/import/amazon-prime/session/{session_id}/
   http.delete('/api/v1/import/amazon-prime/session/:sessionId/', ({ request, params }) => {
     const authHeader = request.headers.get('Authorization');
