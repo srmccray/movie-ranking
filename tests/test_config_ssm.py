@@ -84,8 +84,11 @@ def test_pagination_reads_all_pages(ssm_env: pytest.MonkeyPatch) -> None:
 
 
 def test_missing_parameter_logs_prefix_and_key_without_values(
-    ssm_env: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ssm_env: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    tmp_path: Any,
 ) -> None:
+    ssm_env.chdir(tmp_path)  # keep a developer's local .env out of Settings()
     partial = {k: v for k, v in FIVE.items() if k != "TMDB_API_KEY"}
     _stub(ssm_env, StubSsm(partial))
     with caplog.at_level(logging.ERROR, logger="app.config"):
