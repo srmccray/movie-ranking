@@ -41,7 +41,7 @@ Object.defineProperty(window, 'localStorage', {
 
 // Establish API mocking before all tests
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'warn' });
+  server.listen({ onUnhandledRequest: 'error' });
 });
 
 // Reset any request handlers that may be added during tests
