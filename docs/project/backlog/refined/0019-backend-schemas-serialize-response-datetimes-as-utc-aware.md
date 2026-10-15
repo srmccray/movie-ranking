@@ -1,17 +1,17 @@
 ---
-id: '0019'
-title: 'app/schemas: serialize response datetimes as UTC-aware ISO 8601 so the column conversion cannot shift times'
-status: Proposed
+id: 0019
+title: 'app/schemas: serialize response datetimes as UTC-aware ISO 8601 so the column
+  conversion cannot shift times'
+status: Refined
+dependencies:
+- TASK-0014
 governing_adrs:
 - ADR-0010
 governing_prds:
 - PRD-0006
 governing_stories:
 - US-0007
-dependencies:
-- TASK-0014
 target_bc: backend
-priority: P1
 ---
 
 # TASK-0019: app/schemas: serialize response datetimes as UTC-aware ISO 8601 so the column conversion cannot shift times

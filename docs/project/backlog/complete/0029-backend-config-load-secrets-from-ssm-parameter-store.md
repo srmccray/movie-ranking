@@ -2,7 +2,7 @@
 id: 0029
 title: 'app/config.py: load secrets from SSM Parameter Store at cold start when SSM_PARAMETER_PREFIX
   is set'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0008
 - ADR-0003

@@ -1,7 +1,7 @@
 ---
 id: '0015'
 title: 'app/routers/rankings.py: delete all rankings with a single DELETE statement'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0003
 governing_prds:

@@ -2,7 +2,7 @@
 id: '0011'
 title: 'app/models + alembic: remove the unused Genre model and genres table, and
   the unused ImportCompletionResponse schema'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0002
 - ADR-0003

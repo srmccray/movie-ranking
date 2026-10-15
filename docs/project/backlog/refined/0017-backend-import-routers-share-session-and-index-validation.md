@@ -1,7 +1,10 @@
 ---
 id: '0017'
-title: 'app/routers/import_amazon: share the session lookup and movie-index validation in one helper'
-status: Proposed
+title: 'app/routers/import_amazon: share the session lookup and movie-index validation
+  in one helper'
+status: Refined
+dependencies:
+- TASK-0014
 governing_adrs:
 - ADR-0002
 - ADR-0003
@@ -9,10 +12,7 @@ governing_prds:
 - PRD-0006
 governing_stories:
 - US-0007
-dependencies:
-- TASK-0014
 target_bc: backend
-priority: P2
 ---
 
 # TASK-0017: app/routers/import_amazon: share the session lookup and movie-index validation in one helper

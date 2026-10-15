@@ -1,17 +1,16 @@
 ---
-id: '0009'
+id: 0009
 title: 'ci.yml: run eslint and tsc -b in the Frontend Tests & Build job'
-status: Proposed
+status: Refined
+dependencies:
+- TASK-0008
 governing_adrs:
 - ADR-0004
 governing_prds:
 - PRD-0006
 governing_stories:
 - US-0006
-dependencies:
-- TASK-0008
 target_bc: infra
-priority: P1
 ---
 
 # TASK-0009: ci.yml: run eslint and tsc -b in the Frontend Tests & Build job

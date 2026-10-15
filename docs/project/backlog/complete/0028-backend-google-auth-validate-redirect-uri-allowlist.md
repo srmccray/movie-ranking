@@ -1,7 +1,7 @@
 ---
 id: 0028
 title: 'app/routers/google_auth/login.py: reject redirect_uri values outside an allowlist'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0013
 - ADR-0003

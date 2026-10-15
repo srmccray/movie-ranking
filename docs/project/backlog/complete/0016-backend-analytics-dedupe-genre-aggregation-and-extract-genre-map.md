@@ -2,7 +2,7 @@
 id: '0016'
 title: 'app/routers/analytics.py: de-duplicate the genre aggregation and move GENRE_MAP
   to app/constants/genres.py'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0002
 - ADR-0003
