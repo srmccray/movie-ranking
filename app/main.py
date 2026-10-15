@@ -1,16 +1,18 @@
 """FastAPI application entry point for the Movie Ranking API."""
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.config import settings
-from app.database import engine
+from app.database import engine, get_db
 from app.observability import configure_logging, install_observability
 from app.routers import analytics, auth, google_auth, import_amazon, movies, rankings
 
@@ -96,6 +98,16 @@ app.include_router(analytics.router, prefix="/api/v1/analytics")
 app.include_router(import_amazon.router, prefix="/api/v1/import")
 
 
+_DEEP_HEALTH_TIMEOUT_SECONDS = 2.0
+
+
+async def _probe_database(request: Request) -> None:
+    """Run ``SELECT 1`` through the ``get_db`` provider (honours dependency overrides)."""
+    provider = request.app.dependency_overrides.get(get_db, get_db)
+    async with asynccontextmanager(provider)() as session:
+        await session.execute(text("SELECT 1"))
+
+
 @app.get(
     "/health",
     tags=["health"],
@@ -106,23 +118,48 @@ app.include_router(import_amazon.router, prefix="/api/v1/import")
             "description": "Service is healthy",
             "content": {
                 "application/json": {
-                    "example": {"status": "healthy", "version": "1.0.0"}
+                    "examples": {
+                        "liveness": {
+                            "summary": "Liveness (default, no database)",
+                            "value": {"status": "healthy", "version": "1.0.0"},
+                        },
+                        "deep": {
+                            "summary": "Readiness (?deep=true)",
+                            "value": {"status": "healthy", "database": "ok"},
+                        },
+                    }
                 }
             },
         },
-        503: {"description": "Service is unhealthy"},
+        503: {
+            "description": "Service is unhealthy (deep check only: database unreachable)",
+            "content": {
+                "application/json": {
+                    "example": {"status": "unhealthy", "database": "unreachable"}
+                }
+            },
+        },
     },
 )
-async def health_check() -> dict[str, Any]:
+async def health_check(request: Request, deep: bool = False) -> JSONResponse:
     """Check the health status of the API.
 
-    Returns:
-        A dictionary containing the health status and API version.
+    By default this is a liveness check that never touches the database.
+    With ``deep=true`` it also runs ``SELECT 1`` (2 second timeout) and
+    returns 503 when the database is unreachable.
     """
-    return {
-        "status": "healthy",
-        "version": "1.0.0",
-    }
+    if not deep:
+        return JSONResponse({"status": "healthy", "version": "1.0.0"})
+    try:
+        await asyncio.wait_for(
+            _probe_database(request), timeout=_DEEP_HEALTH_TIMEOUT_SECONDS
+        )
+    except Exception:
+        logger.exception("Deep health check failed: database unreachable")
+        return JSONResponse(
+            {"status": "unhealthy", "database": "unreachable"}, status_code=503
+        )
+    return JSONResponse({"status": "healthy", "database": "ok"})
 
 
 @app.get(
