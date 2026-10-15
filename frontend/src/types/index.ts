@@ -292,12 +292,3 @@ export interface ImportMovieMatchRequest {
   release_date?: string | null;
   original_language?: string | null;
 }
-
-/**
- * Summary after completing import (computed from session state).
- */
-export interface ImportCompletionSummary {
-  movies_added: number;
-  movies_skipped: number;
-  unmatched_titles: string[];
-}

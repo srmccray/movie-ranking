@@ -117,7 +117,7 @@ The build output will be in the `dist/` directory.
 
 ### API Base URL
 
-The API client uses the fixed base path `/api/v1` (`API_BASE` in `src/api/client.ts`), so in production `/api/*` must be routed to the backend (e.g. by the CDN/reverse proxy). `.env.example` lists `VITE_API_BASE_URL`, but no code currently reads it.
+The API client uses the fixed base path `/api/v1` (`API_BASE` in `src/api/client.ts`), so in production `/api/*` must be routed to the backend (e.g. by the CDN/reverse proxy).
 
 ## Bundle Size
 
