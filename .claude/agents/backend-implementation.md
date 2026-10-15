@@ -25,7 +25,7 @@ Implements Python backend features using FastAPI, OpenAPI specifications, and Po
 - SQLAlchemy ORM with PostgreSQL
 - Async database operations with asyncpg
 - Alembic migrations
-- pip + `venv/` for dependency and environment management (`requirements.txt`, `requirements-test.txt`)
+- pip + `venv/` for dependency and environment management (`requirements.txt`, `requirements-dev.txt`)
 
 ## Key Patterns to Follow
 
@@ -120,7 +120,7 @@ Before considering work complete:
 ## Commands
 
 ```bash
-venv/bin/pip install -r requirements-test.txt     # Install dependencies (incl. test deps)
+venv/bin/pip install -r requirements-dev.txt     # Install dependencies (incl. test deps)
 venv/bin/pytest <path> -x                         # Run tests, stop on first failure
 venv/bin/alembic revision --autogenerate -m "msg" # Create migration from model changes (files go in alembic/versions/)
 venv/bin/alembic upgrade head                     # Apply migrations

@@ -167,7 +167,7 @@ Specialized agents handle different aspects of development. See `.claude/agents/
 SpecOps is the planning and guardrail layer; Claude Code is the execution layer. SpecOps is installed pinned (CI pins commit `9745c40` of `tyevans/spec-ops`); the local CLI is `spec-ops` on PATH.
 
 1. **Plan.** `spec-ops prd create` -> `spec-ops story create` -> write tasks into `docs/project/backlog/proposed/`. Review and edit everything generated: `spec-ops prd decompose` produces generic boilerplate.
-2. **Pick work.** `spec-ops queue next` shows the next ready task from `docs/project/backlog/refined/`. `spec-ops curate` refills the refined buffer (target 10). Curation's dependency-audit gate reads `docs/project/compliance/licenses.json`: add an entry there whenever a dependency is added to `requirements.txt`, otherwise curate silently promotes nothing.
+2. **Pick work.** `spec-ops queue next` shows the next ready task from `docs/project/backlog/refined/`. `spec-ops curate` refills the refined buffer (target 10). Curation's dependency-audit gate reads `docs/project/compliance/licenses.json`: add an entry there whenever a dependency is added, otherwise curate silently promotes nothing. Dependencies are pinned: edit `pyproject.toml` (the only hand-edited source), regenerate with `uv pip compile pyproject.toml --python-version 3.12 --universal -o requirements.txt` and `uv pip compile pyproject.toml --extra dev --python-version 3.12 --universal -o requirements-dev.txt`, then add the licence entry. CI fails if the pinned files are stale.
 3. **Execute.** One task per feature branch `feat/task-<id>`, in a git worktree under `.worktrees/` (gitignored):
 
    ```bash

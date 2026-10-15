@@ -103,7 +103,7 @@ movie-ranking/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
-└── requirements-test.txt
+└── requirements-dev.txt
 ```
 
 ## Backend Development
@@ -343,7 +343,7 @@ curl http://localhost:8000/api/v1/rankings/ \
 
 ```bash
 # Backend (from the repo root, using the local venv; tests use SQLite via aiosqlite)
-venv/bin/pip install -r requirements-test.txt
+venv/bin/pip install -r requirements-dev.txt
 venv/bin/pytest
 
 # Frontend

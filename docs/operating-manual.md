@@ -21,7 +21,7 @@ These rules are non-negotiable. Autonomous agents and human contributors must fo
    - Shared backlog files (`docs/project/backlog/`) must never be modified directly on feature branches; transitions are synchronized upon integration.
    - Governed by ADR-0005.
 4. **Project Toolchain**:
-   - Backend Python dependencies live in `requirements.txt` / `requirements-test.txt` and run in the repo-root `venv/`. Backend tests: `venv/bin/pytest` (the `specops.toml` preflight). Frontend (`frontend/`) uses npm. SpecOps is the standalone `spec-ops` CLI (there is no UV workspace or `uv.lock`).
+   - Backend Python dependencies live in `requirements.txt` / `requirements-dev.txt` and run in the repo-root `venv/`. Backend tests: `venv/bin/pytest` (the `specops.toml` preflight). Frontend (`frontend/`) uses npm. SpecOps is the standalone `spec-ops` CLI (there is no UV workspace or `uv.lock`).
 5. **Specification as Code (PMaC)**:
    - Every requirement, persona, architectural decision, and work item lives under `docs/project/` as Markdown with YAML frontmatter.
    - Governed by ADR-0001.

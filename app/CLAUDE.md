@@ -1177,7 +1177,7 @@ venv/bin/pytest tests/test_rankings.py::TestCreateRanking
 venv/bin/pytest tests/test_rankings.py::TestCreateRanking::test_create_ranking_success
 ```
 
-Install test dependencies with `pip install -r requirements-test.txt`. Coverage (`--cov=app`) needs `pytest-cov`, which is not in `requirements-test.txt`.
+Install test dependencies with `pip install -r requirements-dev.txt`. Coverage (`--cov=app`) needs `pytest-cov`, which is not in `requirements-dev.txt`.
 
 ---
 
