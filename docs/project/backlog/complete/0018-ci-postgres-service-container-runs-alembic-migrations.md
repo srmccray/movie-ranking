@@ -2,7 +2,7 @@
 id: 0018
 title: 'ci.yml: add a PostgreSQL job that runs alembic upgrade head and a downgrade/upgrade
   round trip'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0009
 governing_adrs:

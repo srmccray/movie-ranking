@@ -2,7 +2,7 @@
 id: '0023'
 title: 'app/routers/movies.py: make POST /api/v1/movies/ get-or-create by tmdb_id
   and share the logic with the import'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0017
 governing_adrs:

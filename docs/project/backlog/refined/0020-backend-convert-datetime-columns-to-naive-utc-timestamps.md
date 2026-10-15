@@ -1,7 +1,12 @@
 ---
 id: '0020'
-title: 'alembic + app/models: convert all datetime columns to TIMESTAMP WITHOUT TIME ZONE (naive UTC)'
-status: Proposed
+title: 'alembic + app/models: convert all datetime columns to TIMESTAMP WITHOUT TIME
+  ZONE (naive UTC)'
+status: Refined
+dependencies:
+- TASK-0011
+- TASK-0018
+- TASK-0019
 governing_adrs:
 - ADR-0010
 - ADR-0007
@@ -9,12 +14,7 @@ governing_prds:
 - PRD-0006
 governing_stories:
 - US-0007
-dependencies:
-- TASK-0011
-- TASK-0018
-- TASK-0019
 target_bc: backend
-priority: P1
 ---
 
 # TASK-0020: alembic + app/models: convert all datetime columns to TIMESTAMP WITHOUT TIME ZONE (naive UTC)

@@ -2,7 +2,7 @@
 id: '0046'
 title: 'app/routers/google_auth/login.py: set the session cookie on the Google callback
   redirect and gate the legacy ?token= parameter'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0045
 - TASK-0028

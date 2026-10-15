@@ -1,18 +1,18 @@
 ---
 id: '0044'
-title: 'frontend/src/types/index.ts: replace hand-written API types with aliases to the generated schema'
-status: Proposed
+title: 'frontend/src/types/index.ts: replace hand-written API types with aliases to
+  the generated schema'
+status: Refined
+dependencies:
+- TASK-0043
+- TASK-0017
 governing_adrs:
 - ADR-0012
 governing_prds:
 - PRD-0006
 governing_stories:
 - US-0006
-dependencies:
-- TASK-0043
-- TASK-0017
 target_bc: frontend
-priority: P3
 ---
 
 # TASK-0044: frontend/src/types/index.ts: replace hand-written API types with aliases to the generated schema

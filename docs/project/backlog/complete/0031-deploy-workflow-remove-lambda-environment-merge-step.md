@@ -2,7 +2,7 @@
 id: '0031'
 title: 'deploy.yml + infra stack: remove the ''Update Lambda environment variables''
   step and the UpdateFunctionConfiguration permission'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0030
 governing_adrs:

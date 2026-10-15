@@ -2,7 +2,7 @@
 id: 0039
 title: 'infra/lib/movie-ranking-stack.ts: set log retention, enable X-Ray, and add
   CloudWatch alarms with SNS email'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0037
 - TASK-0030
