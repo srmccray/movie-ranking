@@ -1,7 +1,7 @@
 ---
 id: REFACTOR-tests-test_movies
 title: 'tests/test_movies.py: split into two test modules under 500 lines'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:
