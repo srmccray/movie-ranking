@@ -171,7 +171,7 @@ const deployRole = new iam.Role(this, "GitHubActionsDeployRole", {
 The role is named `movie-ranking-deploy` and has permissions for:
 - S3: `PutObject`, `DeleteObject`, `ListBucket`, `GetObject` on the frontend bucket
 - CloudFront: `CreateInvalidation` on this distribution
-- Lambda: `UpdateFunctionCode`, `UpdateFunctionConfiguration`, `GetFunction`, `GetFunctionConfiguration` on the API function
+- Lambda: `UpdateFunctionCode`, `GetFunction`, `GetFunctionConfiguration` on the API function
 
 It has **no CloudFormation/CDK permissions**: the GitHub Actions workflow does not run `cdk deploy`. Infrastructure changes are deployed manually (see below).
 
@@ -312,8 +312,7 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`) runs on push to `ma
    - Zip to lambda.zip
 6. Deploy Lambda:
    - update-function-code (--publish)
-   - Wait for update to complete
-   - Merge secrets into existing environment variables
+   - Wait for update to complete (the workflow never changes function configuration; secrets come from SSM)
 7. Invalidate CloudFront cache (/*)
 ```
 
@@ -327,9 +326,6 @@ The code zip built by CI replaces the CDK-bundled code asset; the CDK `code:` as
 | `S3_BUCKET_NAME` | Frontend bucket name |
 | `CLOUDFRONT_DISTRIBUTION_ID` | Distribution ID for invalidation |
 | `LAMBDA_FUNCTION_NAME` | Lambda function name |
-| `SECRET_KEY` | JWT signing secret |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 
 ## Stack Configuration
 
@@ -377,7 +373,7 @@ env: {
 
 ### 2. Lambda Secrets
 
-The CDK stack defines no secret environment variables; see [Secrets](#secrets). `cdk deploy` does not reset application configuration. Until the workflow's env-merge step is removed (TASK-0031), a deploy workflow run still re-adds `SECRET_KEY` and `GOOGLE_*` to the environment, where they win over SSM.
+The CDK stack defines no secret environment variables; see [Secrets](#secrets). `cdk deploy` does not reset application configuration. The deploy workflow does not touch function configuration, so the five secrets come only from SSM.
 
 ### 3. CORS Handling
 
