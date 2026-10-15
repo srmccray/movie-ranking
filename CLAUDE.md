@@ -186,7 +186,7 @@ SpecOps is the planning and guardrail layer; Claude Code is the execution layer.
 | `spec-ops worker` (plain or `--drain`) | Its merge step squash-merges into local `main` with no push or PR, and its preflight uses relative paths that fail in worktrees |
 | `spec-ops scaffold agents` | Overwrites the project-specific fixes in `AGENTS.md` |
 
-Safe to run: `spec-ops queue next`, `worker --dry-run`, `health`, `trace`, `prd lint`, `story trace`, `curate`.
+Read-only: `spec-ops queue next`, `worker --dry-run` (creates and removes a temporary worktree), `health`, `trace`, `prd lint`, `story trace`, `curate --dry-run`. `spec-ops curate` without `--dry-run` writes to disk: it promotes tasks from `proposed/` to `refined/`.
 
 ## Git Conventions
 
