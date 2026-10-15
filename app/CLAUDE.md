@@ -1319,6 +1319,15 @@ from app.utils.security import (
 
 ---
 
+## Logging and Request IDs
+
+Logging is configured in `app/observability/` (called from `app/main.py`; tests install the same behavior via `install_observability(app)` in `tests/conftest.py`).
+
+- `configure_logging()` emits one JSON object per line: `timestamp`, `level`, `logger`, `message`, `request_id`, plus any `extra={...}` fields. Existing `logger.info(f"...")` calls keep working.
+- `RequestIdMiddleware` accepts a valid inbound `X-Request-ID` (8-64 chars of `A-Za-z0-9._-`), else API Gateway's request id, else generates one. It returns `X-Request-ID` on every response and logs one `app.access` record per request: `method`, `path` (never the query string), `status`, `duration_ms`, and `user_id` when `get_current_user` ran.
+- Unhandled exceptions are logged once as `unhandled_exception` (with `exception_type` and traceback) and return `{"detail": "Internal server error"}` with `X-Request-ID`. `HTTPException` and validation errors use FastAPI's defaults.
+- Never log request bodies, `Authorization`/`Cookie` headers, tokens, or URLs with query strings.
+
 ## Important Gotchas
 
 > **Note:** For trailing slashes, datetime handling, and HTTP status codes, see the [root CLAUDE.md](../CLAUDE.md). This section covers backend-specific gotchas.

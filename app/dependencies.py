@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import DbSession
 from app.models.user import User
+from app.observability.logging_config import bind_user_id
 from app.utils.security import TokenError, decode_token
 
 # OAuth2 scheme for bearer token authentication
@@ -51,6 +52,7 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
 
+    bind_user_id(user.id)
     return user
 
 

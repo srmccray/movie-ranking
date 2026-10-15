@@ -36,6 +36,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from app.database import Base, get_db
+from app.observability import install_observability
 
 
 # Register UUID type adapter for SQLite
@@ -150,6 +151,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 
     # Create test app
     test_app = FastAPI()
+    install_observability(test_app)
     test_app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
