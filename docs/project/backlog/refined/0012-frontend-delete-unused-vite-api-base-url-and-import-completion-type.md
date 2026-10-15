@@ -1,16 +1,15 @@
 ---
 id: '0012'
-title: 'frontend: delete the unused VITE_API_BASE_URL setting and the unused ImportCompletionSummary type'
-status: Proposed
+title: 'frontend: delete the unused VITE_API_BASE_URL setting and the unused ImportCompletionSummary
+  type'
+status: Refined
 governing_adrs:
 - ADR-0002
 governing_prds:
 - PRD-0006
 governing_stories:
 - US-0007
-dependencies: []
 target_bc: frontend
-priority: P3
 ---
 
 # TASK-0012: frontend: delete the unused VITE_API_BASE_URL setting and the unused ImportCompletionSummary type

@@ -1,16 +1,15 @@
 ---
 id: '0014'
-title: 'app/utils/time.py: add one naive-UTC helper module and replace every datetime.utcnow() call and duplicate to_naive_utc'
-status: Proposed
+title: 'app/utils/time.py: add one naive-UTC helper module and replace every datetime.utcnow()
+  call and duplicate to_naive_utc'
+status: Refined
 governing_adrs:
 - ADR-0010
 governing_prds:
 - PRD-0006
 governing_stories:
 - US-0007
-dependencies: []
 target_bc: backend
-priority: P2
 ---
 
 # TASK-0014: app/utils/time.py: add one naive-UTC helper module and replace every datetime.utcnow() call and duplicate to_naive_utc

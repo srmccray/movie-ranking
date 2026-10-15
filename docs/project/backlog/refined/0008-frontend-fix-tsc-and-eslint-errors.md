@@ -1,16 +1,14 @@
 ---
-id: '0008'
+id: 0008
 title: 'frontend: fix all tsc -b errors and eslint problems'
-status: Proposed
+status: Refined
 governing_adrs:
 - ADR-0004
 governing_prds:
 - PRD-0006
 governing_stories:
 - US-0006
-dependencies: []
 target_bc: frontend
-priority: P1
 ---
 
 # TASK-0008: frontend: fix all tsc -b errors and eslint problems

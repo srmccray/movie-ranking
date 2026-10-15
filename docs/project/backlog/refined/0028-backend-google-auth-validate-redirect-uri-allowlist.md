@@ -1,7 +1,7 @@
 ---
-id: '0028'
+id: 0028
 title: 'app/routers/google_auth/login.py: reject redirect_uri values outside an allowlist'
-status: Proposed
+status: Refined
 governing_adrs:
 - ADR-0013
 - ADR-0003
@@ -9,9 +9,7 @@ governing_prds:
 - PRD-0007
 governing_stories:
 - US-0010
-dependencies: []
 target_bc: backend
-priority: P1
 ---
 
 # TASK-0028: app/routers/google_auth/login.py: reject redirect_uri values outside an allowlist

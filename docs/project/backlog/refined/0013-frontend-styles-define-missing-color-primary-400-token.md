@@ -1,16 +1,15 @@
 ---
 id: '0013'
-title: 'frontend/src/styles/variables.css: define the missing --color-primary-400 token'
-status: Proposed
+title: 'frontend/src/styles/variables.css: define the missing --color-primary-400
+  token'
+status: Refined
 governing_adrs:
 - ADR-0002
 governing_prds:
 - PRD-0006
 governing_stories:
 - US-0007
-dependencies: []
 target_bc: frontend
-priority: P2
 ---
 
 # TASK-0013: frontend/src/styles/variables.css: define the missing --color-primary-400 token

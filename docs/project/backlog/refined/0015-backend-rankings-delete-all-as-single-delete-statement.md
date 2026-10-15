@@ -1,16 +1,14 @@
 ---
 id: '0015'
 title: 'app/routers/rankings.py: delete all rankings with a single DELETE statement'
-status: Proposed
+status: Refined
 governing_adrs:
 - ADR-0003
 governing_prds:
 - PRD-0006
 governing_stories:
 - US-0007
-dependencies: []
 target_bc: backend
-priority: P2
 ---
 
 # TASK-0015: app/routers/rankings.py: delete all rankings with a single DELETE statement
