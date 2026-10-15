@@ -1,0 +1,204 @@
+/* Import Search (Manual Movie Search) */
+.import-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.import-search-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.import-search-label {
+  font-size: 0.875rem;
+  color: var(--color-neutral-400);
+}
+
+.import-search-label strong {
+  color: var(--color-neutral-100);
+}
+
+.import-search-input-wrapper {
+  position: relative;
+}
+
+.import-search-input {
+  padding-right: var(--space-10);
+}
+
+.import-search-spinner {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-neutral-400);
+}
+
+.import-search-spinner .spinner {
+  width: 16px;
+  height: 16px;
+}
+
+.import-search-error {
+  font-size: 0.875rem;
+  color: var(--color-error);
+  padding: var(--space-2) 0;
+}
+
+.import-search-no-results {
+  font-size: 0.875rem;
+  color: var(--color-neutral-400);
+  text-align: center;
+  padding: var(--space-4);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.import-search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg-secondary);
+  box-shadow: var(--shadow-lg);
+}
+
+.import-search-result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.import-search-result:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.import-search-result:hover,
+.import-search-result.highlighted {
+  background: var(--gradient-card-hover);
+}
+
+.import-search-result.highlighted {
+  outline: none;
+}
+
+.import-search-result-poster {
+  flex-shrink: 0;
+  width: 40px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background-color: var(--color-bg-tertiary);
+}
+
+.import-search-poster-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.import-search-poster-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-500);
+}
+
+.import-search-poster-placeholder svg {
+  width: 20px;
+  height: 20px;
+}
+
+.import-search-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.import-search-result-title {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-neutral-50);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-search-result-year {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-neutral-400);
+  margin-top: 2px;
+}
+
+/* Search link button in confidence badge area */
+.import-review-search-link {
+  display: inline;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: var(--space-2);
+  font-size: 0.75rem;
+  color: var(--color-primary-500);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.import-review-search-link:hover:not(:disabled) {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+.import-review-search-link:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.import-review-search-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Import Wizard Responsive */
+@media (max-width: 640px) {
+  .import-review-card {
+    flex-direction: column;
+  }
+
+  .import-review-poster {
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+
+  .import-complete-stats {
+    gap: var(--space-4);
+  }
+
+  .import-complete-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .import-search-header {
+    flex-wrap: wrap;
+  }
+
+  .import-review-search-link {
+    display: block;
+    margin-left: 0;
+    margin-top: var(--space-1);
+  }
+}
