@@ -1,7 +1,10 @@
 ---
 id: '0035'
-title: 'infra/lib/movie-ranking-stack.ts: throttle auth routes at API Gateway and cap Lambda concurrency'
-status: Proposed
+title: 'infra/lib/movie-ranking-stack.ts: throttle auth routes at API Gateway and
+  cap Lambda concurrency'
+status: Refined
+dependencies:
+- TASK-0030
 governing_adrs:
 - ADR-0008
 - ADR-0009
@@ -9,10 +12,7 @@ governing_prds:
 - PRD-0007
 governing_stories:
 - US-0010
-dependencies:
-- TASK-0030
 target_bc: infra
-priority: P1
 ---
 
 # TASK-0035: infra/lib/movie-ranking-stack.ts: throttle auth routes at API Gateway and cap Lambda concurrency

@@ -2,7 +2,7 @@
 id: '0045'
 title: 'app/routers/auth.py + app/dependencies.py: issue an httpOnly session cookie
   with CSRF double-submit and add POST /auth/logout/'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0013
 - ADR-0003

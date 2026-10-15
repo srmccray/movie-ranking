@@ -1,7 +1,10 @@
 ---
 id: '0023'
-title: 'app/routers/movies.py: make POST /api/v1/movies/ get-or-create by tmdb_id and share the logic with the import'
-status: Proposed
+title: 'app/routers/movies.py: make POST /api/v1/movies/ get-or-create by tmdb_id
+  and share the logic with the import'
+status: Refined
+dependencies:
+- TASK-0017
 governing_adrs:
 - ADR-0003
 - ADR-0002
@@ -9,10 +12,7 @@ governing_prds:
 - PRD-0006
 governing_stories:
 - US-0007
-dependencies:
-- TASK-0017
 target_bc: backend
-priority: P1
 ---
 
 # TASK-0023: app/routers/movies.py: make POST /api/v1/movies/ get-or-create by tmdb_id and share the logic with the import

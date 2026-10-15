@@ -1,18 +1,18 @@
 ---
-id: '0039'
-title: 'infra/lib/movie-ranking-stack.ts: set log retention, enable X-Ray, and add CloudWatch alarms with SNS email'
-status: Proposed
+id: 0039
+title: 'infra/lib/movie-ranking-stack.ts: set log retention, enable X-Ray, and add
+  CloudWatch alarms with SNS email'
+status: Refined
+dependencies:
+- TASK-0037
+- TASK-0030
 governing_adrs:
 - ADR-0009
 governing_prds:
 - PRD-0007
 governing_stories:
 - US-0009
-dependencies:
-- TASK-0037
-- TASK-0030
 target_bc: infra
-priority: P2
 ---
 
 # TASK-0039: infra/lib/movie-ranking-stack.ts: set log retention, enable X-Ray, and add CloudWatch alarms with SNS email

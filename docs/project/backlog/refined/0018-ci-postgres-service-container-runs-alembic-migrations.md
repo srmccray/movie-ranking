@@ -1,7 +1,10 @@
 ---
-id: '0018'
-title: 'ci.yml: add a PostgreSQL job that runs alembic upgrade head and a downgrade/upgrade round trip'
-status: Proposed
+id: 0018
+title: 'ci.yml: add a PostgreSQL job that runs alembic upgrade head and a downgrade/upgrade
+  round trip'
+status: Refined
+dependencies:
+- TASK-0009
 governing_adrs:
 - ADR-0003
 - ADR-0007
@@ -9,10 +12,7 @@ governing_prds:
 - PRD-0006
 governing_stories:
 - US-0006
-dependencies:
-- TASK-0009
 target_bc: infra
-priority: P1
 ---
 
 # TASK-0018: ci.yml: add a PostgreSQL job that runs alembic upgrade head and a downgrade/upgrade round trip

@@ -2,7 +2,7 @@
 id: '0017'
 title: 'app/routers/import_amazon: share the session lookup and movie-index validation
   in one helper'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0014
 governing_adrs:

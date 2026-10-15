@@ -1,7 +1,11 @@
 ---
 id: '0046'
-title: 'app/routers/google_auth/login.py: set the session cookie on the Google callback redirect and gate the legacy ?token= parameter'
-status: Proposed
+title: 'app/routers/google_auth/login.py: set the session cookie on the Google callback
+  redirect and gate the legacy ?token= parameter'
+status: Refined
+dependencies:
+- TASK-0045
+- TASK-0028
 governing_adrs:
 - ADR-0013
 - ADR-0003
@@ -9,11 +13,7 @@ governing_prds:
 - PRD-0007
 governing_stories:
 - US-0010
-dependencies:
-- TASK-0045
-- TASK-0028
 target_bc: backend
-priority: P1
 ---
 
 # TASK-0046: app/routers/google_auth/login.py: set the session cookie on the Google callback redirect and gate the legacy ?token= parameter

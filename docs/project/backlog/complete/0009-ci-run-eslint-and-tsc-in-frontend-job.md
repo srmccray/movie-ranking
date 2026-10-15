@@ -1,7 +1,7 @@
 ---
 id: 0009
 title: 'ci.yml: run eslint and tsc -b in the Frontend Tests & Build job'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0008
 governing_adrs:
