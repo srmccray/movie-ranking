@@ -1,3 +1,9 @@
+---
+status: Accepted
+amended_by:
+- ADR-0007
+---
+
 # ADR-0003: Blackbox Frontdoor Verification and Zero Backdoor Testing
 
 ## Status
