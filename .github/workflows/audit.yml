@@ -1,0 +1,81 @@
+name: Dependency Audit (movie-ranking)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "requirements*.txt"
+      - "pyproject.toml"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+      - "infra/package.json"
+      - "infra/package-lock.json"
+      - ".github/workflows/audit.yml"
+  push:
+    branches: [main]
+    paths:
+      - "requirements*.txt"
+      - "frontend/package-lock.json"
+      - "infra/package-lock.json"
+      - ".github/workflows/audit.yml"
+  schedule:
+    - cron: "0 9 * * 1" # weekly, Monday 09:00 UTC, surfaces new advisories
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # pip-audit is installed here only; it is not added to requirements.txt.
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      # Ignore list: advisories with no fixed release. Each needs an expiry;
+      # re-evaluate (and remove) on or before that date.
+      #   PYSEC-2026-1325 (ecdsa 0.19.2, transitive of python-jose): no fix; expires 2026-12-31
+      #   CVE-2026-85394  (python-jose 3.5.0): no fix; expires 2026-12-31
+      - name: pip-audit (pinned Python packages)
+        run: |
+          pip-audit -r requirements.txt --strict --no-deps --disable-pip \
+            --ignore-vuln PYSEC-2026-1325 \
+            --ignore-vuln CVE-2026-85394
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20" # keep in sync with ci.yml / deploy.yml
+
+      # NON-BLOCKING until existing high/critical advisories are remediated
+      # (vitest major bump, aws-cdk-lib, transitive deps). Remove
+      # continue-on-error once clean, then make the check required.
+      - name: npm audit (frontend)
+        working-directory: frontend
+        continue-on-error: true
+        run: npm ci && npm audit --audit-level=high
+
+      - name: npm audit (infra)
+        working-directory: infra
+        continue-on-error: true
+        run: npm ci && npm audit --audit-level=high
+
+  license-manifest:
+    name: Licence Manifest Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Install spec-ops
+        run: uv tool install "git+https://github.com/tyevans/spec-ops@9745c40"
+      - name: spec-ops audit dependencies
+        run: spec-ops audit dependencies
