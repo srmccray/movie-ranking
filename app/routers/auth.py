@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 
@@ -11,6 +11,7 @@ from app.dependencies import CurrentUser
 from app.models.user import User
 from app.schemas.token import Token
 from app.schemas.user import UserCreate, UserProfileResponse
+from app.utils.cookies import clear_session_cookies, set_session_cookies
 from app.utils.security import create_access_token, get_password_hash, verify_password
 
 router = APIRouter(tags=["auth"])
@@ -27,7 +28,7 @@ router = APIRouter(tags=["auth"])
         422: {"description": "Validation error"},
     },
 )
-async def register(user_data: UserCreate, db: DbSession) -> Token:
+async def register(user_data: UserCreate, db: DbSession, response: Response) -> Token:
     """Create a new user account and return an access token.
 
     Args:
@@ -64,6 +65,7 @@ async def register(user_data: UserCreate, db: DbSession) -> Token:
     # Generate access token
     access_token = create_access_token(data={"sub": str(new_user.id)})
 
+    set_session_cookies(response, access_token)
     return Token(access_token=access_token)
 
 
@@ -79,6 +81,7 @@ async def register(user_data: UserCreate, db: DbSession) -> Token:
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: DbSession,
+    response: Response,
 ) -> Token:
     """Authenticate user and return an access token.
 
@@ -114,6 +117,7 @@ async def login(
     # Generate access token
     access_token = create_access_token(data={"sub": str(user.id)})
 
+    set_session_cookies(response, access_token)
     return Token(access_token=access_token)
 
 
@@ -148,3 +152,17 @@ async def get_current_user_profile(
         has_password=current_user.hashed_password is not None,
         created_at=current_user.created_at,
     )
+
+
+@router.post(
+    "/logout/",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Log out and clear session cookies",
+    responses={204: {"description": "Session cookies cleared"}},
+)
+async def logout(response: Response) -> None:
+    """Clear the session and CSRF cookies.
+
+    No authentication or CSRF token is required: the endpoint only clears state.
+    """
+    clear_session_cookies(response)
