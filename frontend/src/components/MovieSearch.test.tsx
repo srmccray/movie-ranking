@@ -123,8 +123,6 @@ describe('MovieSearch', () => {
       // Advance past debounce but before response
       await vi.advanceTimersByTimeAsync(310);
 
-      // Loading spinner should be visible during the request
-      const spinner = document.querySelector('.spinner');
       // Note: The spinner may or may not be visible depending on timing
       // This is a weak assertion but tests the structure
       expect(input).toBeInTheDocument();
@@ -158,7 +156,7 @@ describe('MovieSearch', () => {
 
     it('should debounce API calls', async () => {
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
       renderMovieSearch();
 
       const input = screen.getByRole('textbox', { name: /search movies/i });

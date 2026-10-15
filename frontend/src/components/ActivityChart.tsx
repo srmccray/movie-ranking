@@ -12,7 +12,6 @@ interface ActivityChartProps {
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function getActivityLevel(count: number): number {
   if (count === 0) return 0;
@@ -60,7 +59,7 @@ export function ActivityChart({ activity, startDate, endDate }: ActivityChartPro
     const adjustedStart = new Date(start);
     adjustedStart.setDate(adjustedStart.getDate() - adjustedStart.getDay());
 
-    let currentDate = new Date(adjustedStart);
+    const currentDate = new Date(adjustedStart);
     let currentWeek: { date: Date; dateStr: string; count: number; isFuture: boolean }[] = [];
 
     while (currentDate <= end || currentWeek.length > 0) {

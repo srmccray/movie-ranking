@@ -35,7 +35,7 @@ describe('ApiClient', () => {
     it('should send form-urlencoded Content-Type for login', async () => {
       // This test specifically verifies the Content-Type bug fix
       // The login endpoint requires application/x-www-form-urlencoded
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.login(MOCK_USER_EMAIL, MOCK_USER_PASSWORD);
 
@@ -50,7 +50,7 @@ describe('ApiClient', () => {
     });
 
     it('should send username and password as form data', async () => {
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.login(MOCK_USER_EMAIL, MOCK_USER_PASSWORD);
 
@@ -95,7 +95,7 @@ describe('ApiClient', () => {
     });
 
     it('should send JSON Content-Type for register', async () => {
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.register('another@example.com', 'password123');
 
@@ -110,7 +110,7 @@ describe('ApiClient', () => {
     });
 
     it('should send email and password in JSON body', async () => {
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.register('json@example.com', 'password123');
 
@@ -141,7 +141,7 @@ describe('ApiClient', () => {
   describe('setToken', () => {
     it('should set the token for authenticated requests', async () => {
       apiClient.setToken(MOCK_TOKEN);
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.getRankings();
 
@@ -155,7 +155,7 @@ describe('ApiClient', () => {
 
     it('should not include Authorization header when token is null', async () => {
       apiClient.setToken(null);
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       // This will fail because no token, but we're checking the request
       try {
@@ -187,7 +187,7 @@ describe('ApiClient', () => {
     });
 
     it('should send JSON Content-Type for movie creation', async () => {
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.createMovie({ title: 'Another Movie' });
 
@@ -200,7 +200,7 @@ describe('ApiClient', () => {
     });
 
     it('should include trailing slash in URL', async () => {
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.createMovie({ title: 'Slash Movie' });
 
@@ -225,7 +225,7 @@ describe('ApiClient', () => {
     });
 
     it('should include trailing slash in URL', async () => {
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       // Create a movie first to have a valid movie_id
       const movie = await apiClient.createMovie({ title: 'Rating Test Movie' });
@@ -258,7 +258,7 @@ describe('ApiClient', () => {
     });
 
     it('should include trailing slash in URL', async () => {
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.getRankings();
 
@@ -269,7 +269,7 @@ describe('ApiClient', () => {
     });
 
     it('should pass limit and offset parameters', async () => {
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.getRankings(10, 5);
 
