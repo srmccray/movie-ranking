@@ -8,7 +8,6 @@
     "frontend/src/components/MovieSearch.test.tsx": 515,
     "frontend/src/styles/pages/analytics.css": 622,
     "frontend/src/styles/pages/import.css": 619,
-    "tests/test_auth.py": 586,
     "tests/test_google_auth.py": 649,
     "tests/test_import_amazon.py": 1409,
     "tests/test_import_session.py": 625,
