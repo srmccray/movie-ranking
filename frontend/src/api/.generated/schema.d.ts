@@ -866,10 +866,7 @@ export interface components {
         };
         /** Body_upload_amazon_prime_csv_api_v1_import_amazon_prime_upload__post */
         Body_upload_amazon_prime_csv_api_v1_import_amazon_prime_upload__post: {
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
         };
         /**
@@ -1734,6 +1731,10 @@ export interface components {
         };
         /** ValidationError */
         ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
             /** Location */
             loc: (string | number)[];
             /** Message */
