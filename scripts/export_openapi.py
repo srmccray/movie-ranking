@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # Dummy settings so app.main imports; the engine is built but never connects.
-os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://openapi:export@localhost:5432/openapi")  # pragma: allowlist secret
 os.environ.setdefault("SECRET_KEY", "openapi-export-dummy-secret")
 os.environ.setdefault("TMDB_API_KEY", "openapi-export-dummy-key")
 
