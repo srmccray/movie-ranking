@@ -1112,7 +1112,7 @@ npx playwright install chromium   # once per machine
 npm run test:e2e                  # headless; also `npm run test:e2e:ui`
 ```
 
-- Prerequisites: the repo-root `venv` with `requirements-test.txt` installed (provides `aiosqlite`). No Postgres, Docker, TMDB key, or network is needed.
+- Prerequisites: the repo-root `venv` with `requirements-dev.txt` installed (provides `aiosqlite`). No Postgres, Docker, TMDB key, or network is needed.
 - `playwright.config.ts` starts both servers itself: the real FastAPI app on a throwaway SQLite file (`e2e/support/run_backend.py`, port 8100) and Vite on port 3100 proxying `/api` to it (`API_PROXY_TARGET`). It never reuses a running dev server.
 - Naming: one spec per story, `e2e/us-XXXX-<slug>.spec.ts`, `test.describe('US-XXXX: <title>')`, and one `test('Scenario: <name>')` per Gherkin scenario, with `Given/When/Then` comments. Cross-story smoke specs are `e2e/smoke-*.spec.ts`; shared helpers go in `e2e/support/`.
 - ADR-0003 applies: drive the real UI and public API only. Setup is allowed via the UI or session injection (e.g. a token in `localStorage`); no DB access and no mocking of the app's own API. Flows needing TMDB (search, import) are not automated yet.

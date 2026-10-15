@@ -24,7 +24,7 @@ Ensures code quality through comprehensive test coverage. Untested code is legac
 - HTTPX `AsyncClient` against the real FastAPI app (fixtures in `tests/conftest.py`)
 - Tests run on a per-test temporary SQLite database (via aiosqlite), not PostgreSQL; be careful with PostgreSQL-only features such as UUID defaults (see `app/CLAUDE.md`)
 - `unittest.mock` for external services (TMDB, Google OAuth)
-- Installed test deps are listed in `requirements-test.txt`; do not assume Factory Boy, Freezegun, Moto, or pytest-cov are available
+- Installed test deps are listed in `requirements-dev.txt`; do not assume Factory Boy, Freezegun, Moto, or pytest-cov are available
 
 ### Frontend Testing
 - Vitest (globals enabled, jsdom) with React Testing Library and `@testing-library/user-event`

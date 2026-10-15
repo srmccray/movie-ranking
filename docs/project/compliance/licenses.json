@@ -35,6 +35,30 @@
     "python-multipart": {
       "license": "Apache-2.0",
       "source": "installed package metadata (venv)"
+    },
+    "sqlalchemy": {
+      "license": "MIT",
+      "source": "installed package metadata (venv)"
+    },
+    "google-auth": {
+      "license": "Apache-2.0",
+      "source": "installed package metadata (venv)"
+    },
+    "requests": {
+      "license": "Apache-2.0",
+      "source": "installed package metadata (venv)"
+    },
+    "pydantic": {
+      "license": "MIT",
+      "source": "installed package metadata (venv)"
+    },
+    "httpx": {
+      "license": "BSD-3-Clause",
+      "source": "installed package metadata (venv)"
+    },
+    "mangum": {
+      "license": "MIT",
+      "source": "PyPI wheel metadata (mangum 0.22.0)"
     }
   }
 }

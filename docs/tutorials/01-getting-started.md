@@ -15,7 +15,7 @@ Welcome to movie-ranking! This tutorial guides you through setting up your envir
 Backend (from the repository root):
 ```bash
 python3 -m venv venv
-venv/bin/pip install -r requirements-test.txt
+venv/bin/pip install -r requirements-dev.txt
 ```
 
 Frontend:

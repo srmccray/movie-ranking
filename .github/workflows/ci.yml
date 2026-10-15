@@ -49,6 +49,7 @@ jobs:
               - 'tests/**'
               - '**/*.py'
               - 'pyproject.toml'
+              - 'requirements*.txt'
               - 'specops.toml'
               - '.github/workflows/ci.yml'
 
@@ -77,11 +78,20 @@ jobs:
         if: steps.filter.outputs.health == 'true'
         run: spec-ops health
 
+      - name: Verify pinned requirements match pyproject.toml
+        if: steps.filter.outputs.python == 'true'
+        run: |
+          uv pip compile pyproject.toml --python-version 3.12 --universal -o requirements.txt
+          uv pip compile pyproject.toml --extra dev --python-version 3.12 --universal -o requirements-dev.txt
+          git diff --exit-code -- requirements.txt requirements-dev.txt || {
+            echo "::error::requirements*.txt are out of date. Re-run the uv pip compile commands from CLAUDE.md and commit the result."
+            exit 1
+          }
+
       - name: Execute blackbox test suite
         if: steps.filter.outputs.python == 'true'
         run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx aiosqlite boto3
+          pip install -r requirements-dev.txt
           pytest
 
   # Deliberately NOT run here: eslint (9 pre-existing problems), `tsc -b` / `npm run build`
