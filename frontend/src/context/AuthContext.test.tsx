@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthProvider, useAuth } from './AuthContext';
 import { resetMockData, MOCK_TOKEN, MOCK_USER_EMAIL, MOCK_USER_PASSWORD } from '../__tests__/mocks/handlers';
@@ -32,27 +32,6 @@ function TestAuthConsumer() {
         Register
       </button>
       <button onClick={logout}>Logout</button>
-    </div>
-  );
-}
-
-// Test component for error handling
-function TestAuthErrorConsumer() {
-  const { login } = useAuth();
-  const [error, setError] = vi.fn().mockReturnValue(null);
-
-  const handleLogin = async () => {
-    try {
-      await login('bad@example.com', 'wrongpassword');
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
-
-  return (
-    <div>
-      <button onClick={handleLogin}>Login with bad credentials</button>
-      <div data-testid="error">{error || 'no error'}</div>
     </div>
   );
 }

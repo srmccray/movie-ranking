@@ -10,7 +10,7 @@
 
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
-import { afterEach, beforeAll, afterAll, vi, beforeEach } from 'vitest';
+import { afterEach, beforeAll, afterAll, vi } from 'vitest';
 import { server } from './mocks/server';
 
 // Mock localStorage

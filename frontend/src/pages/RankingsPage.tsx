@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Header } from '../components/Header';
 import { MovieCard } from '../components/MovieCard';
 import { EmptyState } from '../components/EmptyState';
@@ -42,9 +42,14 @@ export function RankingsPage() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // fetchRankings changes identity whenever the pagination offset changes, so
+  // the effect reads the latest one through a ref to refetch only on sort change.
+  const fetchRankingsRef = useRef(fetchRankings);
+  fetchRankingsRef.current = fetchRankings;
+
   // Fetch rankings on mount and when sort changes
   useEffect(() => {
-    fetchRankings(true);
+    fetchRankingsRef.current(true);
   }, [sortBy, sortOrder]);
 
   const handleSortChange = useCallback(
