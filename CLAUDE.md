@@ -57,7 +57,7 @@ rated_at = to_naive_utc(payload.rated_at) or utc_now_naive()
 | Code | Usage |
 |------|-------|
 | `200` | Successful update/read |
-| `201` | Successful creation |
+| `201` | Successful creation (`POST /movies/` returns 200 instead when the TMDB id already exists) |
 | `204` | Successful deletion (no content) |
 | `401` | Not authenticated |
 | `403` | Not authorized (wrong user) |

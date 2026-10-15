@@ -32,12 +32,13 @@ app/
     __init__.py
     auth.py            # /register, /login, /me/ (mounted at /api/v1/auth)
     google_auth/       # package: oauth.py (state + Google token helpers), login.py, link.py; routes /google/login/, /google/callback/, /google/link/, /google/link/callback/ (also /api/v1/auth)
-    movies.py          # GET /search/ (TMDB search), POST / (create movie) -- no list/get/update/delete
+    movies.py          # GET /search/ (TMDB search), POST / (get-or-create movie) -- no list/get/update/delete
     rankings.py        # Ranking upsert, paginated list, delete one, delete all
     analytics.py       # /activity/, /genres/, /stats/, /rating-distribution/
     import_amazon/     # package: matching.py, session.py, review.py; /amazon-prime/... CSV import (mounted at /api/v1/import)
   services/
     __init__.py
+    movies.py          # find_movie_by_tmdb_id, create_movie, backfill_missing_metadata (shared by movies and import routers)
     tmdb.py            # TMDBService (async httpx client), search_movies, get_movie_details
     csv_parser.py      # parse_amazon_prime_csv
     import_session.py  # In-memory ImportSessionStore (import_session_store singleton)
@@ -746,7 +747,7 @@ All routes are mounted in `app/main.py` under `/api/v1/...` (plus `GET /health` 
 | `/auth` | `GET /google/login/`, `GET /google/link/` | `GoogleAuthUrlResponse` (`/google/link/` needs auth; 409 if already linked) |
 | `/auth` | `GET /google/callback/`, `GET /google/link/callback/` | See "Google OAuth" below |
 | `/movies` | `GET /search/?q=&year=` | `TMDBSearchResponse` (503 on TMDB rate limit, 500 on other TMDB errors) |
-| `/movies` | `POST /` (201) | `MovieResponse` |
+| `/movies` | `POST /` | `MovieResponse`; get-or-create by `tmdb_id`: 201 on create, 200 when a movie with that `tmdb_id` already exists (NULL metadata back-filled); a null `tmdb_id` always creates. Logic lives in `services/movies.py`, shared with the Amazon import |
 | `/rankings` | `POST /` | `RankingResponse`; 201 on create, 200 when updating an existing ranking; 404 if movie missing |
 | `/rankings` | `GET /?limit=&offset=&sort_by=&sort_order=` | `RankingListResponse`; `sort_by` is `rated_at` (default), `rating`, `title` or `year`; `sort_order` `desc` (default) or `asc`; limit 1-100 (default 20) |
 | `/rankings` | `DELETE /{ranking_id}/` (204; 404/403) | none |
