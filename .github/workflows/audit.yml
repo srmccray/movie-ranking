@@ -77,7 +77,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v7
       - name: Install spec-ops
         run: uv tool install "git+https://github.com/tyevans/spec-ops@9745c40"
       - name: spec-ops audit dependencies
