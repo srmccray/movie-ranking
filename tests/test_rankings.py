@@ -332,3 +332,56 @@ class TestDeleteRanking:
         )
         assert list_response.json()["total"] == 1
         assert list_response.json()["items"][0]["movie"]["title"] == "Second Movie"
+
+
+class TestDeleteAllRankings:
+    """Tests for DELETE /api/v1/rankings/all/ endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_delete_all_removes_only_callers_rankings(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        """Deleting all rankings leaves other users' rankings untouched."""
+        other = await client.post(
+            "/api/v1/auth/register",
+            json={"email": "other@example.com", "password": "otherpassword123"},
+        )
+        other_headers = {"Authorization": f"Bearer {other.json()['access_token']}"}
+
+        movie_ids = []
+        for i in range(3):
+            movie = await client.post(
+                "/api/v1/movies/",
+                json={"title": f"Delete All Movie {i}", "year": 2000 + i},
+                headers=auth_headers,
+            )
+            movie_ids.append(movie.json()["id"])
+
+        for movie_id in movie_ids:
+            created = await client.post(
+                "/api/v1/rankings/",
+                json={"movie_id": movie_id, "rating": 4},
+                headers=auth_headers,
+            )
+            assert created.status_code == 201
+        for movie_id in movie_ids[:2]:
+            created = await client.post(
+                "/api/v1/rankings/",
+                json={"movie_id": movie_id, "rating": 3},
+                headers=other_headers,
+            )
+            assert created.status_code == 201
+
+        response = await client.delete("/api/v1/rankings/all/", headers=auth_headers)
+        assert response.status_code == 204
+
+        mine = await client.get("/api/v1/rankings/", headers=auth_headers)
+        assert mine.json()["total"] == 0
+        theirs = await client.get("/api/v1/rankings/", headers=other_headers)
+        assert theirs.json()["total"] == 2
+
+    @pytest.mark.asyncio
+    async def test_delete_all_requires_auth(self, client: AsyncClient):
+        """Unauthenticated delete-all is rejected."""
+        response = await client.delete("/api/v1/rankings/all/")
+        assert response.status_code == 401
