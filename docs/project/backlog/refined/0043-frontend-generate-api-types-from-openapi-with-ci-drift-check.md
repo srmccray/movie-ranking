@@ -1,7 +1,11 @@
 ---
 id: '0043'
-title: 'frontend: generate API types with openapi-typescript and fail CI when they drift from the backend'
-status: Proposed
+title: 'frontend: generate API types with openapi-typescript and fail CI when they
+  drift from the backend'
+status: Refined
+dependencies:
+- TASK-0042
+- TASK-0009
 governing_adrs:
 - ADR-0012
 - ADR-0002
@@ -9,11 +13,7 @@ governing_prds:
 - PRD-0006
 governing_stories:
 - US-0006
-dependencies:
-- TASK-0042
-- TASK-0009
 target_bc: frontend
-priority: P2
 ---
 
 # TASK-0043: frontend: generate API types with openapi-typescript and fail CI when they drift from the backend

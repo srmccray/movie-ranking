@@ -2,7 +2,7 @@
 id: '0040'
 title: 'requirements.txt: pin Python dependencies from a single source and complete
   docs/project/compliance/licenses.json'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0009
 - ADR-0001

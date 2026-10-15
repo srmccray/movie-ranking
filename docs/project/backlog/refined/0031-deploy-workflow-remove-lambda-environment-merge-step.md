@@ -1,7 +1,10 @@
 ---
 id: '0031'
-title: 'deploy.yml + infra stack: remove the ''Update Lambda environment variables'' step and the UpdateFunctionConfiguration permission'
-status: Proposed
+title: 'deploy.yml + infra stack: remove the ''Update Lambda environment variables''
+  step and the UpdateFunctionConfiguration permission'
+status: Refined
+dependencies:
+- TASK-0030
 governing_adrs:
 - ADR-0008
 - ADR-0009
@@ -9,10 +12,7 @@ governing_prds:
 - PRD-0007
 governing_stories:
 - US-0009
-dependencies:
-- TASK-0030
 target_bc: infra
-priority: P1
 ---
 
 # TASK-0031: deploy.yml + infra stack: remove the 'Update Lambda environment variables' step and the UpdateFunctionConfiguration permission

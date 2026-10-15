@@ -2,7 +2,7 @@
 id: '0030'
 title: 'infra/lib/movie-ranking-stack.ts: grant the Lambda SSM read access and remove
   placeholder secret environment variables'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0029
 governing_adrs:

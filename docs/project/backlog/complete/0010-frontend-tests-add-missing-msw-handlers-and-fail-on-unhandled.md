@@ -2,7 +2,7 @@
 id: '0010'
 title: 'frontend/src/__tests__/mocks: add missing MSW handlers and fail tests on unhandled
   requests'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0008
 governing_adrs:

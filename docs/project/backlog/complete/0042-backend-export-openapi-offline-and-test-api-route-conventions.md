@@ -2,7 +2,7 @@
 id: '0042'
 title: 'scripts/export_openapi.py + tests: export the OpenAPI schema offline and test
   trailing-slash and response_model conventions'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0012
 - ADR-0003

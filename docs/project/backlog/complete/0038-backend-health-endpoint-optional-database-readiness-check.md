@@ -2,7 +2,7 @@
 id: 0038
 title: 'app/main.py: GET /health?deep=true checks the database and returns 503 when
   it is unreachable'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0037
 governing_adrs:
