@@ -2,9 +2,6 @@
   "version": 1,
   "files": {
     "app/routers/google_auth.py": 706,
-    "app/routers/import_amazon.py": 765,
-    "tests/test_import_amazon.py": 1409,
-    "tests/test_import_session.py": 625,
-    "tests/test_movies.py": 608
+    "app/routers/import_amazon.py": 765
   }
 }

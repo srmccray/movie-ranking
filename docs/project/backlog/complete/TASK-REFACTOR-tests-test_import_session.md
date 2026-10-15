@@ -1,7 +1,7 @@
 ---
 id: REFACTOR-tests-test_import_session
 title: 'tests/test_import_session.py: split into two test modules under 500 lines'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:

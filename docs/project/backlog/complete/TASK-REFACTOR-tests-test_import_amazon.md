@@ -2,7 +2,7 @@
 id: REFACTOR-tests-test_import_amazon
 title: 'tests/test_import_amazon.py: split into several test modules plus a helper
   module'
-status: Refined
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:
