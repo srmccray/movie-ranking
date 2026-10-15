@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.movie import MovieBrief
+from app.schemas.types import UTCDatetime
 
 
 class RankingCreate(BaseModel):
@@ -40,9 +41,9 @@ class RankingResponse(BaseModel):
     id: UUID
     movie_id: UUID
     rating: int
-    rated_at: datetime
-    created_at: datetime
-    updated_at: datetime
+    rated_at: UTCDatetime
+    created_at: UTCDatetime
+    updated_at: UTCDatetime
 
 
 class RankingWithMovie(BaseModel):
@@ -63,9 +64,9 @@ class RankingWithMovie(BaseModel):
 
     id: UUID
     rating: int
-    rated_at: datetime
-    created_at: datetime
-    updated_at: datetime
+    rated_at: UTCDatetime
+    created_at: UTCDatetime
+    updated_at: UTCDatetime
     movie: MovieBrief
 
 
