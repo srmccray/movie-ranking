@@ -1,18 +1,22 @@
 """Analytics router for user activity and insights."""
 
-from collections import defaultdict
 from datetime import date, datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Query
 from sqlalchemy import func, select, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
+from app.constants.genres import genre_name
 from app.database import DbSession
 from app.dependencies import CurrentUser
 from app.models.movie import Movie
 from app.models.ranking import Ranking
+from app.services.analytics_genres import (
+    fetch_year_rankings,
+    primary_genre_counts,
+    rolling_year_window,
+)
 from app.schemas.analytics import (
     ActivityDay,
     ActivityResponse,
@@ -24,30 +28,6 @@ from app.schemas.analytics import (
 )
 
 router = APIRouter(tags=["analytics"])
-
-# TMDB genre ID to name mapping
-GENRE_MAP: dict[int, str] = {
-    28: "Action",
-    12: "Adventure",
-    16: "Animation",
-    35: "Comedy",
-    80: "Crime",
-    99: "Documentary",
-    18: "Drama",
-    10751: "Family",
-    14: "Fantasy",
-    36: "History",
-    27: "Horror",
-    10402: "Music",
-    9648: "Mystery",
-    10749: "Romance",
-    878: "Sci-Fi",
-    10770: "TV Movie",
-    53: "Thriller",
-    10752: "War",
-    37: "Western",
-}
-
 
 @router.get(
     "/activity/",
@@ -144,46 +124,21 @@ async def get_genres(
     Returns:
         GenreResponse with genre statistics sorted by count.
     """
-    today = date.today()
-
-    # Rolling year: from 1 year ago to today
-    start_date = date(today.year - 1, today.month, 1)
-    end_date = today
-
-    # Query rankings with movies for the year
-    result = await db.execute(
-        select(Ranking)
-        .options(joinedload(Ranking.movie))
-        .where(
-            Ranking.user_id == current_user.id,
-            cast(Ranking.rated_at, Date) >= start_date,
-            cast(Ranking.rated_at, Date) <= end_date,
-        )
-    )
-    rankings = result.scalars().unique().all()
-
-    # Aggregate by primary genre (first genre in list, most relevant per TMDB)
-    genre_counts: dict[int, int] = defaultdict(int)
-    genre_ratings: dict[int, list[int]] = defaultdict(list)
-
-    for ranking in rankings:
-        if ranking.movie and ranking.movie.genre_ids:
-            # Use only the first/primary genre
-            genre_id = ranking.movie.genre_ids[0]
-            genre_counts[genre_id] += 1
-            genre_ratings[genre_id].append(ranking.rating)
+    start_date, end_date = rolling_year_window(date.today())
+    rankings = await fetch_year_rankings(db, current_user.id, start_date, end_date)
+    genre_counts, genre_ratings = primary_genre_counts(rankings)
 
     # Build genre stats
     genres: list[GenreStats] = []
     for genre_id, count in genre_counts.items():
-        genre_name = GENRE_MAP.get(genre_id, f"Unknown ({genre_id})")
+        name = genre_name(genre_id)
         ratings = genre_ratings[genre_id]
         avg_rating = sum(ratings) / len(ratings) if ratings else 0.0
 
         genres.append(
             GenreStats(
                 genre_id=genre_id,
-                genre_name=genre_name,
+                genre_name=name,
                 count=count,
                 average_rating=round(avg_rating, 1),
             )
@@ -264,32 +219,9 @@ async def _get_top_genre(db: AsyncSession, user_id) -> str | None:
     Returns:
         The genre name string, or None if the user has no ratings in the period.
     """
-    today = date.today()
-    start_date = date(today.year - 1, today.month, 1)
-    end_date = today
-
-    # Query rankings with movies for the rolling year
-    result = await db.execute(
-        select(Ranking)
-        .options(joinedload(Ranking.movie))
-        .where(
-            Ranking.user_id == user_id,
-            cast(Ranking.rated_at, Date) >= start_date,
-            cast(Ranking.rated_at, Date) <= end_date,
-        )
-    )
-    rankings = result.scalars().unique().all()
-
-    if not rankings:
-        return None
-
-    # Count by primary genre (first genre in list)
-    genre_counts: dict[int, int] = defaultdict(int)
-
-    for ranking in rankings:
-        if ranking.movie and ranking.movie.genre_ids:
-            genre_id = ranking.movie.genre_ids[0]
-            genre_counts[genre_id] += 1
+    start_date, end_date = rolling_year_window(date.today())
+    rankings = await fetch_year_rankings(db, user_id, start_date, end_date)
+    genre_counts, _ = primary_genre_counts(rankings)
 
     if not genre_counts:
         return None
@@ -301,8 +233,7 @@ async def _get_top_genre(db: AsyncSession, user_id) -> str | None:
     top_genres_with_names = []
     for genre_id, count in genre_counts.items():
         if count == max_count:
-            genre_name = GENRE_MAP.get(genre_id, f"Unknown ({genre_id})")
-            top_genres_with_names.append(genre_name)
+            top_genres_with_names.append(genre_name(genre_id))
 
     # Sort alphabetically and return first (handles ties)
     top_genres_with_names.sort()
