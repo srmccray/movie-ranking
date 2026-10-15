@@ -42,10 +42,7 @@ installed = ["core", "bdd"]
 version = "0.1.0"
 
 [invariants.file_limits]
-grandfathered = [
-  "app/routers/google_auth.py",
-  "app/routers/import_amazon.py",
-]
+grandfathered = []
 
 [audit.provenance]
 baseline_commit = "1b4a1ec3fdc8d24daf6fe02e8b35080f3ece042f"
