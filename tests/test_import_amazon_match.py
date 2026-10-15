@@ -18,7 +18,7 @@ class TestUpdateMovieMatch:
         """Test updating a movie's TMDB match."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test Movie"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -81,7 +81,7 @@ class TestUpdateMovieMatch:
         """Test updating match on a previously unmatched movie."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Unknown Movie"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -130,7 +130,7 @@ class TestUpdateMovieMatch:
         """Test that updating match persists in session."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test Movie"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -179,7 +179,7 @@ class TestUpdateMovieMatch:
         """Test updating match then adding the movie works correctly."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test Movie"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -256,7 +256,7 @@ class TestUpdateMovieMatch:
         """Test updating match with invalid index returns 404."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test Movie"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -311,7 +311,7 @@ class TestUpdateMovieMatch:
         """Test updating match with missing required fields returns 422."""
         csv_file = create_test_csv([{"Type": "Movie", "Title": "Test Movie"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None

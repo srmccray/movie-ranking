@@ -33,7 +33,7 @@ class TestFullImportFlow:
             ]
         )
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -114,7 +114,7 @@ class TestFullImportFlow:
             ]
         )
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -174,7 +174,7 @@ class TestFullImportFlow:
         # First upload
         csv_file_1 = create_test_csv([{"Type": "Movie", "Title": "First Movie"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None
@@ -194,7 +194,7 @@ class TestFullImportFlow:
         # Second upload (should replace first)
         csv_file_2 = create_test_csv([{"Type": "Movie", "Title": "Second Movie"}])
 
-        with patch("app.routers.import_amazon.TMDBService") as mock_tmdb_class:
+        with patch("app.routers.import_amazon.matching.TMDBService") as mock_tmdb_class:
             mock_instance = AsyncMock()
             mock_instance.__aenter__.return_value = mock_instance
             mock_instance.__aexit__.return_value = None

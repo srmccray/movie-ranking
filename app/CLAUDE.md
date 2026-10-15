@@ -36,7 +36,7 @@ app/
     movies.py          # GET /search/ (TMDB search), POST / (create movie) -- no list/get/update/delete
     rankings.py        # Ranking upsert, paginated list, delete one, delete all
     analytics.py       # /activity/, /genres/, /stats/, /rating-distribution/
-    import_amazon.py   # /amazon-prime/... CSV import workflow (mounted at /api/v1/import)
+    import_amazon/     # package: matching.py, session.py, review.py; /amazon-prime/... CSV import (mounted at /api/v1/import)
   services/
     __init__.py
     tmdb.py            # TMDBService (async httpx client), search_movies, get_movie_details
@@ -776,7 +776,7 @@ All four endpoints are `GET`, take no query parameters, and are scoped to the cu
 
 `TMDBService` is an async context manager over `httpx` (10s timeout) configured by `TMDB_API_KEY` (required), `TMDB_BASE_URL`, `TMDB_IMAGE_BASE_URL`. Use `async with TMDBService() as service: await service.search_movies(query, year)`; module-level `search_movies` and `get_movie_details` helpers also exist. Errors: `TMDBServiceError` (base), `TMDBRateLimitError`, `TMDBAPIError`; routers map them to HTTP 503/500. Tests must mock TMDB rather than call it.
 
-### Amazon Prime Import (`routers/import_amazon.py`)
+### Amazon Prime Import (`routers/import_amazon/`)
 
 Multi-step workflow mounted at `/api/v1/import`; all routes require auth:
 
@@ -1240,7 +1240,7 @@ The database stores naive UTC datetimes. Always convert timezone-aware input:
 ```python
 from datetime import datetime, timezone
 
-# Defined locally in app/routers/rankings.py and app/routers/import_amazon.py
+# Defined locally in app/routers/rankings.py and app/routers/import_amazon/review.py
 # (there is no shared helper module yet)
 def to_naive_utc(dt: datetime | None) -> datetime | None:
     """Convert a datetime to naive UTC datetime for database storage."""
