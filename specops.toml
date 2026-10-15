@@ -45,12 +45,7 @@ version = "0.1.0"
 grandfathered = [
   "app/routers/google_auth.py",
   "app/routers/import_amazon.py",
-  "frontend/src/__tests__/mocks/handlers.ts",
   "frontend/src/components/ImportReview.tsx",
-  "frontend/src/components/MovieSearch.test.tsx",
-  "frontend/src/styles/pages/analytics.css",
-  "frontend/src/styles/pages/import.css",
-  "tests/test_google_auth.py",
   "tests/test_import_amazon.py",
   "tests/test_import_session.py",
   "tests/test_movies.py",
