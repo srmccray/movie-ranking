@@ -108,14 +108,26 @@ export class MovieRankingStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       architecture: lambda.Architecture.ARM_64, // Cost savings: ~20% cheaper than x86
       environment: {
-        // Placeholder values - set actual values after deployment via AWS Console or CLI
-        DATABASE_URL: "postgresql+asyncpg://user:pass@host:5432/dbname",
-        SECRET_KEY: "placeholder-replace-after-deployment",
-        TMDB_API_KEY: "placeholder-replace-after-deployment",
+        // Non-secret configuration only (ADR-0008). Secrets live in SSM
+        // Parameter Store under SSM_PARAMETER_PREFIX and are read by the app.
         CORS_ORIGIN: `https://${domainName}`,
+        SSM_PARAMETER_PREFIX: "/movie-ranking/prod/",
+        GOOGLE_REDIRECT_URI: `https://${domainName}/api/v1/auth/google/callback/`,
       },
       description: "Movie Ranking API - FastAPI backend via Mangum",
     });
+
+    // Read access to application secrets (SecureString, default aws/ssm key).
+    // Parameters are created out-of-band, never by CDK (ADR-0008).
+    this.lambdaFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["ssm:GetParametersByPath", "ssm:GetParameters"],
+        resources: [
+          `arn:aws:ssm:${this.region}:${this.account}:parameter/movie-ranking/prod`,
+          `arn:aws:ssm:${this.region}:${this.account}:parameter/movie-ranking/prod/*`,
+        ],
+      })
+    );
 
     // ==========================================================================
     // API Gateway HTTP API
