@@ -35,6 +35,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
+from app.config import settings
 from app.database import Base, get_db
 from app.observability import install_observability
 
@@ -65,6 +66,15 @@ class SQLiteUUID(TypeDecorator):
                 return UUID(value)
             return value
         return value
+
+
+@pytest.fixture(autouse=True)
+def _production_like_debug(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Run every test with DEBUG off so a developer's local .env cannot change results.
+
+    Tests that need debug behaviour set it themselves.
+    """
+    monkeypatch.setattr(settings, "DEBUG", False)
 
 
 @pytest.fixture(scope="session")
