@@ -129,7 +129,7 @@ docs/project/                          # SpecOps project-management-as-code tree
 
 ## Agent Workflow
 
-Specialized agents handle different aspects of development. See `.claude/agents/` for agent definitions.
+Specialized agents handle different aspects of development. See `.claude/agents/` for agent definitions. The tiers and agents below govern how a feature is planned and shaped; [How We Work](#how-we-work) governs how a backlog task is executed.
 
 ### Feature Development Tiers
 
@@ -155,6 +155,38 @@ Specialized agents handle different aspects of development. See `.claude/agents/
 | `infrastructure-implementation` | Implements AWS CDK infrastructure |
 | `security-review` | Reviews auth flows and security-sensitive code |
 | `workflow-orchestrator` | Entry point; recommends which agent to invoke next |
+
+## How We Work
+
+SpecOps is the planning and guardrail layer; Claude Code is the execution layer. SpecOps is installed pinned (CI pins commit `9745c40` of `tyevans/spec-ops`); the local CLI is `spec-ops` on PATH.
+
+1. **Plan.** `spec-ops prd create` -> `spec-ops story create` -> write tasks into `docs/project/backlog/proposed/`. Review and edit everything generated: `spec-ops prd decompose` produces generic boilerplate.
+2. **Pick work.** `spec-ops queue next` shows the next ready task from `docs/project/backlog/refined/`. `spec-ops curate` refills the refined buffer (target 10). Curation's dependency-audit gate reads `docs/project/compliance/licenses.json`: add an entry there whenever a dependency is added to `requirements.txt`, otherwise curate silently promotes nothing.
+3. **Execute.** One task per feature branch `feat/task-<id>`, in a git worktree under `.worktrees/` (gitignored):
+
+   ```bash
+   git worktree add .worktrees/task-<id> -b feat/task-<id> main
+   ```
+
+   The worktree has no `venv/` or `node_modules/`. Run backend tests with the absolute path to the primary checkout's `venv/bin/pytest` (for frontend tasks, symlink or install the deps). Follow the task file's blueprint, its Definition of Done, and the governing ADRs. Before opening the PR:
+   - Backend: `venv/bin/pytest`
+   - Frontend (only if frontend code changed): `npm run test:run` in `frontend/`
+   - `spec-ops health` exits 0
+   - `spec-ops trace` if docs or specs changed
+
+   Do not use `git commit --no-verify` to get past the pre-commit hook without the maintainer's approval. Known false positive: the secret scanner can flag npm integrity hashes in `frontend/package-lock.json`.
+4. **PR.** Push the branch and open a PR to `main`. CI (`.github/workflows/ci.yml`: numbering, health, backend tests) must pass before merge. Feature branches must NOT touch `docs/project/backlog/` (ADR-0005).
+5. **Complete.** After the PR merges, from `main` on a short-lived branch (opened as its own small PR), move the task to `docs/project/backlog/complete/` and sync `PRIORITY.md` with `spec-ops queue complete <task-id>`. Then run `spec-ops curate` if the refined buffer dropped. (This step is provisional and will be confirmed after the first real trial.)
+
+### SpecOps Commands to Avoid
+
+| Command | Why |
+|---------|-----|
+| `spec-ops cycle` | Modifies `docs/project/` even with `--dry-run`: decomposes PRDs and creates junk tasks and stories |
+| `spec-ops worker` (plain or `--drain`) | Its merge step squash-merges into local `main` with no push or PR, and its preflight uses relative paths that fail in worktrees |
+| `spec-ops scaffold agents` | Overwrites the project-specific fixes in `AGENTS.md` |
+
+Safe to run: `spec-ops queue next`, `worker --dry-run`, `health`, `trace`, `prd lint`, `story trace`, `curate`.
 
 ## Git Conventions
 
