@@ -7,3 +7,6 @@
 | `PRD-0003` | Auto-Logout on 401 Unauthorized | Shipped | Casey | auth |
 | `PRD-0004` | MovieCard Layout Redesign | Shipped | Casey | rankings |
 | `PRD-0005` | Legacy File Decomposition | Accepted | Alex | core |
+| `PRD-0006` | Platform Foundations | Accepted | Alex | core |
+| `PRD-0007` | Operational Safety | Accepted | Alex | infra |
+| `PRD-0008` | Rewatch History | Shaped | Casey | backend |
