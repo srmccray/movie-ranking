@@ -1,7 +1,7 @@
 ---
 id: REFACTOR-app-routers-google_auth
-title: "app/routers/google_auth.py: split into a package of modules under 500 lines"
-status: Refined
+title: 'app/routers/google_auth.py: split into a package of modules under 500 lines'
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:

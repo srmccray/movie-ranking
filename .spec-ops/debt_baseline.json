@@ -1,7 +1,4 @@
 {
   "version": 1,
-  "files": {
-    "app/routers/google_auth.py": 706,
-    "app/routers/import_amazon.py": 765
-  }
+  "files": {}
 }

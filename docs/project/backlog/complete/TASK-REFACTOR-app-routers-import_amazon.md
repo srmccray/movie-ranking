@@ -1,7 +1,7 @@
 ---
 id: REFACTOR-app-routers-import_amazon
-title: "app/routers/import_amazon.py: split into a package of modules under 500 lines"
-status: Refined
+title: 'app/routers/import_amazon.py: split into a package of modules under 500 lines'
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:
