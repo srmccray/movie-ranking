@@ -1,7 +1,8 @@
 ---
 id: REFACTOR-frontend-styles-pages-analytics
-title: "frontend/src/styles/pages/analytics.css: split into three stylesheets under 500 lines"
-status: Refined
+title: 'frontend/src/styles/pages/analytics.css: split into three stylesheets under
+  500 lines'
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:

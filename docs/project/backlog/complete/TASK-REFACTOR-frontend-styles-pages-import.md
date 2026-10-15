@@ -1,7 +1,8 @@
 ---
 id: REFACTOR-frontend-styles-pages-import
-title: "frontend/src/styles/pages/import.css: split into two stylesheets under 500 lines"
-status: Refined
+title: 'frontend/src/styles/pages/import.css: split into two stylesheets under 500
+  lines'
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:

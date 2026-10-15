@@ -1,7 +1,8 @@
 ---
 id: REFACTOR-frontend-__tests__-mocks-handlers
-title: "frontend/src/__tests__/mocks/handlers.ts: split into a handlers/ directory under 500 lines per file"
-status: Refined
+title: 'frontend/src/__tests__/mocks/handlers.ts: split into a handlers/ directory
+  under 500 lines per file'
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:

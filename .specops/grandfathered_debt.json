@@ -3,12 +3,7 @@
   "files": {
     "app/routers/google_auth.py": 706,
     "app/routers/import_amazon.py": 765,
-    "frontend/src/__tests__/mocks/handlers.ts": 894,
     "frontend/src/components/ImportReview.tsx": 505,
-    "frontend/src/components/MovieSearch.test.tsx": 515,
-    "frontend/src/styles/pages/analytics.css": 622,
-    "frontend/src/styles/pages/import.css": 619,
-    "tests/test_google_auth.py": 649,
     "tests/test_import_amazon.py": 1409,
     "tests/test_import_session.py": 625,
     "tests/test_movies.py": 608

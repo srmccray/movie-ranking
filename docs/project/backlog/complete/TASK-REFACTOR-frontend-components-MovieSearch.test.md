@@ -1,7 +1,8 @@
 ---
 id: REFACTOR-frontend-components-MovieSearch.test
-title: "frontend/src/components/MovieSearch.test.tsx: split into two test files under 500 lines"
-status: Refined
+title: 'frontend/src/components/MovieSearch.test.tsx: split into two test files under
+  500 lines'
+status: Complete
 governing_adrs:
 - ADR-0002
 governing_prds:
