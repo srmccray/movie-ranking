@@ -2,7 +2,7 @@
 id: '0043'
 title: 'frontend: generate API types with openapi-typescript and fail CI when they
   drift from the backend'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0042
 - TASK-0009

@@ -1,17 +1,17 @@
 ---
 id: '0036'
-title: 'infra/lib/movie-ranking-stack.ts: add a CloudFront WAF per-IP rate rule for /api/v1/auth/*'
-status: Proposed
+title: 'infra/lib/movie-ranking-stack.ts: add a CloudFront WAF per-IP rate rule for
+  /api/v1/auth/*'
+status: Refined
+dependencies:
+- TASK-0035
 governing_adrs:
 - ADR-0009
 governing_prds:
 - PRD-0007
 governing_stories:
 - US-0010
-dependencies:
-- TASK-0035
 target_bc: infra
-priority: P2
 ---
 
 # TASK-0036: infra/lib/movie-ranking-stack.ts: add a CloudFront WAF per-IP rate rule for /api/v1/auth/*

@@ -1,7 +1,11 @@
 ---
 id: '0032'
-title: 'deploy.yml: run alembic upgrade head before update-function-code and abort the deploy if it fails'
-status: Proposed
+title: 'deploy.yml: run alembic upgrade head before update-function-code and abort
+  the deploy if it fails'
+status: Refined
+dependencies:
+- TASK-0031
+- TASK-0018
 governing_adrs:
 - ADR-0009
 - ADR-0008
@@ -10,11 +14,7 @@ governing_prds:
 - PRD-0007
 governing_stories:
 - US-0009
-dependencies:
-- TASK-0031
-- TASK-0018
 target_bc: infra
-priority: P1
 ---
 
 # TASK-0032: deploy.yml: run alembic upgrade head before update-function-code and abort the deploy if it fails
