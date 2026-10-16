@@ -102,7 +102,7 @@ export function AddMovieForm({ onSubmit, onCancel }: AddMovieFormProps) {
     setTitle(result.title);
     setYear(result.year ? result.year.toString() : '');
     setTmdbId(result.tmdb_id);
-    setPosterUrl(result.poster_url);
+    setPosterUrl(result.poster_url ?? null);
     // Set new metadata fields from search result
     setGenreIds(result.genre_ids ?? null);
     setVoteAverage(result.vote_average ?? null);
