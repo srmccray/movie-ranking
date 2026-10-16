@@ -54,7 +54,7 @@ frontend/src/
 ├── pages/
 │   ├── LoginPage.tsx           # Login form + Google sign-in
 │   ├── RegisterPage.tsx        # Registration form + Google sign-up
-│   ├── GoogleCallbackPage.tsx  # Receives ?token= from backend after Google OAuth
+│   ├── GoogleCallbackPage.tsx  # Confirms the cookie session (/auth/me/) after Google OAuth
 │   ├── RankingsPage.tsx        # Main rankings display page
 │   ├── AnalyticsPage.tsx       # Stats, activity, genres, rating distribution
 │   └── SettingsPage.tsx        # Profile, Google linking, import wizard, clear rankings
@@ -610,7 +610,7 @@ async login(email: string, password: string): Promise<Token> {
 
 ### 401 Auto-Logout
 
-`ApiClient` holds an `onUnauthorized` callback (`setOnUnauthorized`). Any non-OK response with status 401 invokes it before the error is thrown. `AuthProvider` registers `logout` as that callback, which clears the token, so `ProtectedRoute` then redirects to `/login`. Do not add per-call 401 handling for session expiry. Note this applies to failed login attempts too (a 401 from `/auth/login` also triggers `logout`, which is harmless when already logged out).
+`ApiClient` holds an `onUnauthorized` callback (`setOnUnauthorized`). Any non-OK response with status 401 invokes it before the error is thrown. `AuthProvider` registers a handler that clears the signed-in state and calls `POST /auth/logout/` so the server expires the httpOnly cookies (page scripts cannot remove them); `ProtectedRoute` then redirects to `/login`. The logout request itself never re-triggers the callback. Do not add per-call 401 handling for session expiry. Note this applies to failed login attempts too (a 401 from `/auth/login` also triggers it, which is harmless when already logged out).
 
 ### Handling 204 No Content
 
@@ -913,7 +913,7 @@ Uses Context API via `AuthContext`:
 import { useAuth } from '../context/AuthContext';
 
 function Component() {
-  const { token, isAuthenticated, isLoading, login, logout, register, loginWithToken } = useAuth();
+  const { isAuthenticated, isLoading, login, logout, register, refreshAuth } = useAuth();
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -927,15 +927,17 @@ function Component() {
 }
 ```
 
-- The JWT is stored in `localStorage` under `movie_ranking_token` and mirrored into `apiClient` via `setToken`.
-- `loginWithToken(token)` stores a token obtained out-of-band; `GoogleCallbackPage` uses it.
+- Auth is a cookie session (ADR-0013). The backend sets an httpOnly `session` cookie (unreadable by scripts) and a readable `csrf_token` cookie on login, register and the Google callback. The SPA never stores or sees the JWT: no `localStorage`, no `Authorization` header. Never add token storage.
+- `ApiClient.request` and the multipart upload send `credentials: 'include'` and, on non-GET requests, `X-CSRF-Token` read from the `csrf_token` cookie (`getCsrfToken()`); the backend double-submit check returns 403 without it.
+- `AuthProvider` learns the signed-in state from `GET /auth/me/` on mount (`isLoading` is true until it resolves so `ProtectedRoute` does not flash `/login`). `login`/`register` call the API then refresh via `/auth/me/`; `refreshAuth()` returns whether the session is valid; `logout()` calls `POST /auth/logout/` then clears state.
+- On startup the provider removes the old `movie_ranking_token` key from `localStorage` once (the only allowed mention of it in source).
 - `useAuth()` throws if used outside `AuthProvider`.
 
 ### Google OAuth Flow
 
 1. `LoginPage`/`RegisterPage` render `GoogleSignInButton` (props: `variant: 'signin' | 'signup'`, `loading`, `fullWidth`, plus button attributes). Clicking calls `apiClient.getGoogleAuthUrl()` (passes `redirect_uri=<origin>/auth/google/callback`) and sets `window.location.href` to the returned `authorization_url`.
-2. The backend completes OAuth and redirects to `/auth/google/callback?token=...` (or `?error=...&error_description=...`).
-3. `GoogleCallbackPage` calls `loginWithToken(token)` and navigates to `/` (or shows an error with a link back to `/login`).
+2. The backend completes OAuth and sets the session cookies and redirects to `/auth/google/callback` with no token in the URL (or `?error=...&error_description=...`).
+3. `GoogleCallbackPage` calls `refreshAuth()` (`/auth/me/`) and navigates to `/` (or shows an error with a link back to `/login`).
 4. Account linking for existing users happens on `SettingsPage` via `apiClient.getGoogleLinkUrl()` (redirect back to `/settings`) and `getCurrentUser()` (`UserProfileResponse.auth_provider`: `'local' | 'google' | 'linked'`).
 
 ### Amazon Prime Import Wizard
@@ -1119,7 +1121,7 @@ npm run test:e2e                  # headless; also `npm run test:e2e:ui`
 - Prerequisites: the repo-root `venv` with `requirements-dev.txt` installed (provides `aiosqlite`). No Postgres, Docker, TMDB key, or network is needed.
 - `playwright.config.ts` starts both servers itself: the real FastAPI app on a throwaway SQLite file (`e2e/support/run_backend.py`, port 8100) and Vite on port 3100 proxying `/api` to it (`API_PROXY_TARGET`). It never reuses a running dev server.
 - Naming: one spec per story, `e2e/us-XXXX-<slug>.spec.ts`, `test.describe('US-XXXX: <title>')`, and one `test('Scenario: <name>')` per Gherkin scenario, with `Given/When/Then` comments. Cross-story smoke specs are `e2e/smoke-*.spec.ts`; shared helpers go in `e2e/support/`.
-- ADR-0003 applies: drive the real UI and public API only. Setup is allowed via the UI or session injection (e.g. a token in `localStorage`); no DB access and no mocking of the app's own API. Flows needing TMDB (search, import) are not automated yet.
+- ADR-0003 applies: drive the real UI and public API only. Setup is allowed via the UI or session injection (e.g. `context.addCookies` with an httpOnly `session` cookie); the helpers in `e2e/support/auth.ts` assert the httpOnly session cookie; no DB access and no mocking of the app's own API. Flows needing TMDB (search, import) are not automated yet.
 - Chromium only for now (ADR-0006 also names Firefox and WebKit).
 
 ### Running Tests
@@ -1134,16 +1136,14 @@ Config is in the `test` block of `vite.config.ts`: `jsdom` environment, globals 
 
 ### MSW Mock Handlers
 
-Add handlers in `/frontend/src/__tests__/mocks/handlers.ts` (the `handlers` array for core API; import-wizard routes are in `importHandlers`; `server.ts` combines both). The file also exports helpers such as `resetMockData`, `setTmdbServiceError`, `setUserGoogleLinked`, `addValidOAuthState`, `resetImportSessions`, `createMockImportSession`, and constants `MOCK_TOKEN`, `MOCK_USER_EMAIL`. Note there is currently no handler for `PATCH .../movie/:index/match/`, or for `analytics/activity|genres`, `rankings/all/`; add one if a test needs it.
+Add handlers in `/frontend/src/__tests__/mocks/handlers.ts` (the `handlers` array for core API; import-wizard routes are in `importHandlers`; `server.ts` combines both). The file also exports helpers such as `resetMockData`, `setTmdbServiceError`, `setUserGoogleLinked`, `addValidOAuthState`, `resetImportSessions`, `createMockImportSession`, `setMockSession`/`hasMockSession` (the cookie-session stand-in: Node `fetch` does not carry `document.cookie`, so protected handlers return 401 unless the flag is set, which the login, register and Google callback handlers do), and constants `MOCK_TOKEN`, `MOCK_USER_EMAIL`. Tests that assert the CSRF header set `document.cookie = 'csrf_token=...'` directly. Note there is currently no handler for `PATCH .../movie/:index/match/`, or for `analytics/activity|genres`, `rankings/all/`; add one if a test needs it.
 
 ```tsx
 import { http, HttpResponse } from 'msw';
 
 export const handlers = [
-  http.get('/api/v1/new-items/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.get('/api/v1/new-items/', () => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -1161,9 +1161,7 @@ export const handlers = [
   }),
 
   http.post('/api/v1/new-items/', async ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }

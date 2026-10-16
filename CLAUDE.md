@@ -64,6 +64,13 @@ rated_at = to_naive_utc(payload.rated_at) or utc_now_naive()
 | `404` | Resource not found |
 | `422` | Validation error |
 
+## Authentication
+
+Auth is a cookie session (ADR-0013). Login, register and the Google callback set an httpOnly `session` cookie and a readable `csrf_token` cookie; the JWT never reaches page scripts and is never put in a URL or `localStorage`.
+
+- **Frontend**: `fetch` uses `credentials: 'include'`; unsafe methods send `X-CSRF-Token` from the `csrf_token` cookie; signed-in state comes from `GET /auth/me/`; logout is `POST /auth/logout/`. Any API 401 clears local state and calls logout so the server expires the cookies (US-0003).
+- **Backend**: cookie-authenticated unsafe requests require the double-submit CSRF header (403 otherwise); `Authorization: Bearer` remains accepted for non-browser clients and is CSRF-exempt. The Google callback redirect never carries a token.
+
 ## API Contract Verification
 
 **Critical:** Frontend and backend types must match exactly. Runtime errors occur when they don't.

@@ -1,14 +1,12 @@
 /** Movie handlers: TMDB search, movie creation, and rankings (analytics lives in analytics.ts). */
 
 import { http, HttpResponse } from 'msw';
-import { MOCK_TMDB_RESULTS, movies, rankings, tmdbServiceError } from './state';
+import { MOCK_TMDB_RESULTS, hasMockSession, movies, rankings, tmdbServiceError } from './state';
 
 export const movieHandlers = [
   // GET /api/v1/movies/search/
   http.get('/api/v1/movies/search/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -74,9 +72,7 @@ export const movieHandlers = [
 
   // POST /api/v1/movies/
   http.post('/api/v1/movies/', async ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -113,9 +109,7 @@ export const movieHandlers = [
 
   // POST /api/v1/rankings/
   http.post('/api/v1/rankings/', async ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -154,9 +148,7 @@ export const movieHandlers = [
 
   // GET /api/v1/rankings/
   http.get('/api/v1/rankings/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -190,10 +182,8 @@ export const movieHandlers = [
   }),
 
   // DELETE /api/v1/rankings/all/ (must precede the :rankingId route)
-  http.delete('/api/v1/rankings/all/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.delete('/api/v1/rankings/all/', () => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -205,10 +195,8 @@ export const movieHandlers = [
   }),
 
   // DELETE /api/v1/rankings/:rankingId/
-  http.delete('/api/v1/rankings/:rankingId/', ({ request, params }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.delete('/api/v1/rankings/:rankingId/', ({ params }) => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }

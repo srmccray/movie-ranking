@@ -1,4 +1,4 @@
-"""Google callback sets the session cookies and gates the legacy ?token= redirect."""
+"""Google callback sets the session cookies; the redirect never carries the token."""
 
 from contextlib import contextmanager
 from unittest.mock import AsyncMock, patch
@@ -75,18 +75,9 @@ def _assert_cookies(resp) -> str:
 
 class TestRedirectSetsCookies:
     @pytest.mark.asyncio
-    async def test_redirect_sets_both_cookies_legacy_default(self, client: AsyncClient):
-        resp = await _callback(client, "/auth/google/callback")
-        assert resp.status_code == 302
-        jwt = _assert_cookies(resp)
-        # Default flag is true: legacy token still in the URL, same value as cookie.
-        assert resp.headers["location"] == f"/auth/google/callback?token={jwt}"
-
-    @pytest.mark.asyncio
-    async def test_flag_off_location_has_no_token(
-        self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+    async def test_redirect_sets_both_cookies_and_location_has_no_token(
+        self, client: AsyncClient
     ):
-        monkeypatch.setattr(settings, "GOOGLE_LEGACY_TOKEN_IN_URL", False)
         resp = await _callback(client, "/auth/google/callback")
         assert resp.status_code == 302
         jwt = _assert_cookies(resp)
@@ -97,10 +88,7 @@ class TestRedirectSetsCookies:
         assert jwt not in resp.text
 
     @pytest.mark.asyncio
-    async def test_flag_off_session_cookie_value_is_valid_jwt(
-        self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch
-    ):
-        monkeypatch.setattr(settings, "GOOGLE_LEGACY_TOKEN_IN_URL", False)
+    async def test_session_cookie_value_is_valid_jwt(self, client: AsyncClient):
         resp = await _callback(client, "/settings")
         jwt = _assert_cookies(resp)
         me = await client.get(
@@ -108,6 +96,10 @@ class TestRedirectSetsCookies:
         )
         assert me.status_code == 200
         assert me.json()["email"] == IDINFO["email"]
+
+    @pytest.mark.asyncio
+    async def test_legacy_setting_is_gone(self):
+        assert not hasattr(settings, "GOOGLE_LEGACY_TOKEN_IN_URL")
 
     @pytest.mark.asyncio
     async def test_cookies_not_secure_in_debug(
@@ -131,10 +123,7 @@ class TestJsonPathSetsCookies:
         assert _assert_cookies(resp) == body["access_token"]
 
     @pytest.mark.asyncio
-    async def test_json_unchanged_when_flag_off(
-        self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch
-    ):
-        monkeypatch.setattr(settings, "GOOGLE_LEGACY_TOKEN_IN_URL", False)
+    async def test_json_body_shape(self, client: AsyncClient):
         resp = await _callback(client, None)
         assert resp.status_code == 200
         assert set(resp.json()) == {"access_token", "token_type"}
@@ -146,15 +135,9 @@ class TestRejectedRedirectUri:
     @pytest.mark.parametrize(
         "value", ["https://evil.example/", "//evil.example", "javascript:alert(1)"]
     )
-    @pytest.mark.parametrize("flag", [True, False])
     async def test_login_rejects_and_sets_no_cookies(
-        self,
-        client: AsyncClient,
-        monkeypatch: pytest.MonkeyPatch,
-        value: str,
-        flag: bool,
+        self, client: AsyncClient, value: str
     ):
-        monkeypatch.setattr(settings, "GOOGLE_LEGACY_TOKEN_IN_URL", flag)
         resp = await client.get(LOGIN, params={"redirect_uri": value})
         assert resp.status_code == 400
         assert resp.json()["detail"] == "Invalid redirect_uri"

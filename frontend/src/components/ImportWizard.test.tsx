@@ -8,9 +8,8 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { ImportWizard } from './ImportWizard';
-import { apiClient } from '../api/client';
 import { server } from '../__tests__/mocks/server';
-import { MOCK_TOKEN, createMockImportSession, resetMockData } from '../__tests__/mocks/handlers';
+import { setMockSession, createMockImportSession, resetMockData } from '../__tests__/mocks/handlers';
 import { importSessions } from '../__tests__/mocks/handlers/import';
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -35,7 +34,7 @@ const stat = (label: string) => screen.getByText(label).previousElementSibling;
 describe('ImportWizard', () => {
   beforeEach(() => {
     resetMockData();
-    apiClient.setToken(MOCK_TOKEN);
+    setMockSession(true);
     Element.prototype.scrollIntoView = vi.fn(); // not implemented by jsdom
     // The shared upload handler rejects any request whose Content-Type is not multipart/form-data,
     // but under jsdom fetch() does not serialize FormData as multipart, so it always answers 422.
@@ -57,7 +56,7 @@ describe('ImportWizard', () => {
   });
 
   afterEach(() => {
-    apiClient.setToken(null);
+    setMockSession(false);
   });
 
   it('starts on the upload step with Upload disabled until a file is chosen', () => {

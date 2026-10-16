@@ -78,6 +78,19 @@ export const rankings = new Map<string, { id: string; movie_id: string; rating: 
 // Flag to simulate TMDB service errors
 export let tmdbServiceError: 'rate_limit' | 'api_error' | 'unavailable' | null = null;
 
+// Cookie-session stand-in. Node's fetch does not carry document.cookie, so the
+// mocks key "signed in" on this flag, which login/register/Google callback set
+// (as the real backend sets the httpOnly session cookie) and logout clears.
+let mockSessionActive = false;
+
+export function hasMockSession(): boolean {
+  return mockSessionActive;
+}
+
+export function setMockSession(active: boolean) {
+  mockSessionActive = active;
+}
+
 // Helper to reset mock data between tests
 export function resetMockData() {
   registeredUsers.clear();
@@ -90,6 +103,7 @@ export function resetMockData() {
   validLinkStates.clear();
   userHasGoogleLinked = false;
   importSessions.clear();
+  mockSessionActive = false;
 }
 
 // Helper to simulate TMDB service errors

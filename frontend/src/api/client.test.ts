@@ -4,7 +4,7 @@
  * These tests verify:
  * - Login method sends correct Content-Type (application/x-www-form-urlencoded)
  * - Register method works with JSON Content-Type
- * - Token is properly included in authenticated requests
+ * - Cookie credentials and the CSRF header are sent (ADR-0013); no token is stored
  * - Error handling works correctly
  *
  * The Content-Type bug fix is specifically tested here:
@@ -13,13 +13,18 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { apiClient, ApiClientError } from './client';
-import { resetMockData, MOCK_TOKEN, MOCK_USER_EMAIL, MOCK_USER_PASSWORD } from '../__tests__/mocks/handlers';
+import { apiClient, ApiClientError, getCsrfToken } from './client';
+import { resetMockData, setMockSession, MOCK_TOKEN, MOCK_USER_EMAIL, MOCK_USER_PASSWORD } from '../__tests__/mocks/handlers';
+
+function clearCsrfCookie() {
+  document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+}
 
 describe('ApiClient', () => {
   beforeEach(() => {
-    // Reset the API client token before each test
-    apiClient.setToken(null);
+    // Start signed out with no CSRF cookie
+    setMockSession(false);
+    clearCsrfCookie();
     // Reset mock data
     resetMockData();
   });
@@ -138,44 +143,116 @@ describe('ApiClient', () => {
     });
   });
 
-  describe('setToken', () => {
-    it('should set the token for authenticated requests', async () => {
-      apiClient.setToken(MOCK_TOKEN);
+  describe('cookie session and CSRF', () => {
+    function lastCall(spy: { mock: { calls: Array<Parameters<typeof fetch>> } }) {
+      const [url, options = {}] = spy.mock.calls[spy.mock.calls.length - 1] as [string, RequestInit?];
+      return { url, options, headers: (options.headers ?? {}) as Record<string, string> };
+    }
+
+    it('sends credentials and never an Authorization header', async () => {
+      setMockSession(true);
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       await apiClient.getRankings();
 
-      const [, options] = fetchSpy.mock.calls[0];
-      const headers = options?.headers as Record<string, string>;
-
-      expect(headers['Authorization']).toBe(`Bearer ${MOCK_TOKEN}`);
+      const { options, headers } = lastCall(fetchSpy);
+      expect(options.credentials).toBe('include');
+      expect(headers['Authorization']).toBeUndefined();
+      expect(headers['X-CSRF-Token']).toBeUndefined();
 
       fetchSpy.mockRestore();
     });
 
-    it('should not include Authorization header when token is null', async () => {
-      apiClient.setToken(null);
+    it('reads the csrf_token cookie', () => {
+      document.cookie = 'other=1; path=/';
+      document.cookie = 'csrf_token=abc.def-123_x; path=/';
+      expect(getCsrfToken()).toBe('abc.def-123_x');
+    });
+
+    it('returns null when there is no csrf_token cookie', () => {
+      expect(getCsrfToken()).toBeNull();
+    });
+
+    it('sends X-CSRF-Token on DELETE /rankings/all/', async () => {
+      setMockSession(true);
+      document.cookie = 'csrf_token=csrf-value-1; path=/';
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-      // This will fail because no token, but we're checking the request
-      try {
-        await apiClient.getRankings();
-      } catch {
-        // Expected to fail
-      }
+      await apiClient.clearAllRankings();
 
-      const [, options] = fetchSpy.mock.calls[0];
-      const headers = options?.headers as Record<string, string>;
-
-      expect(headers['Authorization']).toBeUndefined();
+      const { url, options, headers } = lastCall(fetchSpy);
+      expect(url).toBe('/api/v1/rankings/all/');
+      expect(options.method).toBe('DELETE');
+      expect(headers['X-CSRF-Token']).toBe('csrf-value-1');
 
       fetchSpy.mockRestore();
+    });
+
+    it('sends X-CSRF-Token on POST requests', async () => {
+      setMockSession(true);
+      document.cookie = 'csrf_token=csrf-value-2; path=/';
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+      await apiClient.createMovie({ title: 'CSRF Movie' });
+
+      expect(lastCall(fetchSpy).headers['X-CSRF-Token']).toBe('csrf-value-2');
+
+      fetchSpy.mockRestore();
+    });
+
+    it('sends X-CSRF-Token and credentials on the multipart CSV upload', async () => {
+      setMockSession(true);
+      document.cookie = 'csrf_token=csrf-value-3; path=/';
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+      // The mock may reject the jsdom multipart body; only the request is asserted.
+      await apiClient
+        .uploadAmazonPrimeCSV(new File(['a,b'], 'x.csv', { type: 'text/csv' }))
+        .catch(() => undefined);
+
+      const { options, headers } = lastCall(fetchSpy);
+      expect(headers['X-CSRF-Token']).toBe('csrf-value-3');
+      expect(headers['Authorization']).toBeUndefined();
+      expect(options.credentials).toBe('include');
+
+      fetchSpy.mockRestore();
+    });
+
+    it('does not send X-CSRF-Token on GET requests', async () => {
+      setMockSession(true);
+      document.cookie = 'csrf_token=csrf-value-4; path=/';
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+      await apiClient.getRankings();
+
+      expect(lastCall(fetchSpy).headers['X-CSRF-Token']).toBeUndefined();
+
+      fetchSpy.mockRestore();
+    });
+
+    it('logout POSTs to /auth/logout/ with the CSRF header', async () => {
+      setMockSession(true);
+      document.cookie = 'csrf_token=csrf-value-5; path=/';
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+      await apiClient.logout();
+
+      const { url, options, headers } = lastCall(fetchSpy);
+      expect(url).toBe('/api/v1/auth/logout/');
+      expect(options.method).toBe('POST');
+      expect(headers['X-CSRF-Token']).toBe('csrf-value-5');
+
+      fetchSpy.mockRestore();
+    });
+
+    it('rejects with 401 when there is no session', async () => {
+      await expect(apiClient.getRankings()).rejects.toThrow(ApiClientError);
     });
   });
 
   describe('createMovie', () => {
     beforeEach(() => {
-      apiClient.setToken(MOCK_TOKEN);
+      setMockSession(true);
     });
 
     it('should create a movie with authentication', async () => {
@@ -211,7 +288,7 @@ describe('ApiClient', () => {
     });
 
     it('should throw ApiClientError when not authenticated', async () => {
-      apiClient.setToken(null);
+      setMockSession(false);
 
       await expect(
         apiClient.createMovie({ title: 'Test Movie' })
@@ -221,7 +298,7 @@ describe('ApiClient', () => {
 
   describe('createOrUpdateRanking', () => {
     beforeEach(async () => {
-      apiClient.setToken(MOCK_TOKEN);
+      setMockSession(true);
     });
 
     it('should include trailing slash in URL', async () => {
@@ -246,7 +323,7 @@ describe('ApiClient', () => {
 
   describe('getRankings', () => {
     beforeEach(() => {
-      apiClient.setToken(MOCK_TOKEN);
+      setMockSession(true);
     });
 
     it('should fetch rankings with authentication', async () => {

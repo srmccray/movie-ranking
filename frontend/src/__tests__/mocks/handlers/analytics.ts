@@ -1,14 +1,12 @@
 /** Analytics handlers: stats, rating distribution, activity and genres. */
 
 import { http, HttpResponse } from 'msw';
-import { rankings } from './state';
+import { hasMockSession, rankings } from './state';
 
 export const analyticsHandlers = [
   // GET /api/v1/analytics/stats/
-  http.get('/api/v1/analytics/stats/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.get('/api/v1/analytics/stats/', () => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -37,10 +35,8 @@ export const analyticsHandlers = [
   }),
 
   // GET /api/v1/analytics/rating-distribution/
-  http.get('/api/v1/analytics/rating-distribution/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.get('/api/v1/analytics/rating-distribution/', () => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -71,10 +67,8 @@ export const analyticsHandlers = [
   }),
 
   // GET /api/v1/analytics/activity/
-  http.get('/api/v1/analytics/activity/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.get('/api/v1/analytics/activity/', () => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -94,10 +88,8 @@ export const analyticsHandlers = [
   }),
 
   // GET /api/v1/analytics/genres/
-  http.get('/api/v1/analytics/genres/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.get('/api/v1/analytics/genres/', () => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }

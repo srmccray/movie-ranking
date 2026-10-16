@@ -187,7 +187,6 @@ export interface ValidationError {
 // Auth Context Types
 
 export interface AuthState {
-  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -195,8 +194,9 @@ export interface AuthState {
 export interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  loginWithToken: (token: string) => void;
+  logout: () => Promise<void>;
+  /** Re-check the cookie session via GET /auth/me/; resolves true if signed in. */
+  refreshAuth: () => Promise<boolean>;
 }
 
 // ============================================

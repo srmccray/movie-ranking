@@ -22,6 +22,8 @@ export {
   setTmdbServiceError,
   addValidOAuthState,
   setUserGoogleLinked,
+  setMockSession,
+  hasMockSession,
   MOCK_TOKEN,
   MOCK_USER_EMAIL,
   MOCK_USER_PASSWORD,

@@ -1,25 +1,29 @@
 import { expect, test } from '@playwright/test'
-import { PASSWORD, TOKEN_KEY, readToken, registerViaUi, uniqueEmail } from './support/auth'
+import { PASSWORD, getSessionCookie, registerViaUi, uniqueEmail } from './support/auth'
 
-// A structurally valid JWT whose exp is in the past. The backend rejects it
-// with 401 (its signature does not verify either), which is exactly what the
-// client sees for an expired session.
-const EXPIRED_TOKEN =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
-  'eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJleHAiOjk0NjY4NDgwMH0.' +
-  'ZXhwaXJlZC1zaWduYXR1cmU'
+// An httpOnly session cookie whose value is not a valid JWT. The backend rejects
+// it with 401, which is exactly what the client sees for an expired session.
+const EXPIRED_SESSION = 'expired-or-invalid'
 
 test.describe('US-0003: Automatically log out on expired session', () => {
-  test('Scenario: Expired token redirects to login', async ({ page }) => {
-    // Given Casey has an expired token stored in the browser
-    await page.addInitScript(
-      ([key, token]) => localStorage.setItem(key, token),
-      [TOKEN_KEY, EXPIRED_TOKEN],
-    )
+  test('Scenario: Expired session redirects to login', async ({ page }) => {
+    // Given Casey has an expired session cookie in the browser
+    await page.context().addCookies([
+      {
+        name: 'session',
+        value: EXPIRED_SESSION,
+        domain: 'localhost',
+        path: '/api',
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Lax',
+      },
+    ])
+    expect(await getSessionCookie(page.context())).toBeDefined()
 
-    // When Casey opens the rankings page and an API call returns 401
+    // When Casey opens the rankings page and the session check returns 401
     const unauthorized = page.waitForResponse(
-      (res) => res.url().includes('/api/v1/rankings') && res.status() === 401,
+      (res) => res.url().includes('/api/v1/auth/me/') && res.status() === 401,
     )
     await page.goto('/')
     await unauthorized
@@ -28,8 +32,8 @@ test.describe('US-0003: Automatically log out on expired session', () => {
     await expect(page).toHaveURL(/\/login$/)
     await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible()
 
-    // And the token is removed from localStorage
-    expect(await readToken(page)).toBeNull()
+    // And the session cookie is gone (the server expired it)
+    await expect.poll(async () => getSessionCookie(page.context())).toBeUndefined()
   })
 
   test('Scenario: Failed login still shows an error', async ({ page }) => {

@@ -11,89 +11,121 @@ import type { AuthContextType } from '../types';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const TOKEN_KEY = 'movie_ranking_token';
+/** Key the pre-cookie build stored its JWT under; removed once on startup. */
+const LEGACY_TOKEN_KEY = 'movie_ranking_token';
 
+/**
+ * Provides cookie-session auth state (ADR-0013).
+ *
+ * The session JWT lives in an httpOnly cookie that page scripts cannot read, so
+ * signed-in state is learned from `GET /auth/me/` rather than from storage.
+ * Nothing token-like is ever persisted by the SPA.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state from localStorage
-  useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY);
-    if (storedToken) {
-      setToken(storedToken);
-      apiClient.setToken(storedToken);
-    }
-    setIsLoading(false);
+  // Clear local state on logout or when any API call returns 401 (US-0003).
+  const clearSession = useCallback(() => {
+    setIsAuthenticated(false);
   }, []);
 
-  const saveToken = useCallback((newToken: string) => {
-    localStorage.setItem(TOKEN_KEY, newToken);
-    setToken(newToken);
-    apiClient.setToken(newToken);
+  // On any API 401 (US-0003) drop local state and ask the server to expire the
+  // httpOnly cookies, which page scripts cannot remove themselves.
+  const handleUnauthorized = useCallback(() => {
+    clearSession();
+    apiClient.logout().catch(() => {
+      // Best effort: the local state is already cleared.
+    });
+  }, [clearSession]);
+
+  // Register before the initial /auth/me/ call so a 401 there is handled too.
+  useEffect(() => {
+    apiClient.setOnUnauthorized(handleUnauthorized);
+    return () => {
+      apiClient.setOnUnauthorized(null);
+    };
+  }, [handleUnauthorized]);
+
+  /** Ask the server whether the session cookie is valid. Resolves true if so. */
+  const refreshAuth = useCallback(async (): Promise<boolean> => {
+    try {
+      await apiClient.getCurrentUser();
+      setIsAuthenticated(true);
+      return true;
+    } catch {
+      setIsAuthenticated(false);
+      return false;
+    }
   }, []);
+
+  useEffect(() => {
+    // One-time cleanup of the token the previous build kept in localStorage.
+    try {
+      localStorage.removeItem(LEGACY_TOKEN_KEY);
+    } catch {
+      // Storage may be unavailable (private mode); nothing to clean up then.
+    }
+
+    let cancelled = false;
+    void refreshAuth().finally(() => {
+      if (!cancelled) setIsLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshAuth]);
 
   const login = useCallback(
     async (email: string, password: string) => {
       try {
-        const response = await apiClient.login(email, password);
-        saveToken(response.access_token);
+        await apiClient.login(email, password);
       } catch (error) {
         if (error instanceof ApiClientError) {
           throw error;
         }
         throw new Error('Failed to login. Please try again.');
       }
+      if (!(await refreshAuth())) {
+        throw new Error('Failed to login. Please try again.');
+      }
     },
-    [saveToken]
+    [refreshAuth]
   );
 
   const register = useCallback(
     async (email: string, password: string) => {
       try {
-        const response = await apiClient.register(email, password);
-        saveToken(response.access_token);
+        await apiClient.register(email, password);
       } catch (error) {
         if (error instanceof ApiClientError) {
           throw error;
         }
         throw new Error('Failed to register. Please try again.');
       }
+      if (!(await refreshAuth())) {
+        throw new Error('Failed to register. Please try again.');
+      }
     },
-    [saveToken]
+    [refreshAuth]
   );
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    setToken(null);
-    apiClient.setToken(null);
-  }, []);
-
-  // Register logout as the unauthorized callback so API 401s trigger logout
-  useEffect(() => {
-    apiClient.setOnUnauthorized(logout);
-
-    // Cleanup on unmount (though AuthProvider rarely unmounts)
-    return () => {
-      apiClient.setOnUnauthorized(null);
-    };
-  }, [logout]);
-
-  const loginWithToken = useCallback(
-    (accessToken: string) => {
-      saveToken(accessToken);
-    },
-    [saveToken]
-  );
+  const logout = useCallback(async () => {
+    try {
+      await apiClient.logout();
+    } catch {
+      // Even if the request fails, drop the local signed-in state.
+    }
+    clearSession();
+  }, [clearSession]);
 
   const value: AuthContextType = {
-    token,
-    isAuthenticated: !!token,
+    isAuthenticated,
     isLoading,
     login,
     register,
     logout,
-    loginWithToken,
+    refreshAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

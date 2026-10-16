@@ -6,8 +6,7 @@
 
 import { act } from '@testing-library/react';
 import { vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import { apiClient } from '../../api/client';
-import { MOCK_TOKEN } from '../mocks/handlers';
+import { setMockSession } from '../mocks/handlers';
 import { http, HttpResponse } from 'msw';
 import { server } from '../mocks/server';
 import type { MatchedMovieItem, TMDBMatchResult } from '../../types';
@@ -110,13 +109,13 @@ export function useFakeSearchTimers() {
     delete (globalThis as { jest?: unknown }).jest;
   });
   beforeEach(() => {
-    apiClient.setToken(MOCK_TOKEN);
+    setMockSession(true);
     Element.prototype.scrollIntoView = vi.fn();
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   });
   afterEach(() => {
     vi.useRealTimers();
-    apiClient.setToken(null);
+    setMockSession(false);
   });
 }
 

@@ -112,8 +112,8 @@ async def google_callback(
     Returns:
         A 302 to the stored redirect_uri, or the Token JSON when none was
         stored. Both set the httpOnly session cookie and the CSRF cookie. The
-        redirect carries ``?token=<jwt>`` only while
-        ``GOOGLE_LEGACY_TOKEN_IN_URL`` is true (removed by TASK-0047).
+        redirect ``Location`` is the stored URL unchanged: it never carries the
+        token.
 
     Raises:
         HTTPException: Various errors for invalid state, cancelled auth, etc.
@@ -224,12 +224,10 @@ async def google_callback(
     access_token = create_access_token(data={"sub": str(user.id)})
 
     if custom_redirect_uri:
-        # Legacy: the deployed frontend still reads the JWT from the URL.
-        if settings.GOOGLE_LEGACY_TOKEN_IN_URL:
-            redirect_url = f"{custom_redirect_uri}?token={access_token}"
-        else:
-            redirect_url = custom_redirect_uri
-        redirect = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+        # The session cookie authenticates the SPA; the URL never carries the JWT.
+        redirect = RedirectResponse(
+            url=custom_redirect_uri, status_code=status.HTTP_302_FOUND
+        )
         set_session_cookies(redirect, access_token)
         return redirect
 

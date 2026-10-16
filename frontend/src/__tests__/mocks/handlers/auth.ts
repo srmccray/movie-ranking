@@ -8,6 +8,8 @@ import {
   validOAuthStates,
   validLinkStates,
   userHasGoogleLinked,
+  hasMockSession,
+  setMockSession,
 } from './state';
 
 export const authHandlers = [
@@ -42,6 +44,7 @@ export const authHandlers = [
 
     // Register the user
     registeredUsers.set(body.email, body.password);
+    setMockSession(true);
 
     return HttpResponse.json(
       {
@@ -93,10 +96,17 @@ export const authHandlers = [
       );
     }
 
+    setMockSession(true);
     return HttpResponse.json({
       access_token: MOCK_TOKEN,
       token_type: 'bearer',
     });
+  }),
+
+  // POST /api/v1/auth/logout/
+  http.post('/api/v1/auth/logout/', () => {
+    setMockSession(false);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   // GET /api/v1/auth/google/login/
@@ -144,7 +154,8 @@ export const authHandlers = [
     // Remove used state
     validOAuthStates.delete(state);
 
-    // Return mock token
+    // Return mock token (the real backend also sets the session cookies)
+    setMockSession(true);
     return HttpResponse.json({
       access_token: MOCK_TOKEN,
       token_type: 'bearer',
@@ -152,10 +163,8 @@ export const authHandlers = [
   }),
 
   // GET /api/v1/auth/me/
-  http.get('/api/v1/auth/me/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.get('/api/v1/auth/me/', () => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -173,10 +182,8 @@ export const authHandlers = [
   }),
 
   // GET /api/v1/auth/google/link/
-  http.get('/api/v1/auth/google/link/', ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.get('/api/v1/auth/google/link/', () => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }

@@ -12,63 +12,60 @@ interface ErrorInfo {
 
 /**
  * Handles the OAuth callback after Google authentication.
- * Receives the JWT token from the backend redirect and logs in the user.
+ * The backend sets the httpOnly session cookie before redirecting here, so the
+ * URL carries no credential; this page only confirms the session via /auth/me/.
  */
 export function GoogleCallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { loginWithToken, isAuthenticated } = useAuth();
+  const { refreshAuth, isAuthenticated, isLoading } = useAuth();
 
   const [state, setState] = useState<CallbackState>('loading');
   const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
 
   useEffect(() => {
-    // If already authenticated, redirect to home
+    // Wait for the initial session check, then bounce signed-in users home.
+    if (isLoading) return;
     if (isAuthenticated) {
       navigate('/', { replace: true });
       return;
     }
 
-    const handleCallback = () => {
-      // Check for error from backend or Google
-      const error = searchParams.get('error');
-      if (error) {
-        const errorDescription = searchParams.get('error_description');
-        setState('error');
-        setErrorInfo({
-          title: 'Authentication Failed',
-          message: errorDescription || error || 'Sign-in failed. Please try again.',
-          canRetry: true,
-        });
-        return;
-      }
+    // Error from backend or Google
+    const error = searchParams.get('error');
+    if (error) {
+      const errorDescription = searchParams.get('error_description');
+      setState('error');
+      setErrorInfo({
+        title: 'Authentication Failed',
+        message: errorDescription || error || 'Sign-in failed. Please try again.',
+        canRetry: true,
+      });
+      return;
+    }
 
-      // Get token from URL (sent by backend after successful OAuth)
-      const token = searchParams.get('token');
-
-      if (!token) {
+    let cancelled = false;
+    void refreshAuth().then((ok) => {
+      if (cancelled) return;
+      if (!ok) {
         setState('error');
         setErrorInfo({
           title: 'Invalid Callback',
-          message: 'No authentication token received. Please try signing in again.',
+          message: 'We could not confirm your sign-in. Please try signing in again.',
           canRetry: true,
         });
         return;
       }
-
-      // Log in with the received token
-      loginWithToken(token);
-
       setState('success');
-
-      // Redirect to home page after brief delay for visual feedback
+      // Brief delay for visual feedback before leaving the page
       setTimeout(() => {
         navigate('/', { replace: true });
       }, 500);
+    });
+    return () => {
+      cancelled = true;
     };
-
-    handleCallback();
-  }, [searchParams, loginWithToken, navigate, isAuthenticated]);
+  }, [searchParams, refreshAuth, navigate, isAuthenticated, isLoading]);
 
   return (
     <div className="auth-layout">
