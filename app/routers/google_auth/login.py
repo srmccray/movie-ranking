@@ -3,7 +3,7 @@
 import logging
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
@@ -91,6 +91,7 @@ async def google_login(
     },
 )
 async def google_callback(
+    request: Request,
     db: DbSession,
     response: Response,
     code: str | None = Query(None, description="Authorization code from Google"),
@@ -103,6 +104,7 @@ async def google_callback(
     verifies the ID token, and creates or finds the user account.
 
     Args:
+        request: Incoming request (session cookie for link-flow binding).
         db: Async database session.
         response: Response used to attach the session cookies to JSON replies.
         code: Authorization code from Google.
@@ -155,6 +157,12 @@ async def google_callback(
 
     # If this is a link flow, handle it separately
     if flow_type == "link" and linking_user_id is not None:
+        if not link.session_matches_user(request, linking_user_id):
+            logger.warning("Link callback rejected: session does not match user")
+            return RedirectResponse(
+                url=f"{custom_redirect_uri or '/settings'}?error=session_mismatch",
+                status_code=status.HTTP_302_FOUND,
+            )
         return await link._handle_link_callback(
             db, code, custom_redirect_uri, linking_user_id
         )

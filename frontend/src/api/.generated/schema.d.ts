@@ -163,6 +163,7 @@ export interface paths {
          *     verifies the ID token, and creates or finds the user account.
          *
          *     Args:
+         *         request: Incoming request (session cookie for link-flow binding).
          *         db: Async database session.
          *         response: Response used to attach the session cookies to JSON replies.
          *         code: Authorization code from Google.
