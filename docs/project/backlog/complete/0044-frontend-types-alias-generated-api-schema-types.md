@@ -2,7 +2,7 @@
 id: '0044'
 title: 'frontend/src/types/index.ts: replace hand-written API types with aliases to
   the generated schema'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0043
 - TASK-0017
