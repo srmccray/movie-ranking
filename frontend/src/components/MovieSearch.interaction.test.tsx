@@ -14,11 +14,10 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MovieSearch } from './MovieSearch';
-import { apiClient } from '../api/client';
 import {
   resetMockData,
   setTmdbServiceError,
-  MOCK_TOKEN,
+  setMockSession,
 } from '../__tests__/mocks/handlers';
 
 // Mock scrollIntoView which is not available in JSDOM
@@ -27,7 +26,7 @@ Element.prototype.scrollIntoView = vi.fn();
 // Helper to render MovieSearch with auth set up
 function renderMovieSearch(onSelect = vi.fn()) {
   // Set up authenticated state
-  apiClient.setToken(MOCK_TOKEN);
+  setMockSession(true);
 
   return {
     ...render(<MovieSearch onSelect={onSelect} />),
@@ -38,7 +37,7 @@ function renderMovieSearch(onSelect = vi.fn()) {
 describe('MovieSearch', () => {
   beforeEach(() => {
     resetMockData();
-    apiClient.setToken(null);
+    setMockSession(false);
     // Use fake timers for debounce testing
     vi.useFakeTimers({ shouldAdvanceTime: true });
   });

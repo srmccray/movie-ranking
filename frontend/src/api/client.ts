@@ -24,13 +24,38 @@ import type {
 
 const API_BASE = '/api/v1';
 
-class ApiClient {
-  private token: string | null = null;
-  private onUnauthorized: (() => void) | null = null;
+const CSRF_COOKIE = 'csrf_token';
+const CSRF_HEADER = 'X-CSRF-Token';
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
-  setToken(token: string | null) {
-    this.token = token;
+/**
+ * Read the double-submit CSRF token from the (JS-readable) `csrf_token` cookie.
+ * The httpOnly `session` cookie is never visible here by design (ADR-0013).
+ */
+export function getCsrfToken(): string | null {
+  for (const part of document.cookie.split(';')) {
+    const [name, ...rest] = part.trim().split('=');
+    if (name === CSRF_COOKIE) {
+      return decodeURIComponent(rest.join('='));
+    }
   }
+  return null;
+}
+
+/** Add the CSRF header for unsafe methods when the cookie is present. */
+function withCsrfHeader(
+  headers: Record<string, string>,
+  method: string | undefined
+): Record<string, string> {
+  if (SAFE_METHODS.has((method ?? 'GET').toUpperCase())) {
+    return headers;
+  }
+  const csrf = getCsrfToken();
+  return csrf ? { ...headers, [CSRF_HEADER]: csrf } : headers;
+}
+
+class ApiClient {
+  private onUnauthorized: (() => void) | null = null;
 
   setOnUnauthorized(callback: (() => void) | null) {
     this.onUnauthorized = callback;
@@ -40,13 +65,10 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const headers: Record<string, string> = {
-      ...(options.headers as Record<string, string> | undefined),
-    };
-
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
+    const headers: Record<string, string> = withCsrfHeader(
+      { ...(options.headers as Record<string, string> | undefined) },
+      options.method
+    );
 
     // Only set JSON content-type if not already specified and body is not FormData
     if (
@@ -60,11 +82,12 @@ class ApiClient {
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers,
+      credentials: 'include',
     });
 
     if (!response.ok) {
       // Handle 401 Unauthorized - trigger logout callback
-      if (response.status === 401 && this.onUnauthorized) {
+      if (response.status === 401 && endpoint !== '/auth/logout/' && this.onUnauthorized) {
         this.onUnauthorized();
       }
 
@@ -102,9 +125,14 @@ class ApiClient {
     });
   }
 
+  /** Clear the session and CSRF cookies on the server. */
+  async logout(): Promise<void> {
+    return this.request<void>('/auth/logout/', { method: 'POST' });
+  }
+
   // Google OAuth endpoints
   async getGoogleAuthUrl(): Promise<GoogleAuthUrlResponse> {
-    // Pass the frontend callback URL so backend redirects there with the token
+    // Pass the frontend callback URL so backend redirects there after setting the session cookie
     const redirectUri = `${window.location.origin}/auth/google/callback`;
     const params = new URLSearchParams({ redirect_uri: redirectUri });
     return this.request<GoogleAuthUrlResponse>(`/auth/google/login/?${params.toString()}`);
@@ -206,16 +234,14 @@ class ApiClient {
     const formData = new FormData();
     formData.append('file', file);
 
-    const headers: Record<string, string> = {};
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
+    const headers = withCsrfHeader({}, 'POST');
     // Note: Don't set Content-Type for FormData - browser sets it with boundary
 
     const response = await fetch(`${API_BASE}/import/amazon-prime/upload/`, {
       method: 'POST',
       headers,
       body: formData,
+      credentials: 'include',
     });
 
     if (!response.ok) {

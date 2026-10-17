@@ -13,7 +13,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { ProtectedRoute } from './ProtectedRoute';
-import { resetMockData } from '../__tests__/mocks/handlers';
+import { resetMockData, setMockSession } from '../__tests__/mocks/handlers';
 
 // Protected content component for testing
 function ProtectedContent() {
@@ -78,7 +78,7 @@ describe('ProtectedRoute', () => {
 
   describe('authenticated user', () => {
     it('should render protected content when authenticated', async () => {
-      localStorage.setItem('movie_ranking_token', 'valid-token');
+      setMockSession(true);
 
       renderProtectedRoute();
 
@@ -88,7 +88,7 @@ describe('ProtectedRoute', () => {
     });
 
     it('should render different protected routes when authenticated', async () => {
-      localStorage.setItem('movie_ranking_token', 'valid-token');
+      setMockSession(true);
 
       renderProtectedRoute(['/another-protected']);
 
@@ -101,7 +101,7 @@ describe('ProtectedRoute', () => {
   describe('loading state', () => {
     it('should show loading indicator or redirect when not authenticated', async () => {
       // The loading state is transient - it shows briefly while AuthProvider
-      // checks localStorage, then transitions to redirect. In tests, this
+      // checks the cookie session, then transitions to redirect. In tests, this
       // transition happens very quickly, so we verify the end state.
       renderProtectedRoute();
 
@@ -112,7 +112,7 @@ describe('ProtectedRoute', () => {
     });
 
     it('should transition from loading to content when authenticated', async () => {
-      localStorage.setItem('movie_ranking_token', 'valid-token');
+      setMockSession(true);
 
       const { container } = renderProtectedRoute();
 
@@ -129,7 +129,7 @@ describe('ProtectedRoute', () => {
 
   describe('nested routes', () => {
     it('should render nested outlet content when authenticated', async () => {
-      localStorage.setItem('movie_ranking_token', 'valid-token');
+      setMockSession(true);
 
       render(
         <MemoryRouter initialEntries={['/protected/nested']}>
@@ -154,7 +154,7 @@ describe('ProtectedRoute', () => {
 
   describe('navigation integration', () => {
     it('should work with multiple protected routes', async () => {
-      localStorage.setItem('movie_ranking_token', 'valid-token');
+      setMockSession(true);
 
       render(
         <MemoryRouter initialEntries={['/dashboard']}>
@@ -199,8 +199,8 @@ describe('ProtectedRoute with real auth flow', () => {
 
     unmount();
 
-    // Now simulate successful login by setting token
-    localStorage.setItem('movie_ranking_token', 'valid-token');
+    // Now simulate successful login by establishing the cookie session
+    setMockSession(true);
 
     // Render protected route again - should now work
     renderProtectedRoute(['/protected']);

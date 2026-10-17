@@ -4,7 +4,7 @@ import logging
 from urllib.parse import urlencode
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
@@ -13,11 +13,29 @@ from app.database import DbSession
 from app.dependencies import CurrentUser
 from app.models.user import User
 from app.routers.google_auth import oauth, redirects
+from app.utils.cookies import SESSION_COOKIE
+from app.utils.security import TokenError, decode_token
 from app.schemas.oauth import GoogleAuthUrlResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def session_matches_user(request: Request, user_id: UUID) -> bool:
+    """True if the browser's session cookie belongs to ``user_id``.
+
+    Binds a link-flow callback to the browser that started it, so a victim who
+    completes an attacker-initiated Google consent cannot attach their Google
+    identity to the attacker's account.
+    """
+    token = request.cookies.get(SESSION_COOKIE)
+    if not token:
+        return False
+    try:
+        return decode_token(token).get("sub") == str(user_id)
+    except TokenError:
+        return False
 
 
 async def _handle_link_callback(
@@ -209,6 +227,7 @@ async def google_link(
     },
 )
 async def google_link_callback(
+    request: Request,
     db: DbSession,
     code: str | None = Query(None, description="Authorization code from Google"),
     state: str | None = Query(None, description="State token for CSRF validation"),
@@ -270,6 +289,14 @@ async def google_link_callback(
     # Delete the used state token
     await db.delete(oauth_state)
     await db.flush()
+
+    # The callback must come from the browser session that started the flow
+    if not session_matches_user(request, linking_user_id):
+        logger.warning("Link callback rejected: session does not match user")
+        return RedirectResponse(
+            url=f"{custom_redirect_uri}?error=session_mismatch",
+            status_code=status.HTTP_302_FOUND,
+        )
 
     # Find the user that initiated the linking
     result = await db.execute(select(User).where(User.id == linking_user_id))

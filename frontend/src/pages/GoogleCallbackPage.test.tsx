@@ -3,17 +3,18 @@
  *
  * These tests verify:
  * - Loading state shows while processing callback
- * - Success state redirects to home when token is received
+ * - Success state redirects to home once /auth/me/ confirms the cookie session
+ * - No credential ever appears in the URL (ADR-0013); no token is stored
  * - Error states display appropriate messages
- * - OAuth error handling (user cancelled, missing token, etc.)
+ * - OAuth error handling (user cancelled, unconfirmed session, etc.)
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { GoogleCallbackPage } from './GoogleCallbackPage';
-import { resetMockData } from '../__tests__/mocks/handlers';
+import { resetMockData, setMockSession } from '../__tests__/mocks/handlers';
 
 // Helper to render GoogleCallbackPage with router and auth context
 function renderCallbackPage(searchParams = '') {
@@ -22,6 +23,7 @@ function renderCallbackPage(searchParams = '') {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <AuthProvider>
+        <LocationProbe />
         <Routes>
           <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
           <Route path="/" element={<div>Home Page</div>} />
@@ -32,6 +34,12 @@ function renderCallbackPage(searchParams = '') {
   );
 }
 
+// Exposes the current URL so tests can assert no credential is ever put in it.
+function LocationProbe() {
+  const location = useLocation();
+  return <div data-testid="url">{`${location.pathname}${location.search}`}</div>;
+}
+
 describe('GoogleCallbackPage', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -39,10 +47,12 @@ describe('GoogleCallbackPage', () => {
   });
 
   describe('successful callback', () => {
-    it('should redirect to home after receiving valid token', async () => {
-      renderCallbackPage('token=valid-jwt-token');
+    it('should redirect to home once the cookie session is confirmed', async () => {
+      // The backend set the httpOnly session cookie before redirecting here
+      setMockSession(true);
 
-      // Should eventually navigate to home
+      renderCallbackPage();
+
       await waitFor(
         () => {
           expect(screen.getByText('Home Page')).toBeInTheDocument();
@@ -51,28 +61,17 @@ describe('GoogleCallbackPage', () => {
       );
     });
 
-    it('should store token in localStorage after success', async () => {
-      renderCallbackPage('token=valid-jwt-token');
+    it('should never put a token in the URL or localStorage', async () => {
+      setMockSession(true);
 
-      await waitFor(
-        () => {
-          const token = localStorage.getItem('movie_ranking_token');
-          expect(token).toBe('valid-jwt-token');
-        },
-        { timeout: 2000 }
-      );
-    });
+      renderCallbackPage();
 
-    it('should show success state or redirect to home', async () => {
-      renderCallbackPage('token=valid-jwt-token');
-
-      // Either success message appears or we've already redirected to home
-      // The redirect is fast (500ms delay) so we may not catch the success state
       await waitFor(() => {
-        const hasSuccess = screen.queryByText(/success/i);
-        const hasHome = screen.queryByText('Home Page');
-        expect(hasSuccess || hasHome).toBeTruthy();
+        expect(screen.getByText('Home Page')).toBeInTheDocument();
       });
+
+      expect(screen.getByTestId('url').textContent).not.toContain('token=');
+      expect(localStorage.length).toBe(0);
     });
   });
 
@@ -93,20 +92,13 @@ describe('GoogleCallbackPage', () => {
       });
     });
 
-    it('should show error for missing token parameter', async () => {
+    it('should show an error when no session can be confirmed', async () => {
       renderCallbackPage('');
 
       await waitFor(() => {
         expect(screen.getByText(/invalid callback/i)).toBeInTheDocument();
       });
-    });
-
-    it('should show error message about no token received', async () => {
-      renderCallbackPage('');
-
-      await waitFor(() => {
-        expect(screen.getByText(/no authentication token received/i)).toBeInTheDocument();
-      });
+      expect(screen.getByText(/could not confirm your sign-in/i)).toBeInTheDocument();
     });
 
     it('should show Try Again button on error', async () => {
@@ -129,10 +121,10 @@ describe('GoogleCallbackPage', () => {
 
   describe('already authenticated user', () => {
     it('should redirect to home if already authenticated', async () => {
-      // Set token before rendering (simulate already logged in)
-      localStorage.setItem('movie_ranking_token', 'existing-token');
+      // Simulate an existing cookie session
+      setMockSession(true);
 
-      renderCallbackPage('token=new-token');
+      renderCallbackPage();
 
       // Should redirect to home immediately
       await waitFor(() => {

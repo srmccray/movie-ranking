@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { hasMockSession } from './state';
 // ============================================
 // Amazon Prime Import Mock Data and Handlers
 // ============================================
@@ -104,9 +105,7 @@ export const MOCK_IMPORT_SESSION: MockImportSession = {
 export const importHandlers = [
   // POST /api/v1/import/amazon-prime/upload/
   http.post('/api/v1/import/amazon-prime/upload/', async ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -143,10 +142,8 @@ export const importHandlers = [
   }),
 
   // GET /api/v1/import/amazon-prime/session/{session_id}/
-  http.get('/api/v1/import/amazon-prime/session/:sessionId/', ({ request, params }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.get('/api/v1/import/amazon-prime/session/:sessionId/', ({ params }) => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -181,9 +178,7 @@ export const importHandlers = [
 
   // POST /api/v1/import/amazon-prime/session/{session_id}/movie/{index}/add/
   http.post('/api/v1/import/amazon-prime/session/:sessionId/movie/:index/add/', async ({ request, params }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -249,10 +244,8 @@ export const importHandlers = [
   }),
 
   // POST /api/v1/import/amazon-prime/session/{session_id}/movie/{index}/skip/
-  http.post('/api/v1/import/amazon-prime/session/:sessionId/movie/:index/skip/', ({ request, params }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.post('/api/v1/import/amazon-prime/session/:sessionId/movie/:index/skip/', ({ params }) => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -293,9 +286,7 @@ export const importHandlers = [
 
   // PATCH /api/v1/import/amazon-prime/session/{session_id}/movie/{index}/match/
   http.patch('/api/v1/import/amazon-prime/session/:sessionId/movie/:index/match/', async ({ request, params }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }
@@ -332,10 +323,8 @@ export const importHandlers = [
   }),
 
   // DELETE /api/v1/import/amazon-prime/session/{session_id}/
-  http.delete('/api/v1/import/amazon-prime/session/:sessionId/', ({ request, params }) => {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader?.startsWith('Bearer ')) {
+  http.delete('/api/v1/import/amazon-prime/session/:sessionId/', ({ params }) => {
+    if (!hasMockSession()) {
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 401 }

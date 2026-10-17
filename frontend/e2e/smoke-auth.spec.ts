@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { PASSWORD, readToken, registerViaUi, uniqueEmail } from './support/auth'
+import { PASSWORD, expectHttpOnlySession, getSessionCookie, registerViaUi, uniqueEmail } from './support/auth'
 
 // Smoke coverage for the authentication journey. No TMDB access is needed.
 test.describe('Smoke: authentication journey', () => {
@@ -16,11 +16,11 @@ test.describe('Smoke: authentication journey', () => {
 
     await registerViaUi(page, email)
     await expect(page).toHaveURL(/\/$/)
-    expect(await readToken(page)).not.toBeNull()
+    await expectHttpOnlySession(page)
 
     await page.getByRole('button', { name: 'Logout' }).click()
     await expect(page).toHaveURL(/\/login$/)
-    expect(await readToken(page)).toBeNull()
+    expect(await getSessionCookie(page.context())).toBeUndefined()
 
     await page.getByLabel('Email').fill(email)
     await page.getByLabel('Password').fill(PASSWORD)

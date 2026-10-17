@@ -17,7 +17,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { LoginPage } from './LoginPage';
-import { resetMockData, MOCK_USER_EMAIL, MOCK_USER_PASSWORD } from '../__tests__/mocks/handlers';
+import { resetMockData, setMockSession, MOCK_USER_EMAIL, MOCK_USER_PASSWORD } from '../__tests__/mocks/handlers';
 
 // Helper to find the email/password form's submit button (not the Google button)
 function getEmailSubmitButton() {
@@ -253,8 +253,8 @@ describe('LoginPage', () => {
 
   describe('authenticated user redirect', () => {
     it('should redirect authenticated user to home', async () => {
-      // Set token before rendering
-      localStorage.setItem('movie_ranking_token', 'existing-token');
+      // Simulate an existing cookie session
+      setMockSession(true);
 
       renderLoginPage();
 

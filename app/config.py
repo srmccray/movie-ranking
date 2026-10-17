@@ -83,7 +83,6 @@ class Settings(BaseSettings):
         GOOGLE_CLIENT_ID: Google OAuth 2.0 client ID.
         GOOGLE_CLIENT_SECRET: Google OAuth 2.0 client secret.
         GOOGLE_REDIRECT_URI: OAuth callback URI.
-        GOOGLE_LEGACY_TOKEN_IN_URL: Temporary; append ?token= to the redirect.
     """
 
     DATABASE_URL: str
@@ -101,8 +100,6 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback/"
-    # Temporary (removed by TASK-0047): append ?token=<jwt> to the callback redirect.
-    GOOGLE_LEGACY_TOKEN_IN_URL: bool = True
 
     model_config = SettingsConfigDict(
         env_file=".env",

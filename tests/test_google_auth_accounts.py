@@ -267,6 +267,8 @@ class TestGoogleLinkCallbackEndpoint:
 
         auth_url = link_response.json()["authorization_url"]
         state = auth_url.split("state=")[1].split("&")[0]
+        # The callback is a browser navigation: it carries the session cookie
+        client.cookies.set("session", auth_headers["Authorization"].split(" ", 1)[1])
 
         # Mock Google response
         mock_tokens = {
@@ -323,6 +325,8 @@ class TestGoogleLinkCallbackEndpoint:
             headers=other_headers,
         )
         other_state = other_link_response.json()["authorization_url"].split("state=")[1].split("&")[0]
+        # The callback is a browser navigation: it carries the session cookie
+        client.cookies.set("session", other_token)
 
         mock_tokens = {
             "id_token": "mock-id-token",
@@ -355,6 +359,8 @@ class TestGoogleLinkCallbackEndpoint:
             headers=auth_headers,
         )
         state = link_response.json()["authorization_url"].split("state=")[1].split("&")[0]
+        # The callback is a browser navigation: it carries the session cookie
+        client.cookies.set("session", auth_headers["Authorization"].split(" ", 1)[1])
 
         with patch(
             "app.routers.google_auth.oauth._exchange_code_for_tokens", new_callable=AsyncMock

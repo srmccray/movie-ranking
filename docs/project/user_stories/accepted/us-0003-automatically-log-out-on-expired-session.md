@@ -15,16 +15,16 @@ governing_prd: PRD-0003
 ## User Story
 
 **As a** movie enthusiast,  
-**I want** to be sent to the login page when my token has expired,  
+**I want** to be sent to the login page when my session has expired,  
 **So that** I can re-authenticate instead of seeing cryptic errors.
 
 ## Acceptance Criteria
 
 ```gherkin
-Scenario: Expired token redirects to login
-Given Casey has an expired token stored in the browser
-When Casey opens the rankings page and an API call returns 401
-Then the token is removed from localStorage
+Scenario: Expired session redirects to login
+Given Casey has an expired session cookie in the browser
+When Casey opens the rankings page and the session check returns 401
+Then the session cookie is gone
 And Casey is redirected to "/login"
 ```
 

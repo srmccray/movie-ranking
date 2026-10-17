@@ -16,7 +16,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { RegisterPage } from './RegisterPage';
-import { resetMockData, MOCK_USER_EMAIL } from '../__tests__/mocks/handlers';
+import { resetMockData, setMockSession, MOCK_USER_EMAIL } from '../__tests__/mocks/handlers';
 
 // Helper to render RegisterPage with router and auth context
 function renderRegisterPage(initialEntries = ['/register']) {
@@ -244,8 +244,8 @@ describe('RegisterPage', () => {
 
   describe('authenticated user redirect', () => {
     it('should redirect authenticated user to home', async () => {
-      // Set token before rendering
-      localStorage.setItem('movie_ranking_token', 'existing-token');
+      // Simulate an existing cookie session
+      setMockSession(true);
 
       renderRegisterPage();
 

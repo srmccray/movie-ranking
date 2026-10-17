@@ -3,7 +3,7 @@
 import logging
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
@@ -91,6 +91,7 @@ async def google_login(
     },
 )
 async def google_callback(
+    request: Request,
     db: DbSession,
     response: Response,
     code: str | None = Query(None, description="Authorization code from Google"),
@@ -103,6 +104,7 @@ async def google_callback(
     verifies the ID token, and creates or finds the user account.
 
     Args:
+        request: Incoming request (session cookie for link-flow binding).
         db: Async database session.
         response: Response used to attach the session cookies to JSON replies.
         code: Authorization code from Google.
@@ -112,8 +114,8 @@ async def google_callback(
     Returns:
         A 302 to the stored redirect_uri, or the Token JSON when none was
         stored. Both set the httpOnly session cookie and the CSRF cookie. The
-        redirect carries ``?token=<jwt>`` only while
-        ``GOOGLE_LEGACY_TOKEN_IN_URL`` is true (removed by TASK-0047).
+        redirect ``Location`` is the stored URL unchanged: it never carries the
+        token.
 
     Raises:
         HTTPException: Various errors for invalid state, cancelled auth, etc.
@@ -155,6 +157,12 @@ async def google_callback(
 
     # If this is a link flow, handle it separately
     if flow_type == "link" and linking_user_id is not None:
+        if not link.session_matches_user(request, linking_user_id):
+            logger.warning("Link callback rejected: session does not match user")
+            return RedirectResponse(
+                url=f"{custom_redirect_uri or '/settings'}?error=session_mismatch",
+                status_code=status.HTTP_302_FOUND,
+            )
         return await link._handle_link_callback(
             db, code, custom_redirect_uri, linking_user_id
         )
@@ -224,12 +232,10 @@ async def google_callback(
     access_token = create_access_token(data={"sub": str(user.id)})
 
     if custom_redirect_uri:
-        # Legacy: the deployed frontend still reads the JWT from the URL.
-        if settings.GOOGLE_LEGACY_TOKEN_IN_URL:
-            redirect_url = f"{custom_redirect_uri}?token={access_token}"
-        else:
-            redirect_url = custom_redirect_uri
-        redirect = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+        # The session cookie authenticates the SPA; the URL never carries the JWT.
+        redirect = RedirectResponse(
+            url=custom_redirect_uri, status_code=status.HTTP_302_FOUND
+        )
         set_session_cookies(redirect, access_token)
         return redirect
 

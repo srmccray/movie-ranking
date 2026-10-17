@@ -14,17 +14,12 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { SettingsPage } from '../pages/SettingsPage';
-import { apiClient } from '../api/client';
-import { resetMockData, setUserGoogleLinked, MOCK_TOKEN, MOCK_USER_EMAIL } from './mocks/handlers';
-
-const TOKEN_KEY = 'movie_ranking_token';
+import { resetMockData, setUserGoogleLinked, setMockSession, MOCK_USER_EMAIL } from './mocks/handlers';
 
 // Set up authenticated context
 function renderSettingsPage(route = '/settings') {
-  // Set token in localStorage to simulate authenticated user
-  localStorage.setItem(TOKEN_KEY, MOCK_TOKEN);
-  // Also set on API client since useEffect may not run immediately
-  apiClient.setToken(MOCK_TOKEN);
+  // Simulate an authenticated cookie session
+  setMockSession(true);
 
   return render(
     <MemoryRouter initialEntries={[route]}>
@@ -45,7 +40,7 @@ describe('SettingsPage', () => {
 
   afterEach(() => {
     localStorage.clear();
-    apiClient.setToken(null);
+    setMockSession(false);
   });
 
   describe('Profile Display', () => {

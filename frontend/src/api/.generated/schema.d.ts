@@ -163,6 +163,7 @@ export interface paths {
          *     verifies the ID token, and creates or finds the user account.
          *
          *     Args:
+         *         request: Incoming request (session cookie for link-flow binding).
          *         db: Async database session.
          *         response: Response used to attach the session cookies to JSON replies.
          *         code: Authorization code from Google.
@@ -172,8 +173,8 @@ export interface paths {
          *     Returns:
          *         A 302 to the stored redirect_uri, or the Token JSON when none was
          *         stored. Both set the httpOnly session cookie and the CSRF cookie. The
-         *         redirect carries ``?token=<jwt>`` only while
-         *         ``GOOGLE_LEGACY_TOKEN_IN_URL`` is true (removed by TASK-0047).
+         *         redirect ``Location`` is the stored URL unchanged: it never carries the
+         *         token.
          *
          *     Raises:
          *         HTTPException: Various errors for invalid state, cancelled auth, etc.
