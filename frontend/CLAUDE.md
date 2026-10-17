@@ -694,7 +694,7 @@ export interface SomeContextType {
 
 ### Regenerating API types
 
-`src/api/.generated/schema.d.ts` is generated from the committed `openapi.json` by `openapi-typescript`. After any backend schema change, run `venv/bin/python scripts/export_openapi.py` from the repo root, then `npm run generate:api` in `frontend/`, and commit both files. Never edit them by hand; the `api-contract` CI job fails when they are stale. The directory is hidden so `spec-ops health` skips it, and ESLint ignores it. Nothing imports it yet (TASK-0044).
+`src/api/.generated/schema.d.ts` is generated from the committed `openapi.json` by `openapi-typescript`. After any backend schema change, run `venv/bin/python scripts/export_openapi.py` from the repo root, then `npm run generate:api` in `frontend/`, and commit both files. Never edit them by hand; the `api-contract` CI job fails when they are stale. The directory is hidden so `spec-ops health` skips it, and ESLint ignores it. API-shaped types in `src/types/index.ts` are aliases to `components['schemas']` from this file, so a backend schema change surfaces as `tsc` errors at frontend usage sites.
 
 ### Type Mapping Process
 
@@ -710,16 +710,13 @@ export interface SomeContextType {
    grep "response_model=" app/routers/movies.py
    ```
 
-3. **Create matching frontend type:**
+3. **Alias the generated type** (do not hand-copy fields):
    ```typescript
-   // Backend: TMDBSearchResponse with results, query, year
-   // Frontend must match exactly:
-   export interface TMDBSearchResponse {
-     results: TMDBSearchResult[];
-     query: string;
-     year: number | null;
-   }
+   // src/types/index.ts
+   type Schemas = components['schemas'];
+   export type TMDBSearchResponse = Schemas['TMDBSearchResponse'];
    ```
+   Hand-write only UI-only types (sort options, auth context, `ApiError`).
 
 4. **Use the wrapper type in API client:**
    ```typescript

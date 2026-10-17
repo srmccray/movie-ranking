@@ -113,7 +113,7 @@ export function ImportReview({
     );
   }
 
-  const movie = currentMovie.tmdb_match;
+  const movie = currentMovie.tmdb_match ?? null;
   const isUnmatched = movie === null;
   const confidenceLabel = currentMovie.confidence >= 0.7 ? 'High' :
                           currentMovie.confidence >= 0.5 ? 'Medium' : 'Low';
