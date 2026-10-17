@@ -2,7 +2,7 @@
 id: '0047'
 title: 'frontend: switch auth to the cookie session, drop localStorage tokens, update
   e2e and US-0003, remove the legacy ?token= redirect'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0045
 - TASK-0046
