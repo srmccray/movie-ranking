@@ -13,7 +13,7 @@ anyio==4.15.1
     #   httpx
     #   starlette
     #   watchfiles
-ast-serialize==0.13.0
+ast-serialize==0.13.1
     # via mypy
 asyncpg==0.32.0
     # via movie-ranking-api (pyproject.toml)
@@ -27,7 +27,7 @@ botocore==1.43.114
     # via
     #   boto3
     #   s3transfer
-certifi==2026.7.22
+certifi==2026.10.18
     # via
     #   httpcore
     #   httpx
@@ -52,7 +52,7 @@ ecdsa==0.19.2
     # via python-jose
 email-validator==2.3.0
     # via pydantic
-fastapi==0.143.1
+fastapi==0.146.0
     # via movie-ranking-api (pyproject.toml)
 google-auth==2.62.0
     # via movie-ranking-api (pyproject.toml)
@@ -107,9 +107,9 @@ pathspec==1.1.1
     # via
     #   black
     #   mypy
-platformdirs==4.13.0
+platformdirs==4.13.5
     # via black
-pluggy==1.6.0
+pluggy==1.7.0
     # via pytest
 pyasn1==0.6.4
     # via
@@ -161,11 +161,11 @@ six==1.17.0
     # via
     #   ecdsa
     #   python-dateutil
-sqlalchemy==2.1.4
+sqlalchemy==2.1.5
     # via
     #   movie-ranking-api (pyproject.toml)
     #   alembic
-starlette==1.8.0
+starlette==1.9.0
     # via fastapi
 typing-extensions==4.16.0
     # via
