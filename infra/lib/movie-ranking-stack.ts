@@ -13,6 +13,7 @@ import * as apigatewayv2Integrations from "aws-cdk-lib/aws-apigatewayv2-integrat
 import { Construct } from "constructs";
 import * as path from "path";
 import { ApiMonitoring } from "./monitoring";
+import { AuthRateLimit } from "./auth-rate-limit";
 
 interface MovieRankingStackProps extends cdk.StackProps {
   domainName: string;
@@ -243,7 +244,16 @@ export class MovieRankingStack extends cdk.Stack {
     // - /api/* behavior: API Gateway
     // - SPA routing: 404/403 -> /index.html
     // ==========================================================================
+    // Per-IP rate rule on the auth paths (TASK-0036). Starts in Count mode.
+    const authRateLimit = new AuthRateLimit(this, "AuthRateLimit", {
+      action:
+        this.node.tryGetContext("authRateLimitAction") === "block"
+          ? "block"
+          : "count",
+    });
+
     this.distribution = new cloudfront.Distribution(this, "Distribution", {
+      webAclId: authRateLimit.webAcl.attrArn,
       // Default behavior - S3 static files for frontend
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.bucket, {

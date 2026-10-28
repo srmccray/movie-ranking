@@ -42,7 +42,9 @@ infra/
   bin/
     infra.ts              # CDK app entry point, stack configuration
   lib/
-    movie-ranking-stack.ts # Main stack definition (~430 lines)
+    movie-ranking-stack.ts # Main stack definition (~460 lines)
+    monitoring.ts          # ApiMonitoring alarms
+    auth-rate-limit.ts     # WAF web ACL with per-IP auth rate rule
   cdk.json                # CDK app command, output dir, feature flags
   package.json            # NPM dependencies and scripts
   tsconfig.json           # TypeScript configuration
@@ -346,7 +348,7 @@ new MovieRankingStack(app, "MovieRankingStack", {
 
 ## Rate Limits and Concurrency (TASK-0035)
 
-- **Route throttling** (stage `RouteSettings` in `movie-ranking-stack.ts`, per route across all clients; HTTP API cannot throttle per IP, see TASK-0036). Excess requests get HTTP 429 from API Gateway.
+- **Route throttling** (stage `RouteSettings` in `movie-ranking-stack.ts`, per route across all clients; HTTP API cannot throttle per IP; see the WAF rule below). Excess requests get HTTP 429 from API Gateway.
 
   | Route | Rate/s | Burst |
   |-------|--------|-------|
@@ -356,6 +358,10 @@ new MovieRankingStack(app, "MovieRankingStack", {
   | all other routes (default) | 100 | 200 |
 
   To raise a limit, edit the `routeSettings` / `defaultRouteSettings` values and redeploy. Login and register have no trailing slash (documented exception).
+- **Per-IP WAF rate rule** (`lib/auth-rate-limit.ts`, `AuthRateLimit`; TASK-0036): a CLOUDFRONT-scope web ACL `movie-ranking-web-acl` (us-east-1) attached to the distribution. Rule `AuthRateLimit` counts requests per source IP whose URI path starts with `/api/v1/auth/`; limit 100 per 300 s. It ships in **Count** mode (metric only). After a week of reviewing the `AuthRateLimit` metric (CloudWatch namespace `AWS/WAFV2`, dimensions `WebACL=MovieRankingWebAcl`, `Rule=AuthRateLimit`, `Region=Global`), enable blocking with `npx cdk deploy -c authRateLimitAction=block` (then change the default in the stack so CI-less manual deploys keep it). Blocked requests get HTTP 403 from CloudFront. Tune `AUTH_RATE_LIMIT` in `lib/auth-rate-limit.ts`; shared NATs can trip a low value.
+  - **Read samples**: WAF console, Web ACLs (scope CloudFront) > `movie-ranking-web-acl` > Traffic overview > sampled requests for `AuthRateLimit`, or `aws wafv2 get-sampled-requests --scope CLOUDFRONT --region us-east-1 --web-acl-arn <arn> --rule-metric-name AuthRateLimit --time-window StartTime=<iso>,EndTime=<iso> --max-items 100`.
+  - **Unblock an IP**: rate-based blocks lift automatically once the IP's rate falls below the limit (can take a few minutes). To unblock immediately, create an IP set and add an Allow rule with a lower priority number than `AuthRateLimit`, or switch back to Count by deploying without `-c authRateLimitAction=block`.
+  - **Cost** (check current AWS pricing): about $5/month per web ACL, $1/month per rule, $0.60 per million requests inspected.
 - **Reserved concurrency**: `ApiFunction` reserves 10 concurrent executions (`NullPool` opens one DB connection per invocation, so this bounds connections). Change with `-c reservedConcurrency=<n>`; omit with `-c reservedConcurrency=none`. AWS requires at least 100 unreserved account concurrency; check `aws lambda get-account-settings` first (new accounts can start at 10, which makes any reservation fail the deploy).
 - **Database `max_connections`**: NOT YET RECORDED. The PostgreSQL is external; look it up (`SHOW max_connections;`) and keep the reservation at or below it minus admin headroom, then record the value here.
 
