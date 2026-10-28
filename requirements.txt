@@ -15,7 +15,7 @@ asyncpg==0.32.0
     # via movie-ranking-api (pyproject.toml)
 bcrypt==5.0.0
     # via movie-ranking-api (pyproject.toml)
-certifi==2026.10.18
+certifi==2026.10.23
     # via
     #   httpcore
     #   httpx
