@@ -55,7 +55,7 @@ jobs:
 
       - name: Install uv
         if: steps.filter.outputs.artifacts == 'true' || steps.filter.outputs.health == 'true' || steps.filter.outputs.python == 'true'
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
           enable-cache: false
