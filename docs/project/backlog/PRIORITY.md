@@ -36,7 +36,7 @@ Strict sequential order of execution for engineering tasks.
 - **TASK-0033 (Proposed)**: [`0033-deploy-workflow-gate-on-ci-quality-gate-success`](proposed/0033-deploy-workflow-gate-on-ci-quality-gate-success.md)
 - **TASK-0034 (Proposed)**: [`0034-infra-cdk-diff-on-pull-requests-and-approved-cdk-deploy`](proposed/0034-infra-cdk-diff-on-pull-requests-and-approved-cdk-deploy.md)
 - **TASK-0035 (Complete)**: [`0035-infra-api-gateway-route-throttling-and-lambda-concurrency-cap`](complete/0035-infra-api-gateway-route-throttling-and-lambda-concurrency-cap.md)
-- **TASK-0036 (Refined)**: [`0036-infra-waf-per-ip-rate-limit-on-auth-paths`](refined/0036-infra-waf-per-ip-rate-limit-on-auth-paths.md)
+- **TASK-0036 (Complete, superseded)**: [`0036-infra-waf-per-ip-rate-limit-on-auth-paths`](complete/0036-infra-waf-per-ip-rate-limit-on-auth-paths.md)
 - **TASK-0037 (Complete)**: [`0037-backend-structured-json-logging-request-id-and-exception-handler`](complete/0037-backend-structured-json-logging-request-id-and-exception-handler.md)
 - **TASK-0038 (Complete)**: [`0038-backend-health-endpoint-optional-database-readiness-check`](complete/0038-backend-health-endpoint-optional-database-readiness-check.md)
 - **TASK-0039 (Complete)**: [`0039-infra-lambda-log-retention-xray-tracing-and-cloudwatch-alarms`](complete/0039-infra-lambda-log-retention-xray-tracing-and-cloudwatch-alarms.md)

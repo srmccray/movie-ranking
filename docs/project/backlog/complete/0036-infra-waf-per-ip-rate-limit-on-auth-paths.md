@@ -2,7 +2,7 @@
 id: '0036'
 title: 'infra/lib/movie-ranking-stack.ts: add a CloudFront WAF per-IP rate rule for
   /api/v1/auth/*'
-status: Refined
+status: Complete
 dependencies:
 - TASK-0035
 governing_adrs:
@@ -56,3 +56,6 @@ Scenario: Login attempts are rate limited per IP
 - **Estimable**: Evidence cites files, symbols and line ranges as of main at c81de14; re-check line numbers before editing.
 - **Small**: Small: one focused PR, a few files, well under 500 lines of change.
 - **Testable**: HTTP responses observed from two source IPs against the deployed distribution (ADR-0003).
+
+## Resolution
+Closed as superseded on 2026-10-28; not implemented. A CloudFront WAF web ACL costs roughly $6/month (ACL + rule + request inspection), which is not justified for a single-user personal project. TASK-0035's API Gateway route throttling and Lambda concurrency cap already limit auth-path abuse. The per-IP gap this task described is accepted. The implementation (PR #83) was closed unmerged.
