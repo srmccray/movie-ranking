@@ -180,12 +180,18 @@ export class MovieRankingStack extends cdk.Stack {
     // Explicit auth routes so the stage can throttle them by route key.
     // login/register have no trailing slash (documented exception) and use
     // the L2 construct with the shared integration.
+    // Every route named in the stage's routeSettings; the stage must depend on
+    // all of them so CloudFormation creates routes before updating the stage.
+    const throttledRoutes: apigatewayv2.CfnRoute[] = [];
     for (const path of ["/api/v1/auth/login", "/api/v1/auth/register"]) {
-      this.httpApi.addRoutes({
+      const routes = this.httpApi.addRoutes({
         path,
         methods: [apigatewayv2.HttpMethod.POST],
         integration: lambdaIntegration,
       });
+      for (const route of routes) {
+        throttledRoutes.push(route.node.defaultChild as apigatewayv2.CfnRoute);
+      }
     }
 
     // The L2 HttpRoute rejects paths ending in "/", so the Google routes use
@@ -201,11 +207,13 @@ export class MovieRankingStack extends cdk.Stack {
       ["GoogleLoginRoute", "GET /api/v1/auth/google/login/"],
       ["GoogleCallbackRoute", "GET /api/v1/auth/google/callback/"],
     ]) {
-      new apigatewayv2.CfnRoute(this, id, {
-        apiId: this.httpApi.httpApiId,
-        routeKey,
-        target: `integrations/${googleIntegration.ref}`,
-      });
+      throttledRoutes.push(
+        new apigatewayv2.CfnRoute(this, id, {
+          apiId: this.httpApi.httpApiId,
+          routeKey,
+          target: `integrations/${googleIntegration.ref}`,
+        })
+      );
     }
 
     // Throttling is per route across all clients (no per-IP at HTTP API).
@@ -220,6 +228,10 @@ export class MovieRankingStack extends cdk.Stack {
       throttlingRateLimit: 100,
       throttlingBurstLimit: 200,
     };
+    const defaultStageResource = this.httpApi.defaultStage!.node.defaultChild as apigatewayv2.CfnStage;
+    for (const route of throttledRoutes) {
+      defaultStageResource.addDependency(route);
+    }
 
     // ==========================================================================
     // Alarms -> SNS email (address from context `alertEmail`, not committed)
