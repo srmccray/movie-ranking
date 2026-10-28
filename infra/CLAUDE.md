@@ -290,7 +290,7 @@ Rollback: `aws lambda update-function-configuration` with the old variables (the
 
 ## Deployment Workflow
 
-The GitHub Actions workflow (`.github/workflows/deploy.yml`) runs on push to `main` (and can be started manually via `workflow_dispatch`). It deploys the **application** (frontend files and Lambda code). It does **not** deploy CDK infrastructure changes and does not run Alembic migrations.
+The GitHub Actions workflow (`.github/workflows/deploy.yml`) runs on push to `main` (and can be started manually via `workflow_dispatch`). It deploys the **application** (frontend files and Lambda code). It does **not** deploy CDK infrastructure changes. It does run Alembic migrations (step 2 below) before publishing Lambda code. The workflow uses `concurrency: group: deploy` so deploys never overlap.
 
 ### 1. Test Phase (Parallel)
 - **Backend tests**: Python 3.12, `pytest tests/ -v` against in-memory SQLite (`aiosqlite`)
@@ -300,20 +300,21 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`) runs on push to `ma
 
 ```
 1. Configure AWS credentials via OIDC
-2. Set up QEMU for ARM64 Docker builds
-3. Build frontend (`npx vite build` in frontend/, output frontend/dist)
-4. Upload frontend to S3 (two `aws s3 sync` passes):
+2. Run database migrations on the runner: read `/movie-ranking/prod/DATABASE_URL` from SSM (the deploy role may read only that parameter), mask it, `pip install -r requirements.txt`, `alembic upgrade head`. A failure aborts the deploy before any code is published. This requires GitHub-hosted runners to reach the external PostgreSQL; if its network rules block them, use the ADR-0009 fallback (a `{"action": "migrate"}` Lambda event that runs Alembic in-function, invoked before `update-function-code`)
+3. Set up QEMU for ARM64 Docker builds
+4. Build frontend (`npx vite build` in frontend/, output frontend/dist)
+5. Upload frontend to S3 (two `aws s3 sync` passes):
    - Everything except HTML/JSON, with --delete: max-age=31536000 (1 year)
    - HTML/JSON files: max-age=3600 (1 hour)
-5. Package Lambda (does not use the repo Dockerfile):
+6. Package Lambda (does not use the repo Dockerfile):
    - `docker run` of public.ecr.aws/lambda/python:3.12 (linux/arm64)
    - pip install requirements.txt into package/
    - Copy app/ and lambda_handler.py (alembic/ is not included)
    - Zip to lambda.zip
-6. Deploy Lambda:
+7. Deploy Lambda:
    - update-function-code (--publish)
    - Wait for update to complete (the workflow never changes function configuration; secrets come from SSM)
-7. Invalidate CloudFront cache (/*)
+8. Invalidate CloudFront cache (/*)
 ```
 
 The code zip built by CI replaces the CDK-bundled code asset; the CDK `code:` asset is only what a manual `cdk deploy` uploads.
