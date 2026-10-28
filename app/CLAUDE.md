@@ -48,7 +48,7 @@ app/
 alembic/
   env.py               # Async migration config (reads DATABASE_URL from settings)
   versions/
-    001_initial_schema.py ... 006_add_oauth_state_linking_fields.py  (see Creating Migrations)
+    001_initial_schema.py ... 008_datetime_columns_to_naive_utc.py  (see Creating Migrations)
 tests/                 # At the repo root, not inside app/
   __init__.py
   conftest.py          # Fixtures: client, test_user, auth_headers, test_movie
@@ -797,8 +797,8 @@ Create `alembic/versions/NNN_description.py`:
 ```python
 """Add entities table.
 
-Revision ID: 007_add_entities
-Revises: 006_oauth_linking
+Revision ID: 009_add_entities
+Revises: 008_naive_utc_datetimes
 Create Date: 2026-02-01
 
 This migration adds the entities table for <feature description>.
@@ -810,8 +810,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers
-revision: str = "007_add_entities"
-down_revision: Union[str, None] = "006_oauth_linking"
+revision: str = "009_add_entities"
+down_revision: Union[str, None] = "008_naive_utc_datetimes"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -831,14 +831,14 @@ def upgrade() -> None:
         sa.Column("value", sa.Integer(), nullable=True),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("CURRENT_TIMESTAMP"),
+            sa.DateTime(),
+            server_default=sa.text("timezone('utc', now())"),
             nullable=False,
         ),
         sa.Column(
             "updated_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("CURRENT_TIMESTAMP"),
+            sa.DateTime(),
+            server_default=sa.text("timezone('utc', now())"),
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id"),
@@ -870,10 +870,10 @@ def downgrade() -> None:
 
 | Convention | Details |
 |------------|---------|
-| Naming | Sequential numbering: `001_`, `002_`, ... (currently `001`-`006`; next is `007_`) |
+| Naming | Sequential numbering: `001_`, `002_`, ... (currently `001`-`008`; next is `009_`) |
 | down_revision | Must reference the previous migration's `revision` string, which is not always the filename (file `006_add_oauth_state_linking_fields.py` has revision `006_oauth_linking`) |
 | UUID columns | Use `sa.UUID()` with `server_default=sa.text("gen_random_uuid()")` |
-| Timestamps | Existing migrations use `sa.DateTime(timezone=True)` with `CURRENT_TIMESTAMP`, while the models use naive `Mapped[datetime]` (see root CLAUDE.md for the naive-UTC strategy); match the existing migrations |
+| Timestamps | New migrations use naive UTC `sa.DateTime()` (`TIMESTAMP WITHOUT TIME ZONE`) with `server_default=sa.text("timezone('utc', now())")` (ADR-0010; migration 008 converted the earlier `timezone=True` columns) |
 | Foreign keys | Name pattern: `fk_<table>_<column>`, always include `ondelete` |
 | Constraints | Existing names: `chk_year`, `chk_rating`, `uq_user_movie`; use `chk_<field>` / `uq_<fields>` |
 | Indexes | Create for all foreign keys and frequently queried columns |

@@ -35,6 +35,7 @@ elif IS_LAMBDA:
         settings.DATABASE_URL,
         echo=settings.DEBUG,
         poolclass=NullPool,
+        connect_args={"server_settings": {"timezone": "UTC"}},
     )
 else:
     engine = create_async_engine(
@@ -43,6 +44,7 @@ else:
         pool_pre_ping=True,
         pool_size=5,
         max_overflow=10,
+        connect_args={"server_settings": {"timezone": "UTC"}},
     )
 
 # Create async session factory

@@ -139,6 +139,69 @@ jobs:
       - name: Re-apply all migrations
         run: alembic upgrade head
 
+      - name: Assert datetime columns are TIMESTAMP WITHOUT TIME ZONE
+        run: |
+          python - <<'PY'
+          import asyncio, os
+          import asyncpg
+
+          EXPECTED = {
+              ("users", "created_at"), ("users", "updated_at"),
+              ("movies", "created_at"), ("movies", "updated_at"),
+              ("rankings", "created_at"), ("rankings", "updated_at"),
+              ("rankings", "rated_at"),
+              ("oauth_states", "created_at"), ("oauth_states", "expires_at"),
+          }
+
+          async def types(conn):
+              rows = await conn.fetch(
+                  "SELECT table_name, column_name, data_type FROM information_schema.columns "
+                  "WHERE table_schema = 'public' "
+                  "AND column_name IN ('created_at','updated_at','rated_at','expires_at')"
+              )
+              return {(r["table_name"], r["column_name"]): r["data_type"] for r in rows}
+
+          async def main() -> None:
+              dsn = os.environ["DATABASE_URL"].replace("+asyncpg", "")
+              conn = await asyncpg.connect(dsn)
+              try:
+                  found = await types(conn)
+                  assert set(found) == EXPECTED, f"unexpected datetime columns: {sorted(found)}"
+                  bad = {k: v for k, v in found.items() if v != "timestamp without time zone"}
+                  assert not bad, f"columns not naive UTC: {bad}"
+              finally:
+                  await conn.close()
+
+          asyncio.run(main())
+          print("datetime column assertions passed")
+          PY
+
+      - name: Downgrade one revision restores timestamptz, then re-upgrade
+        run: |
+          alembic downgrade -1
+          python - <<'PY'
+          import asyncio, os
+          import asyncpg
+
+          async def main() -> None:
+              dsn = os.environ["DATABASE_URL"].replace("+asyncpg", "")
+              conn = await asyncpg.connect(dsn)
+              try:
+                  rows = await conn.fetch(
+                      "SELECT table_name, column_name, data_type FROM information_schema.columns "
+                      "WHERE table_schema = 'public' "
+                      "AND column_name IN ('created_at','updated_at','rated_at','expires_at')"
+                  )
+                  assert len(rows) == 9, f"expected 9 datetime columns, got {len(rows)}"
+                  bad = [dict(r) for r in rows if r["data_type"] != "timestamp with time zone"]
+                  assert not bad, f"not restored to timestamptz: {bad}"
+              finally:
+                  await conn.close()
+
+          asyncio.run(main())
+          PY
+          alembic upgrade head
+
       - name: Assert expected schema objects exist
         run: |
           python - <<'PY'

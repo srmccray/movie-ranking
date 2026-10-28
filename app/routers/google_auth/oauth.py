@@ -95,11 +95,7 @@ async def _validate_state_token(db: DbSession, state: str) -> OAuthState | None:
 
     # Check if expired (using naive UTC)
     now = utc_now_naive()
-    # Ensure expires_at is naive for comparison (asyncpg may return tz-aware)
-    expires_at = oauth_state.expires_at
-    if expires_at.tzinfo is not None:
-        expires_at = expires_at.replace(tzinfo=None)
-    if expires_at < now:
+    if oauth_state.expires_at < now:
         # Delete expired state
         await db.delete(oauth_state)
         await db.flush()
