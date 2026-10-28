@@ -98,7 +98,7 @@ export function useRankings(): UseRankingsReturn {
         if (err instanceof ApiClientError) {
           throw err;
         }
-        throw new Error('Failed to add movie');
+        throw new Error('Failed to add movie', { cause: err });
       }
     },
     [fetchRankings]
@@ -127,7 +127,7 @@ export function useRankings(): UseRankingsReturn {
         if (err instanceof ApiClientError) {
           throw err;
         }
-        throw new Error('Failed to update rating');
+        throw new Error('Failed to update rating', { cause: err });
       }
     },
     []
@@ -163,7 +163,7 @@ export function useRankings(): UseRankingsReturn {
         if (err instanceof ApiClientError) {
           throw err;
         }
-        throw new Error('Failed to update rated date');
+        throw new Error('Failed to update rated date', { cause: err });
       }
     },
     [rankings]
@@ -183,7 +183,7 @@ export function useRankings(): UseRankingsReturn {
         if (err instanceof ApiClientError) {
           throw err;
         }
-        throw new Error('Failed to delete ranking');
+        throw new Error('Failed to delete ranking', { cause: err });
       }
     },
     []

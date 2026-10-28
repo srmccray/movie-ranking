@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error instanceof ApiClientError) {
           throw error;
         }
-        throw new Error('Failed to login. Please try again.');
+        throw new Error('Failed to login. Please try again.', { cause: error });
       }
       if (!(await refreshAuth())) {
         throw new Error('Failed to login. Please try again.');
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error instanceof ApiClientError) {
           throw error;
         }
-        throw new Error('Failed to register. Please try again.');
+        throw new Error('Failed to register. Please try again.', { cause: error });
       }
       if (!(await refreshAuth())) {
         throw new Error('Failed to register. Please try again.');

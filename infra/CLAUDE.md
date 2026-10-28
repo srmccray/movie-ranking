@@ -294,7 +294,7 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`) runs on push to `ma
 
 ### 1. Test Phase (Parallel)
 - **Backend tests**: Python 3.12, `pytest tests/ -v` against in-memory SQLite (`aiosqlite`)
-- **Frontend tests**: Node.js 20, `npm run test:run` (Vitest)
+- **Frontend tests**: Node.js 22, `npm run test:run` (Vitest)
 
 ### 2. Deploy Phase (After tests pass)
 

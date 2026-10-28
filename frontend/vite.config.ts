@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
   server: {
@@ -22,9 +22,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          router: ['react-router-dom'],
+        manualChunks(id: string) {
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react'
+          if (/node_modules\/(react-router|react-router-dom|@remix-run\/router)\//.test(id)) return 'router'
         },
       },
     },

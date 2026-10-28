@@ -41,7 +41,7 @@ Full stack with a React frontend, a FastAPI backend, and AWS CDK infrastructure:
 
 ### Prerequisites
 - Docker and Docker Compose
-- Node.js 20+ (for frontend development; CI uses Node 20)
+- Node.js 22.22+ (for frontend development; CI uses Node 22)
 
 ### Start Everything
 

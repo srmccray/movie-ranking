@@ -53,7 +53,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: "20" # keep in sync with ci.yml / deploy.yml
+          node-version: "22" # keep in sync with ci.yml / deploy.yml
 
       # NON-BLOCKING until existing high/critical advisories are remediated
       # (vitest major bump, aws-cdk-lib, transitive deps). Remove

@@ -36,6 +36,12 @@ describe('ImportWizard', () => {
     resetMockData();
     setMockSession(true);
     Element.prototype.scrollIntoView = vi.fn(); // not implemented by jsdom
+    // jsdom's FormData is not understood by Node's fetch (it throws while serializing the body),
+    // so drop FormData bodies; the upload handler below does not read the body anyway.
+    const realFetch = globalThis.fetch;
+    vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
+      realFetch(input, init?.body instanceof FormData ? { ...init, body: undefined } : init)
+    );
     // The shared upload handler rejects any request whose Content-Type is not multipart/form-data,
     // but under jsdom fetch() does not serialize FormData as multipart, so it always answers 422.
     // Replace only that upload endpoint; every later import call uses the shared handlers.
@@ -56,6 +62,7 @@ describe('ImportWizard', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     setMockSession(false);
   });
 
