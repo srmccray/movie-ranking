@@ -15,11 +15,6 @@ env:
   PYTHON_VERSION: "3.12"
   AWS_REGION: "us-east-1"
 
-# One deploy at a time: overlapping runs must not run migrations concurrently.
-concurrency:
-  group: deploy
-  cancel-in-progress: false
-
 jobs:
   test-backend:
     runs-on: ubuntu-latest
@@ -91,29 +86,6 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
-
-      # Apply database migrations BEFORE publishing new code. If this step fails
-      # the job stops and the previously published Lambda keeps serving.
-      # Migrations must be backward compatible with the code still running
-      # (expand now, contract in a later release); see app/CLAUDE.md.
-      - name: Run database migrations
-        run: |
-          set -euo pipefail
-          DATABASE_URL="$(aws ssm get-parameter \
-            --name /movie-ranking/prod/DATABASE_URL \
-            --with-decryption \
-            --query Parameter.Value \
-            --output text)"
-          echo "::add-mask::${DATABASE_URL}"
-          export DATABASE_URL
-          # alembic/env.py imports app.config.settings, which requires these
-          # to be set; the migration itself never uses them.
-          export SECRET_KEY="unused"
-          export TMDB_API_KEY="unused"
-          pip install --quiet -r requirements.txt
-          alembic current
-          alembic upgrade head
-          alembic current
 
       # Setup QEMU for ARM64 Docker builds
       - name: Set up QEMU

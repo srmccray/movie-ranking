@@ -427,18 +427,6 @@ export class MovieRankingStack extends cdk.Stack {
       })
     );
 
-    // Read the database URL so the deploy workflow can run Alembic migrations
-    // before publishing new code (ADR-0009). Scoped to this one parameter.
-    deployRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ["ssm:GetParameter"],
-        resources: [
-          `arn:aws:ssm:${this.region}:${this.account}:parameter/movie-ranking/prod/DATABASE_URL`,
-        ],
-      })
-    );
-
     // ==========================================================================
     // Stack Outputs
     // ==========================================================================
