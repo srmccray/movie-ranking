@@ -878,7 +878,6 @@ def downgrade() -> None:
 | Constraints | Existing names: `chk_year`, `chk_rating`, `uq_user_movie`; use `chk_<field>` / `uq_<fields>` |
 | Indexes | Create for all foreign keys and frequently queried columns |
 | downgrade() | Must reverse all changes in upgrade() |
-| Backward compatibility | The deploy workflow applies migrations before publishing new code, so the previous code keeps running against the new schema. Expand now, contract in a later release: add nullable columns/tables first, and drop or rename only after no running code uses them |
 
 ### Running Migrations
 
