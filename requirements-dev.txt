@@ -2,13 +2,13 @@
 #    uv pip compile pyproject.toml --extra dev --python-version 3.12 --universal -o requirements-dev.txt
 aiosqlite==0.22.1
     # via movie-ranking-api (pyproject.toml)
-alembic==1.20.0
+alembic==1.20.1
     # via movie-ranking-api (pyproject.toml)
 annotated-doc==0.0.5
     # via fastapi
 annotated-types==0.8.0
     # via pydantic
-anyio==4.15.1
+anyio==4.16.0
     # via
     #   httpx
     #   starlette
@@ -21,9 +21,9 @@ bcrypt==5.0.0
     # via movie-ranking-api (pyproject.toml)
 black==26.10.1
     # via movie-ranking-api (pyproject.toml)
-boto3==1.43.114
+boto3==1.43.123
     # via movie-ranking-api (pyproject.toml)
-botocore==1.43.114
+botocore==1.43.123
     # via
     #   boto3
     #   s3transfer
@@ -46,13 +46,13 @@ cryptography==50.0.2
     # via
     #   google-auth
     #   python-jose
-dnspython==2.9.0
+dnspython==2.9.1
     # via email-validator
 ecdsa==0.19.2
     # via python-jose
 email-validator==2.3.0
     # via pydantic
-fastapi==0.146.0
+fastapi==0.162.0
     # via movie-ranking-api (pyproject.toml)
 google-auth==2.62.0
     # via movie-ranking-api (pyproject.toml)
@@ -90,14 +90,14 @@ mangum==0.22.0
     # via movie-ranking-api (pyproject.toml)
 markupsafe==3.0.4
     # via mako
-mypy==2.4.0
+mypy==2.4.1
     # via movie-ranking-api (pyproject.toml)
 mypy-extensions==1.1.0
     # via
     #   black
     #   isort
     #   mypy
-opentelemetry-api==1.45.1
+opentelemetry-api==1.45.2
     # via fastapi
 packaging==26.3
     # via
@@ -107,35 +107,35 @@ pathspec==1.1.1
     # via
     #   black
     #   mypy
-platformdirs==4.13.5
+platformdirs==4.14.3
     # via black
 pluggy==1.7.0
     # via pytest
-pyasn1==0.6.4
+pyasn1==0.6.5
     # via
     #   pyasn1-modules
     #   python-jose
     #   rsa
 pyasn1-modules==0.4.2
     # via google-auth
-pycparser==3.11 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
+pycparser==3.12 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
     # via cffi
-pydantic==2.14.1
+pydantic==2.14.2
     # via
     #   movie-ranking-api (pyproject.toml)
     #   fastapi
     #   pydantic-settings
-pydantic-core==2.50.1
+pydantic-core==2.50.2
     # via pydantic
-pydantic-settings==2.16.0
+pydantic-settings==2.16.2
     # via movie-ranking-api (pyproject.toml)
 pygments==2.21.0
     # via pytest
-pytest==9.1.1
+pytest==9.2.0
     # via
     #   movie-ranking-api (pyproject.toml)
     #   pytest-asyncio
-pytest-asyncio==1.4.0
+pytest-asyncio==1.4.1.post1
     # via movie-ranking-api (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via botocore
@@ -145,7 +145,7 @@ python-dotenv==1.2.4
     #   uvicorn
 python-jose==3.5.0
     # via movie-ranking-api (pyproject.toml)
-python-multipart==0.0.32
+python-multipart==0.0.33
     # via movie-ranking-api (pyproject.toml)
 pytokens==0.4.1
     # via black
@@ -155,17 +155,17 @@ requests==2.34.2
     # via movie-ranking-api (pyproject.toml)
 rsa==4.9.1
     # via python-jose
-s3transfer==0.19.2
+s3transfer==0.19.3
     # via boto3
 six==1.17.0
     # via
     #   ecdsa
     #   python-dateutil
-sqlalchemy==2.1.5
+sqlalchemy==2.1.6
     # via
     #   movie-ranking-api (pyproject.toml)
     #   alembic
-starlette==1.9.0
+starlette==1.10.0
     # via fastapi
 typing-extensions==4.16.0
     # via
@@ -197,5 +197,5 @@ uvloop==0.23.0 ; platform_python_implementation != 'PyPy' and sys_platform != 'c
     # via uvicorn
 watchfiles==1.3.0
     # via uvicorn
-websockets==17.2
+websockets==17.4
     # via uvicorn
